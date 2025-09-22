@@ -1,7 +1,7 @@
 services:
-  openvpn:
+  openvpn-yt-dlp:
     image: dperson/openvpn-client
-    container_name: openvpn
+    container_name: openvpn-yt-dlp
     profiles:
       - vpn
     cap_add:
@@ -32,9 +32,9 @@ services:
     profiles:
       - vpn
     depends_on:
-      openvpn:
+      openvpn-yt-dlp:
         condition: service_healthy
-    network_mode: "service:openvpn"
+    network_mode: "service:openvpn-yt-dlp"
     environment:
       - PUID=1000
       - PGID=1000
