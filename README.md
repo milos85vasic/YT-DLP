@@ -66,8 +66,7 @@ Then, run the container:
     docker logs -f openvpn-yt-dlp
 
     # Stop only yt-dlp (leaves JDownloader running)
-    ./cleanup.sh ytdlp
-
+    ./cleanup ytdlp
 
     # More:
 
@@ -88,14 +87,14 @@ Then, run the container:
 ### Download script
 
 ```bash
-./download.sh 'https://www.youtube.com/watch?v=VIDEO_ID'
+./download 'https://www.youtube.com/watch?v=VIDEO_ID'
 ```
 
 with flags provided:
 
 ```bash
-./download.sh --batch-file /config/urls.txt
-./download.sh --channels /config/channels.txt
+./download --batch-file /config/urls.txt
+./download --channels /config/channels.txt
 ```
 
 ## Port Summary

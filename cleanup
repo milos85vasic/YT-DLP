@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# cleanup.sh - Clean up containers
+# cleanup - Clean up containers
 
 set -e
 
@@ -24,7 +24,7 @@ elif [ "$1" == "jdownloader" ]; then
     CONTAINERS_TO_REMOVE=("openvpn" "jdownloader2")
     echo "Cleaning up only JDownloader containers..."
 else
-    echo "Usage: ./cleanup.sh [all|ytdlp|jdownloader]"
+    echo "Usage: ./cleanup [all|ytdlp|jdownloader]"
     echo ""
     echo "Options:"
     echo "  all         - Remove all containers"

@@ -13,9 +13,9 @@ fi
 
 # Check if URL is provided
 if [ $# -eq 0 ]; then
-    echo "Usage: ./download.sh <URL>"
-    echo "   or: ./download.sh --batch"
-    echo "   or: ./download.sh --channels"
+    echo "Usage: ./download <URL>"
+    echo "   or: ./download --batch"
+    echo "   or: ./download --channels"
     exit 1
 fi
 
