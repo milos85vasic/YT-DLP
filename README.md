@@ -59,3 +59,16 @@ Then, run the container:
     ```bash
     docker-compose logs -f yt-dlp
     ```
+
+### Download script
+
+```bash
+./download.sh 'https://www.youtube.com/watch?v=VIDEO_ID'
+```
+
+with flags provided:
+
+```bash
+./download.sh --batch-file /config/urls.txt
+./download.sh --channels /config/channels.txt
+```
