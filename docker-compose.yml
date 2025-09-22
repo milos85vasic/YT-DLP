@@ -26,7 +26,9 @@ services:
       retries: 3
 
   youtubedl-material:
-    image: tzahi12345/youtubedl-material:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.youtubedl-material
     container_name: youtubedl-material
     profiles:
       - vpn
@@ -49,8 +51,6 @@ services:
       - ytdl_cookies_file_path=/app/cookies/cookies.txt
       # Download settings
       - ytdl_default_file_output=/app/downloads/%(title)s.%(ext)s
-      # REMOVED rate limit to avoid error
-      # - ytdl_download_rate_limit=${RATE_LIMIT:-0}
       # Force yt-dlp usage
       - ytdl_use_yt_dlp=true
       - ytdl_custom_args=--no-check-certificate
