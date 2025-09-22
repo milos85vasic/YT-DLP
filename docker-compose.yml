@@ -12,9 +12,9 @@ services:
       - ${VPN_OVPN_PATH}:/vpn/credentials.ovpn:ro
       - ./vpn-auth.txt:/vpn/vpn.auth:ro
     ports:
-      - "3129:3129/tcp"
-      - "8080:8080/tcp"  # Changed from 5800 for yt-dlp web interface
-      - "8081:8081/tcp"  # Changed from 5900 for yt-dlp API
+      - "3130:3129/tcp"  # Changed to 3130 to avoid conflict with JDownloader's VPN
+      - "8080:8080/tcp"  # yt-dlp web interface (future)
+      - "8081:8081/tcp"  # yt-dlp API (future)
     environment:
       - TZ=Europe/Moscow
     security_opt:

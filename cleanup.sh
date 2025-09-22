@@ -1,0 +1,68 @@
+#!/bin/bash
+
+# cleanup.sh - Clean up containers
+
+set -e
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+echo -e "${BLUE}=== Cleanup Script ===${NC}"
+echo ""
+
+# Check what to clean
+if [ "$1" == "all" ]; then
+    CONTAINERS_TO_REMOVE=("openvpn" "jdownloader2" "openvpn-yt-dlp" "yt-dlp")
+    echo "Cleaning up ALL containers (JDownloader and yt-dlp)..."
+elif [ "$1" == "ytdlp" ]; then
+    CONTAINERS_TO_REMOVE=("openvpn-yt-dlp" "yt-dlp")
+    echo "Cleaning up only yt-dlp containers..."
+elif [ "$1" == "jdownloader" ]; then
+    CONTAINERS_TO_REMOVE=("openvpn" "jdownloader2")
+    echo "Cleaning up only JDownloader containers..."
+else
+    echo "Usage: ./cleanup.sh [all|ytdlp|jdownloader]"
+    echo ""
+    echo "Options:"
+    echo "  all         - Remove all containers"
+    echo "  ytdlp       - Remove only yt-dlp containers"
+    echo "  jdownloader - Remove only JDownloader containers"
+    exit 1
+fi
+
+echo ""
+
+# Remove specified containers
+for container in "${CONTAINERS_TO_REMOVE[@]}"; do
+    if docker ps -a --format "table {{.Names}}" | grep -q "^${container}$"; then
+        echo -e "${YELLOW}Found container: $container${NC}"
+        
+        # Stop the container if running
+        if docker ps --format "table {{.Names}}" | grep -q "^${container}$"; then
+            echo -e "  Stopping $container..."
+            docker stop $container
+        fi
+        
+        # Remove the container
+        echo -e "  Removing $container..."
+        docker rm $container
+        echo -e "${GREEN}  ✓ Removed $container${NC}"
+    fi
+done
+
+# Clean up networks
+echo ""
+echo -e "${BLUE}Cleaning up networks...${NC}"
+
+if [ "$1" == "all" ] || [ "$1" == "ytdlp" ]; then
+    if docker network ls | grep -q "yt-dlp_default"; then
+        echo -e "${YELLOW}Removing yt-dlp network...${NC}"
+        docker network rm yt-dlp_default 2>/dev/null || true
+    fi
+fi
+
+echo ""
+echo -e "${GREEN}Cleanup completed!${NC}"

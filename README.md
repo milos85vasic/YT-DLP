@@ -60,6 +60,28 @@ Then, run the container:
     docker-compose logs -f yt-dlp
     ```
 
+- Misc:
+
+    ```bash
+    # Start yt-dlp with its own VPN
+    docker-compose --profile vpn up -d
+
+    # Check both VPN connections
+    echo "JDownloader VPN:"
+    docker exec openvpn wget -qO- ifconfig.me
+    echo -e "\nyt-dlp VPN:"
+    docker exec openvpn-yt-dlp wget -qO- ifconfig.me
+
+    # Download with yt-dlp
+    docker exec yt-dlp yt-dlp "https://www.youtube.com/watch?v=VIDEO_ID"
+
+    # View logs for yt-dlp VPN
+    docker logs -f openvpn-yt-dlp
+
+    # Stop only yt-dlp (leaves JDownloader running)
+    ./cleanup.sh ytdlp
+    ```
+
 ### Download script
 
 ```bash
@@ -72,3 +94,16 @@ with flags provided:
 ./download.sh --batch-file /config/urls.txt
 ./download.sh --channels /config/channels.txt
 ```
+
+## Port Summary
+
+With this setup, we will have (with [jDownloader](https://github.com/milos85vasic/jDownloader) running in parallel):
+
+- Port `3129`: JDownloader's VPN (original)
+- Port `3130`: yt-dlp's VPN (new)
+- Port `5800`: JDownloader Web UI
+- Port `5900`: JDownloader VNC
+- Port `8080`: Reserved for future yt-dlp Web UI
+- Port `8081`: Reserved for future yt-dlp API
+
+This configuration allows both services to run simultaneously with their own VPN connections without any conflicts.
