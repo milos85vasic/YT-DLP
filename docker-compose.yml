@@ -13,7 +13,7 @@ services:
       - ./vpn-auth.txt:/vpn/vpn.auth:ro
     ports:
       - "3130:3129/tcp"
-      - "8086:17442/tcp"  # YoutubeDL-Material Web UI
+      - "8086:8081/tcp"  # Metube Web UI
     environment:
       - TZ=Europe/Moscow
     security_opt:
@@ -25,12 +25,39 @@ services:
       timeout: 10s
       retries: 3
 
-  # yt-dlp CLI container that provides the binary
+  metube:
+    image: ghcr.io/alexta69/metube:latest
+    container_name: metube
+    profiles:
+      - vpn
+    depends_on:
+      openvpn-yt-dlp:
+        condition: service_healthy
+    network_mode: "service:openvpn-yt-dlp"
+    environment:
+      - UID=1000
+      - GID=1000
+      - DOWNLOAD_DIR=/downloads
+      - STATE_DIR=/config
+      - DELETE_FILE_ON_TRASHCAN=true
+      # Quality settings
+      - DEFAULT_THEME=dark
+      - OUTPUT_TEMPLATE=%(title)s.%(ext)s
+      - YTDL_OPTIONS={"writesubtitles":true,"subtitleslangs":["en","es","fr"],"postprocessors":[{"key":"FFmpegEmbedSubtitle","already_have_subtitle":false}],"format":"bestvideo[height<=?1080]+bestaudio/best"}
+    volumes:
+      - ${DOWNLOAD_DIR}:/downloads
+      - ./metube/config:/config
+      # Share cookies if needed
+      - ./yt-dlp/cookies:/cookies:ro
+    restart: unless-stopped
+
+  # Keep yt-dlp CLI for command-line usage
   yt-dlp-cli:
     image: thr3a/yt-dlp:latest
     container_name: yt-dlp-cli
     profiles:
       - vpn
+      - vpn-cli
     depends_on:
       openvpn-yt-dlp:
         condition: service_healthy
@@ -44,57 +71,41 @@ services:
       - ${DOWNLOAD_DIR}:/downloads:rw
       - ./yt-dlp/cookies:/cookies:rw
       - ./yt-dlp/archive:/archive:rw
-      # Share yt-dlp binary location
-      - ytdlp-shared-bin:/shared-bin
     restart: unless-stopped
-    entrypoint: ["/bin/sh", "-c"]
-    command: |
-      "echo 'Copying yt-dlp binary to shared volume...'
-      cp /usr/local/bin/yt-dlp /shared-bin/yt-dlp 2>/dev/null || true
-      chmod +x /shared-bin/yt-dlp
-      echo 'yt-dlp binary shared. Container staying alive...'
-      while true; do sleep 3600; done"
+    entrypoint: ["/bin/sh", "-c", "while true; do sleep 3600; done"]
+    command: []
 
-  youtubedl-material:
-    image: tzahi12345/youtubedl-material:latest
-    container_name: youtubedl-material
+  # WITHOUT VPN version
+  metube-direct:
+    image: ghcr.io/alexta69/metube:latest
+    container_name: metube
     profiles:
-      - vpn
-    depends_on:
-      openvpn-yt-dlp:
-        condition: service_healthy
-      yt-dlp-cli:
-        condition: service_started
-    network_mode: "service:openvpn-yt-dlp"
+      - no-vpn
+    ports:
+      - "8086:8081/tcp"
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/Moscow
-      # YoutubeDL-Material settings
-      - ytdl_use_local_db=true
-      - write_ytdl_config=true
-      - ALLOW_CONFIG_MUTATIONS=true
-      # Optional settings
-      - ytdl_default_theme=${YTDL_THEME:-dark}
-      - ytdl_allow_advanced_download=true
-      - ytdl_use_cookies_file=true
-      - ytdl_cookies_file_path=/app/cookies/cookies.txt
-      # Download settings
-      - ytdl_default_file_output=/app/downloads/%(title)s.%(ext)s
+      - UID=1000
+      - GID=1000
+      - DOWNLOAD_DIR=/downloads
+      - STATE_DIR=/config
+      - DELETE_FILE_ON_TRASHCAN=true
+      # Quality settings
+      - DEFAULT_THEME=dark
+      - OUTPUT_TEMPLATE=%(title)s.%(ext)s
+      - YTDL_OPTIONS={"writesubtitles":true,"subtitleslangs":["en","es","fr"],"postprocessors":[{"key":"FFmpegEmbedSubtitle","already_have_subtitle":false}],"format":"bestvideo[height<=?1080]+bestaudio/best"}
     volumes:
-      # Main volumes
-      - ${DOWNLOAD_DIR}:/app/downloads:rw
-      - ./youtubedl-material/config:/app/appdata:rw
-      - ./yt-dlp/cookies:/app/cookies:rw
-      # Audio/Video folders
-      - ${DOWNLOAD_DIR}/audio:/app/audio:rw
-      - ${DOWNLOAD_DIR}/video:/app/video:rw
-      - ${DOWNLOAD_DIR}/subscriptions:/app/subscriptions:rw
-      # Share yt-dlp binary location
-      - ytdlp-shared-bin:/shared-bin:ro
-      - ./scripts/ytdlm-entrypoint.sh:/custom-entrypoint.sh:ro
-    entrypoint: ["/custom-entrypoint.sh"]
+      - ${DOWNLOAD_DIR}:/downloads
+      - ./metube/config:/config
+      - ./yt-dlp/cookies:/cookies:ro
     restart: unless-stopped
-
-volumes:
-  ytdlp-shared-bin:
+  
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_INCLUDE_RESTARTING=true
+      - WATCHTOWER_SCHEDULE=0 0 4 * * *  # Daily at 4 AM
+    restart: unless-stopped
