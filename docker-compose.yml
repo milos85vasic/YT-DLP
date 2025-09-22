@@ -13,8 +13,8 @@ services:
       - ./vpn-auth.txt:/vpn/vpn.auth:ro
     ports:
       - "3130:3129/tcp"
-      - "8086:8080/tcp"  # YoutubeDL-Material Web UI (mapped to 8086)
-      - "8081:17442/tcp" # YoutubeDL-Material API
+      - "8086:17442/tcp"  # Fixed: YoutubeDL-Material actually runs on 17442
+      - "8087:17443/tcp"  # Optional: YoutubeDL-Material SSL port
     environment:
       - TZ=Europe/Moscow
     security_opt:
@@ -93,8 +93,8 @@ services:
     profiles:
       - no-vpn
     ports:
-      - "8086:8080/tcp"  # Web UI (mapped to 8086)
-      - "8081:17442/tcp" # API
+      - "8086:17442/tcp"  # Fixed: YoutubeDL-Material runs on 17442
+      - "8087:17443/tcp"  # Optional: SSL port
     environment:
       - PUID=1000
       - PGID=1000
