@@ -1,0 +1,10 @@
+.env
+*.env
+jdownloader2
+jdownloader2/*
+jdownloader2/*.*
+gluetun
+gluetun/*
+gluetun/*.*
+vpn-auth.txt
+

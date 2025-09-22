@@ -1,0 +1,297 @@
+#!/bin/bash
+
+set -e
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+echo -e "${BLUE}=== yt-dlp Docker Setup Script ===${NC}"
+
+if [ ! -f .env ]; then
+
+    echo -e "${RED}ERROR: .env file not found in current directory.${NC}"
+    echo "Please create a .env file with your configuration."
+    exit 1
+fi
+
+echo -e "${BLUE}Loading variables from .env file...${NC}"
+
+
+set -a
+source .env
+set +a
+
+
+REQUIRED_VARS=(
+    "USE_VPN:Enable/Disable VPN (true/false)"
+    "DOWNLOAD_DIR:Download Directory"
+)
+
+VPN_VARS=(
+    "VPN_USERNAME:VPN Username"
+    "VPN_PASSWORD:VPN Password" 
+    "VPN_OVPN_PATH:VPN OpenVPN config file path"
+)
+
+VALIDATION_FAILED=false
+
+echo -e "${BLUE}Validating required variables...${NC}"
+
+for var_info in "${REQUIRED_VARS[@]}"; do
+
+    var_name="${var_info%%:*}"
+    var_description="${var_info##*:}"
+    var_value="${!var_name}"
+    
+    if [ -z "$var_value" ]; then
+
+        echo -e "${RED}✗ ERROR: $var_name ($var_description) is not set.${NC}"
+        VALIDATION_FAILED=true
+
+    else
+        
+        
+        if [[ "$var_name" == *"PASSWORD"* ]] || [[ "$var_name" == *"USERNAME"* ]]; then
+            display_value="***masked***"
+        else
+            display_value="$var_value"
+        fi
+        
+        echo -e "${GREEN}✓ $var_name: $display_value${NC}"
+    fi
+done
+
+if [ "$USE_VPN" = "true" ]; then
+
+    echo -e "${BLUE}VPN enabled - checking VPN-specific variables...${NC}"
+    
+    for var_info in "${VPN_VARS[@]}"; do
+
+        var_name="${var_info%%:*}"
+        var_description="${var_info##*:}"
+        var_value="${!var_name}"
+        
+        if [ -z "$var_value" ]; then
+
+            echo -e "${RED}✗ ERROR: $var_name ($var_description) is not set.${NC}"
+            VALIDATION_FAILED=true
+
+        else
+            
+            if [[ "$var_name" == *"PASSWORD"* ]] || [[ "$var_name" == *"USERNAME"* ]]; then
+                display_value="***masked***"
+            else
+                display_value="$var_value"
+            fi
+            
+            echo -e "${GREEN}✓ $var_name: $display_value${NC}"
+        fi
+    done
+    
+
+    echo -e "${BLUE}Checking VPN configuration file...${NC}"
+
+    if [ ! -f "$VPN_OVPN_PATH" ]; then
+
+        echo -e "${RED}ERROR: VPN config file not found at: $VPN_OVPN_PATH${NC}"
+        echo "Please check the VPN_OVPN_PATH in your .env file."
+        VALIDATION_FAILED=true
+
+    else
+        
+        echo -e "${GREEN}✓ VPN config file found: $VPN_OVPN_PATH${NC}"
+    fi
+    
+    echo -e "${BLUE}Creating VPN authentication file...${NC}"
+    cat > vpn-auth.txt << EOF
+${VPN_USERNAME}
+${VPN_PASSWORD}
+EOF
+    chmod 600 vpn-auth.txt
+    
+    if [ -f vpn-auth.txt ]; then
+    
+        echo -e "${GREEN}✓ VPN authentication file created successfully.${NC}"
+    else
+    
+        echo -e "${RED}ERROR: Failed to create VPN authentication file.${NC}"
+        VALIDATION_FAILED=true
+    fi
+    
+    
+    echo -e "${BLUE}Checking OpenVPN configuration...${NC}"
+    
+    if ! grep -q "auth-user-pass" "$VPN_OVPN_PATH"; then
+    
+        echo -e "${YELLOW}WARNING: Your OpenVPN config file doesn't contain 'auth-user-pass' directive.${NC}"
+        read -p "Add 'auth-user-pass /vpn/vpn.auth' to your config file? (y/n): " -n 1 -r
+        echo
+    
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+    
+            cp "$VPN_OVPN_PATH" "${VPN_OVPN_PATH}.backup"
+            echo "auth-user-pass /vpn/vpn.auth" >> "$VPN_OVPN_PATH"
+            echo -e "${GREEN}✓ Added auth-user-pass directive to OpenVPN config.${NC}"
+            echo -e "${BLUE}Backup created: ${VPN_OVPN_PATH}.backup${NC}"
+
+        else
+            
+            echo -e "${YELLOW}Please manually add 'auth-user-pass /vpn/vpn.auth' to your OpenVPN config file.${NC}"
+        fi
+
+    else
+        
+        echo -e "${GREEN}✓ OpenVPN config already contains auth-user-pass directive.${NC}"
+    fi
+    
+else
+    
+    echo -e "${YELLOW}VPN disabled - skipping VPN-specific validation.${NC}"
+fi
+
+if [ "$VALIDATION_FAILED" = true ]; then
+
+    echo -e "${RED}Please fix the missing variables in your .env file and try again.${NC}"
+    exit 1
+fi
+
+echo -e "${BLUE}Checking download directory...${NC}"
+
+if [ ! -d "$DOWNLOAD_DIR" ]; then
+
+    echo -e "${YELLOW}WARNING: Download directory does not exist: $DOWNLOAD_DIR${NC}"
+    read -p "Create it? (y/n): " -n 1 -r
+    echo
+
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+    
+        mkdir -p "$DOWNLOAD_DIR"
+        echo -e "${GREEN}✓ Created download directory: $DOWNLOAD_DIR${NC}"
+
+    else
+        
+        echo -e "${RED}Please create the download directory or update DOWNLOAD_DIR in .env${NC}"
+        exit 1
+    fi
+
+else
+    
+    echo -e "${GREEN}✓ Download directory exists: $DOWNLOAD_DIR${NC}"
+fi
+
+# Create yt-dlp specific directories
+echo -e "${BLUE}Creating yt-dlp directories...${NC}"
+
+mkdir -p ./yt-dlp/config
+mkdir -p ./yt-dlp/cookies
+mkdir -p ./yt-dlp/archive
+
+# Create default yt-dlp config if not exists
+if [ ! -f ./yt-dlp/config/yt-dlp.conf ]; then
+    echo -e "${BLUE}Creating default yt-dlp configuration...${NC}"
+    cat > ./yt-dlp/config/yt-dlp.conf << 'EOF'
+# yt-dlp configuration file
+
+# Output format
+-o "/downloads/%(uploader)s/%(title)s - %(id)s.%(ext)s"
+
+# Archive downloaded videos
+--download-archive /archive/downloaded.txt
+
+# Format selection
+-f "bestvideo[height<=?1080]+bestaudio/best"
+
+# Download subtitles
+--write-sub
+--sub-langs en,es,fr
+--convert-subs srt
+
+# Embed metadata
+--add-metadata
+--embed-thumbnail
+--embed-subs
+
+# Network options
+--retries 10
+--fragment-retries 10
+
+# Concurrent downloads
+--concurrent-fragments 5
+
+# Rate limiting (optional - uncomment to use)
+# --limit-rate 1M
+
+# User agent
+--user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+
+# Cookies file (if needed)
+# --cookies /cookies/cookies.txt
+
+# Verbose output
+--verbose
+EOF
+    echo -e "${GREEN}✓ Created default yt-dlp configuration${NC}"
+fi
+
+# Create sample batch file
+if [ ! -f ./yt-dlp/config/urls.txt ]; then
+    touch ./yt-dlp/config/urls.txt
+    echo -e "${GREEN}✓ Created empty urls.txt for batch downloads${NC}"
+fi
+
+# Create sample channels file
+if [ ! -f ./yt-dlp/config/channels.txt ]; then
+    cat > ./yt-dlp/config/channels.txt << 'EOF'
+# Add YouTube channels or playlists to monitor
+# One URL per line
+# Example:
+# https://www.youtube.com/@SomeChannel
+# https://www.youtube.com/playlist?list=PLxxxxxxxxxxxxxx
+EOF
+    echo -e "${GREEN}✓ Created sample channels.txt file${NC}"
+fi
+
+echo -e "${GREEN}"
+echo "================================="
+echo "Setup completed successfully! ✓"
+echo "================================="
+echo -e "${NC}"
+
+if [ "$USE_VPN" = "true" ]; then
+
+    echo "Configuration: yt-dlp WITH VPN"
+    echo "Files created/verified:"
+    echo "  • vpn-auth.txt (VPN credentials)"
+    echo "  • OpenVPN config: $VPN_OVPN_PATH"
+    echo "  • Download directory: $DOWNLOAD_DIR"
+    echo "  • yt-dlp config: ./yt-dlp/config/yt-dlp.conf"
+    echo ""
+    echo -e "${BLUE}You can now run: docker-compose --profile vpn up -d${NC}"
+    echo ""
+    echo "To use yt-dlp:"
+    echo "  • Single video: docker exec yt-dlp yt-dlp 'VIDEO_URL'"
+    echo "  • Batch download: Add URLs to ./yt-dlp/config/urls.txt"
+    echo "                   docker exec yt-dlp yt-dlp --batch-file /config/urls.txt"
+    echo "  • Check VPN IP: docker exec openvpn wget -qO- ifconfig.me"
+    echo "  • View logs: docker-compose logs -f"
+
+else
+    
+    echo "Configuration: yt-dlp WITHOUT VPN"
+    echo "Files created/verified:"
+    echo "  • Download directory: $DOWNLOAD_DIR"
+    echo "  • yt-dlp config: ./yt-dlp/config/yt-dlp.conf"
+    echo ""
+    echo -e "${BLUE}You can now run: docker-compose --profile no-vpn up -d${NC}"
+    echo ""
+    echo "To use yt-dlp:"
+    echo "  • Single video: docker exec yt-dlp yt-dlp 'VIDEO_URL'"
+    echo "  • Batch download: Add URLs to ./yt-dlp/config/urls.txt"
+    echo "                   docker exec yt-dlp yt-dlp --batch-file /config/urls.txt"
+    echo "  • View logs: docker-compose logs -f"
+    echo ""
+    echo -e "${YELLOW}WARNING: Running without VPN - your downloads are not protected!${NC}"
+fi

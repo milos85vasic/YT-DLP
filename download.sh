@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# Helper script to download videos easily
+
+set -e
+
+# Load .env file
+if [ -f .env ]; then
+    set -a
+    source .env
+    set +a
+fi
+
+# Check if URL is provided
+if [ $# -eq 0 ]; then
+    echo "Usage: ./download.sh <URL>"
+    echo "   or: ./download.sh --batch"
+    echo "   or: ./download.sh --channels"
+    exit 1
+fi
+
+# Determine which container to use
+CONTAINER_NAME="yt-dlp"
+
+if [ "$1" == "--batch" ]; then
+
+    echo "Downloading from urls.txt..."
+    docker exec $CONTAINER_NAME yt-dlp --batch-file /config/urls.txt
+    
+elif [ "$1" == "--channels" ]; then
+
+    echo "Downloading from subscribed channels..."
+    docker exec $CONTAINER_NAME yt-dlp --batch-file /config/channels.txt --dateafter now-7days
+else
+
+    echo "Downloading: $1"
+    docker exec $CONTAINER_NAME yt-dlp "$@"
+fi

@@ -1,0 +1,13 @@
+#!/bin/bash
+
+set -e
+
+if [ -f .env ]; then
+
+    set -a
+    source .env
+    set +a
+fi
+
+echo "Stopping all services..."
+docker-compose --profile vpn --profile no-vpn down

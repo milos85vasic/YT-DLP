@@ -1,0 +1,44 @@
+#!/bin/bash
+
+set -e
+
+# Load .env file
+if [ -f .env ]; then
+    
+    set -a
+    source .env
+    set +a
+fi
+
+./init
+
+if [ "$USE_VPN" = "true" ]; then
+
+    echo "Starting services with VPN..."
+    docker-compose --profile vpn up -d
+
+else
+    
+    echo "Starting services without VPN..."
+    docker-compose --profile no-vpn up -d
+fi
+
+echo ""
+echo "Services started successfully!"
+echo ""
+echo "Quick commands:"
+echo "  • Download single video:"
+echo "    docker exec yt-dlp yt-dlp 'https://www.youtube.com/watch?v=VIDEO_ID'"
+echo ""
+echo "  • Download from batch file:"
+echo "    docker exec yt-dlp yt-dlp --batch-file /config/urls.txt"
+echo ""
+echo "  • Check container logs:"
+echo "    docker-compose logs -f yt-dlp"
+echo ""
+
+if [ "$USE_VPN" = "true" ]; then
+    
+    echo "  • Check VPN connection:"
+    echo "    docker exec openvpn wget -qO- ifconfig.me"
+fi

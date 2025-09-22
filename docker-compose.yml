@@ -1,0 +1,80 @@
+services:
+  openvpn:
+    image: dperson/openvpn-client
+    container_name: openvpn
+    profiles:
+      - vpn
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    volumes:
+      - ${VPN_OVPN_PATH}:/vpn/credentials.ovpn:ro
+      - ./vpn-auth.txt:/vpn/vpn.auth:ro
+    ports:
+      - "3129:3129/tcp"
+      - "8080:8080/tcp"  # Changed from 5800 for yt-dlp web interface
+      - "8081:8081/tcp"  # Changed from 5900 for yt-dlp API
+    environment:
+      - TZ=Europe/Moscow
+    security_opt:
+      - label:disable
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "ping", "-c", "1", "8.8.8.8"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  yt-dlp-vpn:
+    image: thr3a/yt-dlp:latest
+    container_name: yt-dlp
+    profiles:
+      - vpn
+    depends_on:
+      openvpn:
+        condition: service_healthy
+    network_mode: "service:openvpn"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Moscow
+      - YTDL_OPTIONS=--config-location /config/yt-dlp.conf
+      - DOWNLOAD_DIR=/downloads
+      - CONFIG_DIR=/config
+      - AUTO_UPDATE=${AUTO_UPDATE:-true}
+      - CHECK_INTERVAL=${CHECK_INTERVAL:-3600}
+      - SERVICE_MODE=${SERVICE_MODE:-false}
+    volumes:
+      - ./yt-dlp/config:/config:rw
+      - ${DOWNLOAD_DIR}:/downloads:rw
+      - ./yt-dlp/cookies:/cookies:rw
+      - ./yt-dlp/archive:/archive:rw
+    restart: unless-stopped
+    command: ${YTDLP_COMMAND:-/bin/bash -c "while true; do sleep 3600; done"}
+
+  yt-dlp-direct:
+    image: thr3a/yt-dlp:latest
+    container_name: yt-dlp
+    profiles:
+      - no-vpn
+    ports:
+      - "8080:8080/tcp"
+      - "8081:8081/tcp"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Moscow
+      - YTDL_OPTIONS=--config-location /config/yt-dlp.conf
+      - DOWNLOAD_DIR=/downloads
+      - CONFIG_DIR=/config
+      - AUTO_UPDATE=${AUTO_UPDATE:-true}
+      - CHECK_INTERVAL=${CHECK_INTERVAL:-3600}
+      - SERVICE_MODE=${SERVICE_MODE:-false}
+    volumes:
+      - ./yt-dlp/config:/config:rw
+      - ${DOWNLOAD_DIR}:/downloads:rw
+      - ./yt-dlp/cookies:/cookies:rw
+      - ./yt-dlp/archive:/archive:rw
+    restart: unless-stopped
+    command: ${YTDLP_COMMAND:-/bin/bash -c "while true; do sleep 3600; done"}
