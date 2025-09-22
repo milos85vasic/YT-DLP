@@ -128,19 +128,19 @@ with flags provided:
 
 With this setup, we will have (with [jDownloader](https://github.com/milos85vasic/jDownloader) running in parallel):
 
-Port `8086` → YoutubeDL-Material Web Interface (yt-dlp)
-Port `8081` → YoutubeDL-Material API
-Port `3130` → yt-dlp VPN
-Port `8085` → qBittorrent (already in use)
-Port `5800` → JDownloader Web UI
-Port `5900` → JDownloader VNC
-Port `3129` → JDownloader VPN
+- Port `8086` → YoutubeDL-Material Web Interface (yt-dlp)
+- Port `8081` → YoutubeDL-Material API
+- Port `3130` → yt-dlp VPN
+- Port `8085` → qBittorrent (already in use)
+- Port `5800` → JDownloader Web UI
+- Port `5900` → JDownloader VNC
+- Port `3129` → JDownloader VPN
 
-Access URLs
+## Access URLs
 
-yt-dlp Web Interface: [http://amber.local:8086](http://amber.local:8086)
-JDownloader: [http://amber.local:5800](http://amber.local:5800)
-qBittorrent: [http://amber.local:8085](http://amber.local:8085)
+- yt-dlp Web Interface: [http://amber.local:8086](http://amber.local:8086)
+- JDownloader: [http://amber.local:5800](http://amber.local:5800)
+- qBittorrent: [http://amber.local:8085](http://amber.local:8085)
 
 This configuration allows both services to run simultaneously with their own VPN connections without any conflicts.
 
