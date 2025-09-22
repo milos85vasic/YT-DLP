@@ -1,6 +1,6 @@
 # YT-DLP
 
-Run YT-DLP inside the Docker container.
+Run YT-DLP inside the Docker container with the VPN support.
 
 ## How to Use
 
