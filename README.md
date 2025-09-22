@@ -80,6 +80,22 @@ Then, run the container:
 
     # Stop only yt-dlp (leaves JDownloader running)
     ./cleanup.sh ytdlp
+
+
+    # More:
+
+    # Direct download
+    docker exec yt-dlp yt-dlp "https://www.youtube.com/watch?v=VIDEO_ID"
+
+    # Batch download
+    echo "https://www.youtube.com/watch?v=VIDEO1" >> ./yt-dlp/config/urls.txt
+    docker exec yt-dlp /scripts/process-urls.sh
+
+    # Process subscribed channels
+    docker exec yt-dlp /scripts/process-channels.sh
+
+    # Enable service mode (automatic processing)
+    # Set SERVICE_MODE=true in .env and restart
     ```
 
 ### Download script
