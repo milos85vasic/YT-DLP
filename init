@@ -189,6 +189,25 @@ mkdir -p ./yt-dlp/config
 mkdir -p ./yt-dlp/cookies
 mkdir -p ./yt-dlp/archive
 
+# Create YoutubeDL-Material directories
+echo -e "${BLUE}Creating YoutubeDL-Material directories...${NC}"
+
+mkdir -p ./youtubedl-material/config
+
+# Create download subdirectories for better organization
+mkdir -p "${DOWNLOAD_DIR}/audio"
+mkdir -p "${DOWNLOAD_DIR}/video"
+mkdir -p "${DOWNLOAD_DIR}/subscriptions"
+
+echo -e "${GREEN}✓ Created YoutubeDL-Material directories${NC}"
+
+# Create scripts directory if it doesn't exist
+if [ ! -d ./scripts ]; then
+    echo -e "${BLUE}Creating scripts directory...${NC}"
+    mkdir -p ./scripts
+    echo -e "${GREEN}✓ Created scripts directory${NC}"
+fi
+
 # Create default yt-dlp config if not exists
 if [ ! -f ./yt-dlp/config/yt-dlp.conf ]; then
     echo -e "${BLUE}Creating default yt-dlp configuration...${NC}"
@@ -254,6 +273,46 @@ EOF
     echo -e "${GREEN}✓ Created sample channels.txt file${NC}"
 fi
 
+# Create a README for YoutubeDL-Material
+if [ ! -f ./youtubedl-material/README.md ]; then
+    cat > ./youtubedl-material/README.md << 'EOF'
+# YoutubeDL-Material Configuration
+
+This directory contains the configuration and database for YoutubeDL-Material web interface.
+
+## Access the Web UI
+
+Open your browser and go to: http://localhost:8086
+
+## Directory Structure
+
+- `config/` - Configuration files and database
+- `${DOWNLOAD_DIR}/audio/` - Audio-only downloads
+- `${DOWNLOAD_DIR}/video/` - Video downloads  
+- `${DOWNLOAD_DIR}/subscriptions/` - Subscription downloads
+
+## First Time Setup
+
+1. Open the web interface
+2. Go to Settings
+3. Configure your preferred download quality
+4. Add subscriptions if desired
+
+## Cookies
+
+To download private/age-restricted videos:
+1. Export cookies from your browser
+2. Save as `../yt-dlp/cookies/cookies.txt`
+3. Enable cookies in YoutubeDL-Material settings
+EOF
+    echo -e "${GREEN}✓ Created YoutubeDL-Material README${NC}"
+fi
+
+# Set proper permissions
+echo -e "${BLUE}Setting directory permissions...${NC}"
+chmod -R 755 ./yt-dlp ./youtubedl-material ./scripts 2>/dev/null || true
+chmod 600 ./vpn-auth.txt 2>/dev/null || true
+
 echo -e "${GREEN}"
 echo "================================="
 echo "Setup completed successfully! ✓"
@@ -268,14 +327,19 @@ if [ "$USE_VPN" = "true" ]; then
     echo "  • OpenVPN config: $VPN_OVPN_PATH"
     echo "  • Download directory: $DOWNLOAD_DIR"
     echo "  • yt-dlp config: ./yt-dlp/config/yt-dlp.conf"
+    echo "  • YoutubeDL-Material config: ./youtubedl-material/config/"
+    echo "  • Download subdirectories:"
+    echo "    - ${DOWNLOAD_DIR}/audio"
+    echo "    - ${DOWNLOAD_DIR}/video"
+    echo "    - ${DOWNLOAD_DIR}/subscriptions"
     echo ""
     echo -e "${BLUE}You can now run: docker-compose --profile vpn up -d${NC}"
     echo ""
-    echo "To use yt-dlp:"
-    echo "  • Single video: docker exec yt-dlp yt-dlp 'VIDEO_URL'"
+    echo "To access yt-dlp:"
+    echo "  • Web Interface: http://localhost:8086"
+    echo "  • Command Line: docker exec yt-dlp-cli yt-dlp 'VIDEO_URL'"
     echo "  • Batch download: Add URLs to ./yt-dlp/config/urls.txt"
-    echo "                   docker exec yt-dlp yt-dlp --batch-file /config/urls.txt"
-    echo "  • Check VPN IP: docker exec openvpn wget -qO- ifconfig.me"
+    echo "  • Check VPN IP: docker exec openvpn-yt-dlp wget -qO- ifconfig.me"
     echo "  • View logs: docker-compose logs -f"
 
 else
@@ -284,14 +348,26 @@ else
     echo "Files created/verified:"
     echo "  • Download directory: $DOWNLOAD_DIR"
     echo "  • yt-dlp config: ./yt-dlp/config/yt-dlp.conf"
+    echo "  • YoutubeDL-Material config: ./youtubedl-material/config/"
+    echo "  • Download subdirectories:"
+    echo "    - ${DOWNLOAD_DIR}/audio"
+    echo "    - ${DOWNLOAD_DIR}/video"
+    echo "    - ${DOWNLOAD_DIR}/subscriptions"
     echo ""
     echo -e "${BLUE}You can now run: docker-compose --profile no-vpn up -d${NC}"
     echo ""
-    echo "To use yt-dlp:"
-    echo "  • Single video: docker exec yt-dlp yt-dlp 'VIDEO_URL'"
-    echo "  • Batch download: Add URLs to ./yt-dlp/config/urls.txt"
-    echo "                   docker exec yt-dlp yt-dlp --batch-file /config/urls.txt"
+    echo "To access yt-dlp:"
+    echo "  • Web Interface: http://localhost:8086"
+    echo "  • Command Line: docker exec yt-dlp-cli yt-dlp 'VIDEO_URL'"
     echo "  • View logs: docker-compose logs -f"
     echo ""
     echo -e "${YELLOW}WARNING: Running without VPN - your downloads are not protected!${NC}"
 fi
+
+echo ""
+echo -e "${GREEN}✨ Pro tip: YoutubeDL-Material web interface provides:${NC}"
+echo "  • Download scheduling"
+echo "  • Channel subscriptions"
+echo "  • Format selection"
+echo "  • Download queue management"
+echo "  • Built-in video player"

@@ -15,6 +15,19 @@ AUTO_UPDATE=true
 SERVICE_MODE=false
 CHECK_INTERVAL=3600
 
+# Theme (dark or light)
+YTDL_THEME=dark
+
+# Rate limiting (0 = unlimited)
+RATE_LIMIT=0
+
+# Default download quality
+DEFAULT_QUALITY=1080
+
+# Enable/disable features
+YTDL_MULTI_USER_MODE=false
+YTDL_ALLOW_PLAYLIST_DOWNLOAD=true
+
 # Timezone
 TZ=Europe/Moscow
 
@@ -115,11 +128,20 @@ with flags provided:
 
 With this setup, we will have (with [jDownloader](https://github.com/milos85vasic/jDownloader) running in parallel):
 
-- Port `3129`: JDownloader's VPN (original)
-- Port `3130`: yt-dlp's VPN (new)
-- Port `5800`: JDownloader Web UI
-- Port `5900`: JDownloader VNC
-- Port `8080`: Reserved for future yt-dlp Web UI
-- Port `8081`: Reserved for future yt-dlp API
+Port `8086` → YoutubeDL-Material Web Interface (yt-dlp)
+Port `8081` → YoutubeDL-Material API
+Port `3130` → yt-dlp VPN
+Port `8085` → qBittorrent (already in use)
+Port `5800` → JDownloader Web UI
+Port `5900` → JDownloader VNC
+Port `3129` → JDownloader VPN
+
+Access URLs
+
+yt-dlp Web Interface: [http://amber.local:8086](http://amber.local:8086)
+JDownloader: [http://amber.local:5800](http://amber.local:5800)
+qBittorrent: [http://amber.local:8085](http://amber.local:8085)
 
 This configuration allows both services to run simultaneously with their own VPN connections without any conflicts.
+
+*Note*: The `amber.local` address represents imaginary machine in the network, update it according to your network configuration.
