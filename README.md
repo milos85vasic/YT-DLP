@@ -7,42 +7,16 @@ Run YT-DLP inside the Docker container with the VPN support.
 Create an .env file (optional but recommended) in the same directory as your docker-compose.yml:
 
 ```bash
-# Download Directory Path on Host
-DOWNLOAD_DIR=/mnt/DATA/Downloads
-
-# YT-DLP Options
-AUTO_UPDATE=true
-SERVICE_MODE=false
-CHECK_INTERVAL=3600
-
-# Theme (dark or light)
-YTDL_THEME=dark
-
-# Rate limiting (0 = unlimited)
-RATE_LIMIT=0
-
-# Default download quality
-DEFAULT_QUALITY=1080
-
-# Enable/disable features
-YTDL_MULTI_USER_MODE=false
-YTDL_ALLOW_PLAYLIST_DOWNLOAD=true
-
-# Timezone
-TZ=Europe/Moscow
-
-# OpenVPN Settings
-VPN_OVPN_PATH=/absolute/path/to/your/config.ovpn  # e.g., /home/username/vpn/config.ovpn
-
-# Make sure that you have this in it:
-# auth-user-pass /vpn/vpn.auth <-------------------------------------------------------- !!! 
-# ---------------------------------------------------------------------------------------
-
+USE_VPN=true
 VPN_USERNAME=your_vpn_username
 VPN_PASSWORD=your_vpn_password
+VPN_OVPN_PATH=/home/user/credentials.ovpn
+DOWNLOAD_DIR=/mnt/remote/YT-DLP/
 
-# Use VPN toggle
-USE_VPN=true
+# ============================================
+# OPTIONAL (You can add if you want)
+# ============================================
+TZ=Europe/Moscow
 ```
 
 Replace the placeholders with your actual values. This file should be kept secure and not shared.
@@ -92,8 +66,7 @@ Then, run the container:
     docker logs -f openvpn-yt-dlp
 
     # Stop only yt-dlp (leaves JDownloader running)
-    ./cleanup.sh ytdlp
-
+    ./cleanup ytdlp
 
     # More:
 
@@ -114,14 +87,14 @@ Then, run the container:
 ### Download script
 
 ```bash
-./download.sh 'https://www.youtube.com/watch?v=VIDEO_ID'
+./download 'https://www.youtube.com/watch?v=VIDEO_ID'
 ```
 
 with flags provided:
 
 ```bash
-./download.sh --batch-file /config/urls.txt
-./download.sh --channels /config/channels.txt
+./download --batch-file /config/urls.txt
+./download --channels /config/channels.txt
 ```
 
 ## Port Summary
