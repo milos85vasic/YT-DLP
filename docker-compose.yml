@@ -104,8 +104,7 @@ services:
      - "com.centurylinklabs.watchtower.enable=true"
   
   watchtower:
-    image: containrrr/watchtower:1.7.1
-    container_name: watchtower
+    image: containrrr/watchtower:latest
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
@@ -113,6 +112,7 @@ services:
       - WATCHTOWER_INCLUDE_RESTARTING=false
       - WATCHTOWER_NO_STARTUP_CHECK=true
       - WATCHTOWER_SCHEDULE=0 0 * * *  # Every 24 hours
+      - DOCKER_API_VERSION=1.44
     labels:
       - "com.centurylinklabs.watchtower.enable=false"
     restart: unless-stopped
