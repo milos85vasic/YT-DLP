@@ -78,7 +78,7 @@ services:
   # WITHOUT VPN version
   metube-direct:
     image: ghcr.io/alexta69/metube:latest
-    container_name: metube
+    container_name: metube-direct
     profiles:
       - no-vpn
     ports:
@@ -98,14 +98,17 @@ services:
       - ./metube/config:/config
       - ./yt-dlp/cookies:/cookies:ro
     restart: unless-stopped
-
-  watchtower:
-    image: containrrr/watchtower
-    container_name: watchtower
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      - WATCHTOWER_CLEANUP=true
-      - WATCHTOWER_INCLUDE_RESTARTING=false
-      - WATCHTOWER_SCHEDULE=0 0 4 * * *  # Daily at 4 AM
-    restart: unless-stopped
+ 
+  # watchtower:
+  #   image: containrrr/watchtower:1.7.1
+  #   container_name: watchtower
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #   environment:
+  #     - WATCHTOWER_CLEANUP=true
+  #     - WATCHTOWER_INCLUDE_RESTARTING=false
+  #     - WATCHTOWER_NO_STARTUP_CHECK=true
+  #     - WATCHTOWER_SCHEDULE=0 0 4 * * *  # Daily at 4 AM
+  #   labels:
+  #     - "com.centurylinklabs.watchtower.enable=false"
+  #   restart: unless-stopped
