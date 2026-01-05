@@ -2,6 +2,20 @@
 
 Run YT-DLP inside the Docker container with the VPN support.
 
+## Scripts Overview
+
+This repository includes several scripts to manage the yt-dlp Docker services:
+
+- `./init`: Initializes the environment, creates necessary directories and config files.
+- `./start`: Starts all services with VPN support.
+- `./start_no_vpn`: Starts services without VPN (direct connection).
+- `./stop`: Stops and removes all running services.
+- `./restart`: Restarts all services.
+- `./status`: Shows the status of all services.
+- `./cleanup`: Cleans up specific services or all.
+- `./download`: Downloads videos using yt-dlp with optional flags.
+- `./check-vpn`: Checks VPN connectivity.
+
 ## How to Use
 
 Create an .env file (optional but recommended) in the same directory as your docker-compose.yml:

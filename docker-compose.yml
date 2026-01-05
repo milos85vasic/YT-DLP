@@ -50,8 +50,10 @@ services:
       # Share cookies if needed
       - ./yt-dlp/cookies:/cookies:ro
     restart: unless-stopped
-
-  # Keep yt-dlp CLI for command-line usage
+    labels:
+     - "com.centurylinklabs.watchtower.enable=true"
+ 
+   # Keep yt-dlp CLI for command-line usage
   yt-dlp-cli:
     image: thr3a/yt-dlp:latest
     container_name: yt-dlp-cli
@@ -98,17 +100,19 @@ services:
       - ./metube/config:/config
       - ./yt-dlp/cookies:/cookies:ro
     restart: unless-stopped
- 
-  # watchtower:
-  #   image: containrrr/watchtower:1.7.1
-  #   container_name: watchtower
-  #   volumes:
-  #     - /var/run/docker.sock:/var/run/docker.sock
-  #   environment:
-  #     - WATCHTOWER_CLEANUP=true
-  #     - WATCHTOWER_INCLUDE_RESTARTING=false
-  #     - WATCHTOWER_NO_STARTUP_CHECK=true
-  #     - WATCHTOWER_SCHEDULE=0 0 4 * * *  # Daily at 4 AM
-  #   labels:
-  #     - "com.centurylinklabs.watchtower.enable=false"
-  #   restart: unless-stopped
+    labels:
+     - "com.centurylinklabs.watchtower.enable=true"
+  
+  watchtower:
+    image: containrrr/watchtower:1.7.1
+    container_name: watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_INCLUDE_RESTARTING=false
+      - WATCHTOWER_NO_STARTUP_CHECK=true
+      - WATCHTOWER_SCHEDULE=0 0 * * *  # Every 24 hours
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"
+    restart: unless-stopped
