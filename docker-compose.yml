@@ -98,7 +98,7 @@ services:
       - ./metube/config:/config
       - ./yt-dlp/cookies:/cookies:ro
     restart: unless-stopped
-  
+
   watchtower:
     image: containrrr/watchtower
     container_name: watchtower
@@ -106,6 +106,6 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - WATCHTOWER_CLEANUP=true
-      - WATCHTOWER_INCLUDE_RESTARTING=true
+      - WATCHTOWER_INCLUDE_RESTARTING=false
       - WATCHTOWER_SCHEDULE=0 0 4 * * *  # Daily at 4 AM
     restart: unless-stopped
