@@ -43,8 +43,11 @@ IMAGES=(
     "ghcr.io/alexta69/metube:latest"
     "th3a/yt-dlp:latest"
     "dperson/openvpn-client:latest"
-    "containrrr/watchtower:latest"
 )
+
+if [ "$CONTAINER_RUNTIME" = "docker" ]; then
+    IMAGES+=("containrrr/watchtower:latest")
+fi
 
 # =============================================================================
 # Update Images

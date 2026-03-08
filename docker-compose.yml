@@ -107,6 +107,9 @@ services:
   
   watchtower:
     image: containrrr/watchtower:latest
+    container_name: watchtower
+    profiles:
+      - docker
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:

@@ -71,8 +71,11 @@ echo -e "${BLUE}Stopping all services...${NC}"
 echo -e "Runtime: ${CONTAINER_RUNTIME}"
 echo ""
 
-# Stop both vpn and no-vpn profiles
-$COMPOSE_CMD --profile vpn --profile no-vpn down
+if [ "$CONTAINER_RUNTIME" = "docker" ]; then
+    $COMPOSE_CMD --profile vpn --profile no-vpn --profile docker down
+else
+    $COMPOSE_CMD --profile vpn --profile no-vpn down
+fi
 
 echo ""
 echo -e "${GREEN}All services stopped.${NC}"

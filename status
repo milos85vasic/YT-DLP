@@ -70,6 +70,7 @@ declare -A containers=(
     ["yt-dlp-cli"]="yt-dlp CLI"
     ["metube"]="Metube (with VPN)"
     ["metube-direct"]="Metube (no VPN)"
+    ["watchtower"]="Watchtower (Docker only)"
 )
 
 for container in "${!containers[@]}"; do

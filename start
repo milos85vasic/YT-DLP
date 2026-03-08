@@ -104,12 +104,20 @@ if [ "$USE_VPN" = "true" ]; then
     echo -e "${CYAN}Starting services WITH VPN...${NC}"
     echo -e "Runtime: ${CONTAINER_RUNTIME}"
     echo ""
-    $COMPOSE_CMD --profile vpn up -d
+    if [ "$CONTAINER_RUNTIME" = "docker" ]; then
+        $COMPOSE_CMD --profile vpn --profile docker up -d
+    else
+        $COMPOSE_CMD --profile vpn up -d
+    fi
 else
     echo -e "${CYAN}Starting services WITHOUT VPN...${NC}"
     echo -e "Runtime: ${CONTAINER_RUNTIME}"
     echo ""
-    $COMPOSE_CMD --profile no-vpn up -d
+    if [ "$CONTAINER_RUNTIME" = "docker" ]; then
+        $COMPOSE_CMD --profile no-vpn --profile docker up -d
+    else
+        $COMPOSE_CMD --profile no-vpn up -d
+    fi
 fi
 
 echo ""

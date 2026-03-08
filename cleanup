@@ -68,11 +68,15 @@ echo ""
 # Check what to clean
 if [ "$1" == "all" ]; then
     echo -e "${YELLOW}Cleaning up ALL containers (JDownloader and yt-dlp)...${NC}"
-    $COMPOSE_CMD --profile vpn --profile no-vpn down --remove-orphans
+    if [ "$CONTAINER_RUNTIME" = "docker" ]; then
+        $COMPOSE_CMD --profile vpn --profile no-vpn --profile docker down --remove-orphans
+    else
+        $COMPOSE_CMD --profile vpn --profile no-vpn down --remove-orphans
+    fi
     echo -e "${GREEN}✓ All containers removed${NC}"
 elif [ "$1" == "ytdlp" ]; then
     echo -e "${YELLOW}Cleaning up only yt-dlp containers...${NC}"
-    CONTAINERS_TO_REMOVE=("openvpn-yt-dlp" "yt-dlp-cli" "metube" "metube-direct")
+    CONTAINERS_TO_REMOVE=("openvpn-yt-dlp" "yt-dlp-cli" "metube" "metube-direct" "watchtower")
     
     for container in "${CONTAINERS_TO_REMOVE[@]}"; do
         if $CONTAINER_RUNTIME ps -a --format "table {{.Names}}" | grep -q "^${container}$"; then

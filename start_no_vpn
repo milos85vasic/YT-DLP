@@ -95,7 +95,11 @@ echo -e "${YELLOW}Starting services WITHOUT VPN...${NC}"
 echo -e "Runtime: ${CONTAINER_RUNTIME}"
 echo ""
 
-$COMPOSE_CMD --profile no-vpn up -d
+if [ "$CONTAINER_RUNTIME" = "docker" ]; then
+    $COMPOSE_CMD --profile no-vpn --profile docker up -d
+else
+    $COMPOSE_CMD --profile no-vpn up -d
+fi
 
 echo ""
 echo -e "${GREEN}============================================${NC}"
