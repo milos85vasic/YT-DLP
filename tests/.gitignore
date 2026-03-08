@@ -1,0 +1,5 @@
+# Test artifacts
+logs/*.log
+results/
+config/
+

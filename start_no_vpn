@@ -78,6 +78,18 @@ echo ""
 
 "$SCRIPT_DIR/init"
 
+# =============================================================================
+# Update Images
+# =============================================================================
+
+echo ""
+echo -e "${BLUE}============================================${NC}"
+echo -e "${BLUE}       Updating Container Images${NC}"
+echo -e "${BLUE}============================================${NC}"
+echo ""
+
+"$SCRIPT_DIR/update-images"
+
 echo ""
 echo -e "${YELLOW}Starting services WITHOUT VPN...${NC}"
 echo -e "Runtime: ${CONTAINER_RUNTIME}"

@@ -75,4 +75,4 @@ echo ""
 $COMPOSE_CMD --profile vpn --profile no-vpn down
 
 echo ""
-echo -e "${GREEN}All services stopped.${NC}
+echo -e "${GREEN}All services stopped.${NC}"

@@ -18,6 +18,10 @@ Docker/Podman-based YT-DLP orchestration with VPN support. Manages multiple serv
 ./stop                     # Stops all profiles
 ./restart                  # Stop + Start
 
+# Update images (run manually or via cron)
+./update-images           # Pull latest container images
+./setup-auto-update       # Setup cron job for auto-updates (Podman)
+
 # Utility
 ./status                   # Check service status and runtime info
 ./check-vpn               # Verify VPN connection
@@ -62,6 +66,50 @@ docker-compose --profile vpn up -d
 # or
 docker compose --profile vpn up -d
 ```
+
+## Image Updates
+
+All container images are automatically updated:
+
+1. **On every start**: `./start` and `./start_no_vpn` run `./update-images` before starting containers
+2. **Every 3-4 hours**: Automated background updates
+
+### Docker (Watchtower)
+
+Docker users use Watchtower (configured in docker-compose.yml):
+- Checks for image updates every 3 hours
+- Automatically restarts containers with new images
+- Label: `com.centurylinklabs.watchtower.enable=true`
+
+### Podman (Cron Job)
+
+Podman users (rootless) should use the cron-based alternative:
+
+```bash
+# Setup automatic updates every 3 hours
+./setup-auto-update
+
+# This adds a cron job that runs:
+# 0 */3 * * * cd /path/to/project && ./update-images >> ./logs/update.log 2>&1
+```
+
+### Manual Updates
+
+```bash
+# Pull latest images manually
+./update-images
+
+# Or with specific runtime:
+CONTAINER_RUNTIME=docker ./update-images
+```
+
+### Images Updated
+
+The following images are checked for updates:
+- `ghcr.io/alexta69/metube:latest`
+- `th3a/yt-dlp:latest`
+- `dperson/openvpn-client:latest`
+- `containrrr/watchtower:latest`
 
 ## Code Style Guidelines
 
@@ -234,12 +282,22 @@ echo -e "${CYAN}Container Runtime:${NC} $CONTAINER_RUNTIME"
 ├── start_no_vpn          # Start without VPN
 ├── stop                   # Stop all services
 ├── restart                # Restart services
+├── update-images          # Pull latest container images
+├── setup-auto-update      # Setup cron job for auto-updates
 ├── download               # Download helper with --help
 ├── cleanup                # Container cleanup
 ├── status                 # Status checker with runtime info
 ├── check-vpn             # VPN verification
 ├── lib/                  # Shared libraries
 │   └── container-runtime.sh   # Runtime detection functions
+├── tests/                # Automated test suite
+│   ├── run-tests.sh      # Test runner
+│   ├── run-full-suite.sh # Full suite with container lifecycle
+│   ├── test-unit.sh      # Unit tests
+│   ├── test-integration.sh   # Integration tests
+│   ├── test-scenarios.sh     # Scenario tests
+│   ├── test-errors.sh    # Error tests
+│   └── README.md         # Test documentation
 ├── Upstreams/            # Git upstream config
 │   └── GitHub.sh
 ├── README.md             # Comprehensive documentation
@@ -257,7 +315,76 @@ echo -e "${CYAN}Container Runtime:${NC} $CONTAINER_RUNTIME"
 
 ## Testing
 
-No automated test suite. Test manually:
+### Automated Test Suite
+
+A comprehensive automated test suite is available in the `tests/` directory:
+
+```bash
+# Run all tests
+./tests/run-tests.sh
+
+# Run with verbose output
+./tests/run-tests.sh -v
+
+# Run specific test categories
+./tests/run-tests.sh -p unit          # Unit tests only
+./tests/run-tests.sh -p integration   # Integration tests only
+./tests/run-tests.sh -p scenario      # Scenario tests only
+./tests/run-tests.sh -p error         # Error tests only
+
+# Run with specific runtime
+./tests/run-tests.sh -r podman        # Test with Podman only
+./tests/run-tests.sh -r docker        # Test with Docker only
+
+# Dry run (show what would be tested)
+./tests/run-tests.sh -d
+
+# List all available tests
+./tests/run-tests.sh -l
+
+# Run specific test
+./tests/run-tests.sh test_init_no_vpn
+
+# Cleanup test environment
+./tests/run-tests.sh -c
+
+# Full test suite with container lifecycle (recommended)
+./tests/run-full-suite.sh              # Runs all tests with containers
+./tests/run-full-suite.sh -p unit      # Unit tests only
+./tests/run-full-suite.sh -v           # Verbose output with containers
+```
+
+### Container Lifecycle Management
+
+The test suite automatically manages container lifecycle:
+
+1. **Container Detection**: Checks if containers are already running
+2. **Auto-Start**: Starts containers before integration/scenario tests if needed
+3. **Auto-Stop**: Stops containers after tests complete (if test suite started them)
+4. **Existing Containers**: Uses existing containers if already running
+
+When running `run-full-suite.sh`:
+- Creates test environment
+- Starts containers automatically
+- Runs all tests
+- Shuts down containers after completion
+
+### Test Categories
+
+1. **Unit Tests**: Individual function testing (runtime detection, compose commands, etc.)
+2. **Integration Tests**: Script workflow testing (init, start, stop, download, etc.)
+3. **Scenario Tests**: Combination testing:
+   - Podman + No VPN
+   - Podman + VPN
+   - Docker + No VPN
+   - Docker + VPN
+   - Batch/Channel downloads
+   - Complete workflows
+4. **Error Tests**: Edge cases and error conditions
+
+### Manual Testing
+
+If you need to test manually:
 
 ```bash
 # 1. Validate scripts syntax

@@ -1,0 +1,72 @@
+#!/bin/bash
+#
+# Update container images to latest versions
+# Supports both Podman and Docker
+# Run this before starting containers to ensure latest images
+#
+
+set -e
+
+# Colors
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+# =============================================================================
+# Container Runtime Detection
+# =============================================================================
+
+detect_container_runtime() {
+    if command -v podman &> /dev/null; then
+        echo "podman"
+    elif command -v docker &> /dev/null; then
+        echo "docker"
+    else
+        echo "none"
+    fi
+}
+
+CONTAINER_RUNTIME=$(detect_container_runtime)
+
+if [ "$CONTAINER_RUNTIME" = "none" ]; then
+    echo -e "${RED}ERROR: No container runtime found!${NC}"
+    exit 1
+fi
+
+# =============================================================================
+# Images to Update
+# =============================================================================
+
+IMAGES=(
+    "ghcr.io/alexta69/metube:latest"
+    "th3a/yt-dlp:latest"
+    "dperson/openvpn-client:latest"
+    "containrrr/watchtower:latest"
+)
+
+# =============================================================================
+# Update Images
+# =============================================================================
+
+echo -e "${BLUE}============================================${NC}"
+echo -e "${BLUE}      Updating Container Images${NC}"
+echo -e "${BLUE}============================================${NC}"
+echo ""
+echo -e "${CYAN}Container Runtime:${NC} $CONTAINER_RUNTIME"
+echo ""
+
+for image in "${IMAGES[@]}"; do
+    echo -e "${BLUE}Pulling:${NC} $image"
+    if $CONTAINER_RUNTIME pull "$image" >/dev/null 2>&1; then
+        echo -e "${GREEN}✓${NC} Updated: $image"
+    else
+        echo -e "${YELLOW}⚠${NC} Failed to update: $image (may be using cached version)"
+    fi
+done
+
+echo ""
+echo -e "${GREEN}============================================${NC}"
+echo -e "${GREEN}   Image update check completed!${NC}"
+echo -e "${GREEN}============================================${NC}"

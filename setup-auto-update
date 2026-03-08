@@ -1,0 +1,102 @@
+#!/bin/bash
+#
+# Setup automatic image updates via cron for Podman users
+# Docker users can use Watchtower (already configured)
+# This provides an alternative for Podman rootless setups
+#
+
+set -e
+
+# Colors
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+# Script directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$SCRIPT_DIR"
+
+# =============================================================================
+# Main
+# =============================================================================
+
+echo -e "${BLUE}============================================${NC}"
+echo -e "${BLUE}   Auto-Update Setup for Podman${NC}"
+echo -e "${BLUE}============================================${NC}"
+echo ""
+
+echo -e "${CYAN}This script sets up automatic image updates every 3 hours${NC}"
+echo -e "${CYAN}via cron job for Podman users.${NC}"
+echo ""
+
+# Check if Podman is being used
+if ! command -v podman &> /dev/null; then
+    echo -e "${YELLOW}Podman not found. Docker users should use Watchtower${NC}"
+    echo -e "${YELLOW}which is already configured in docker-compose.yml${NC}"
+    echo ""
+    echo "Watchtower is set to check for updates every 3 hours."
+    exit 0
+fi
+
+# Detect user's crontab
+if ! command -v crontab &> /dev/null; then
+    echo -e "${YELLOW}crontab not found. Please install cron.${NC}"
+    echo ""
+    echo "Alternative: Run './update-images' manually every few hours"
+    echo "Or set up a systemd timer (see docs)"
+    exit 1
+fi
+
+# Create the cron job command
+CRON_JOB="0 */3 * * * cd $PROJECT_DIR && ./update-images >> ./logs/update.log 2>&1"
+
+echo -e "${BLUE}The following cron job will be added:${NC}"
+echo "  $CRON_JOB"
+echo ""
+
+read -p "Add this cron job? (y/n): " -n 1 -r
+echo
+
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    # Create logs directory
+    mkdir -p "$PROJECT_DIR/logs"
+    
+    # Check if cron job already exists
+    if crontab -l 2>/dev/null | grep -q "update-images"; then
+        echo -e "${YELLOW}Cron job already exists. Updating...${NC}"
+        # Remove old entry and add new one
+        (crontab -l 2>/dev/null | grep -v "update-images"; echo "$CRON_JOB") | crontab -
+    else
+        # Add new cron job
+        (crontab -l 2>/dev/null; echo "$CRON_JOB") | crontab -
+    fi
+    
+    echo -e "${GREEN}✓${NC} Cron job added successfully"
+    echo ""
+    echo -e "${BLUE}Current crontab:${NC}"
+    crontab -l | grep "update-images"
+    echo ""
+    echo -e "${CYAN}Updates will run every 3 hours.${NC}"
+    echo -e "${CYAN}Logs will be saved to: ./logs/update.log${NC}"
+else
+    echo -e "${YELLOW}Setup cancelled.${NC}"
+    echo ""
+    echo "You can manually add the cron job:"
+    echo "  crontab -e"
+    echo ""
+    echo "And add this line:"
+    echo "  $CRON_JOB"
+fi
+
+echo ""
+echo -e "${GREEN}============================================${NC}"
+echo -e "${GREEN}          Setup Complete${NC}"
+echo -e "${GREEN}============================================${NC}"
+echo ""
+echo "To verify or modify:"
+echo "  crontab -e"
+echo ""
+echo "To remove automatic updates:"
+echo "  crontab -l | grep -v 'update-images' | crontab -"
