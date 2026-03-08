@@ -1,38 +1,134 @@
 #!/bin/bash
-
-# Helper script to download videos easily
+#
+# Download helper script for YT-DLP
+# Supports both Podman and Docker
+#
 
 set -e
 
-# Load .env file
+# Colors
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+# =============================================================================
+# Container Runtime Detection
+# =============================================================================
+
+detect_container_runtime() {
+    if command -v podman &> /dev/null; then
+        echo "podman"
+    elif command -v docker &> /dev/null; then
+        echo "docker"
+    else
+        echo "none"
+    fi
+}
+
+CONTAINER_RUNTIME=$(detect_container_runtime)
+
+if [ "$CONTAINER_RUNTIME" = "none" ]; then
+    echo -e "${RED}ERROR: No container runtime found!${NC}"
+    exit 1
+fi
+
+# =============================================================================
+# Load Environment
+# =============================================================================
+
 if [ -f .env ]; then
     set -a
     source .env
     set +a
 fi
 
-# Check if URL is provided
+# =============================================================================
+# Show Help
+# =============================================================================
+
+show_help() {
+    echo -e "${BLUE}YT-DLP Download Helper${NC}"
+    echo ""
+    echo "Usage:"
+    echo "  ./download <URL>              Download a single video"
+    echo "  ./download --batch           Download from ./yt-dlp/config/urls.txt"
+    echo "  ./download --channels        Download from subscribed channels"
+    echo "  ./download --help            Show this help message"
+    echo ""
+    echo "Examples:"
+    echo "  ./download 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'"
+    echo "  ./download --batch"
+    echo "  ./download --channels"
+    echo ""
+    echo -e "${CYAN}Container Runtime:${NC} $CONTAINER_RUNTIME"
+    echo ""
+    echo "For advanced usage, run yt-dlp directly:"
+    echo "  $CONTAINER_RUNTIME exec yt-dlp-cli yt-dlp [OPTIONS] <URL>"
+}
+
+# =============================================================================
+# Main Logic
+# =============================================================================
+
 if [ $# -eq 0 ]; then
-    echo "Usage: ./download <URL>"
-    echo "   or: ./download --batch"
-    echo "   or: ./download --channels"
+    show_help
     exit 1
 fi
 
 # Determine which container to use
-CONTAINER_NAME="yt-dlp"
+CONTAINER_NAME="yt-dlp-cli"
 
-if [ "$1" == "--batch" ]; then
-
-    echo "Downloading from urls.txt..."
-    docker exec $CONTAINER_NAME yt-dlp --batch-file /config/urls.txt
-    
-elif [ "$1" == "--channels" ]; then
-
-    echo "Downloading from subscribed channels..."
-    docker exec $CONTAINER_NAME yt-dlp --batch-file /config/channels.txt --dateafter now-7days
-else
-
-    echo "Downloading: $1"
-    docker exec $CONTAINER_NAME yt-dlp "$@"
+# Check if container is running
+if ! $CONTAINER_RUNTIME ps --format "table {{.Names}}" | grep -q "^${CONTAINER_NAME}$"; then
+    echo -e "${YELLOW}WARNING: Container '$CONTAINER_NAME' is not running.${NC}"
+    echo "Please start the services first with: ./start"
+    exit 1
 fi
+
+case "$1" in
+    --help|-h)
+        show_help
+        exit 0
+        ;;
+    --batch)
+        echo -e "${BLUE}Downloading from urls.txt...${NC}"
+        if [ -f ./yt-dlp/config/urls.txt ]; then
+            $CONTAINER_RUNTIME exec $CONTAINER_NAME yt-dlp --batch-file /config/urls.txt
+        else
+            echo -e "${YELLOW}urls.txt not found. Creating template...${NC}"
+            cat > ./yt-dlp/config/urls.txt << 'EOF'
+# Add video URLs here, one per line
+# Example:
+# https://www.youtube.com/watch?v=VIDEO_ID
+# https://www.youtube.com/playlist?list=PLAYLIST_ID
+EOF
+            echo -e "${GREEN}✓${NC} Created urls.txt at ./yt-dlp/config/urls.txt"
+            echo "Please add URLs to the file and run again."
+        fi
+        ;;
+    --channels)
+        echo -e "${BLUE}Downloading from subscribed channels...${NC}"
+        if [ -f ./yt-dlp/config/channels.txt ]; then
+            $CONTAINER_RUNTIME exec $CONTAINER_NAME yt-dlp --batch-file /config/channels.txt --dateafter now-7days
+        else
+            echo -e "${YELLOW}channels.txt not found. Creating template...${NC}"
+            cat > ./yt-dlp/config/channels.txt << 'EOF'
+# Add channel URLs here, one per line
+# Example:
+# https://www.youtube.com/c/ChannelName
+# https://www.youtube.com/@ChannelHandle
+# https://www.youtube.com/channel/CHANNEL_ID
+EOF
+            echo -e "${GREEN}✓${NC} Created channels.txt at ./yt-dlp/config/channels.txt"
+            echo "Please add channel URLs to the file and run again."
+        fi
+        ;;
+    *)
+        URL="$1"
+        echo -e "${BLUE}Downloading:${NC} $URL"
+        shift
+        $CONTAINER_RUNTIME exec $CONTAINER_NAME yt-dlp "$@" "$URL"
+        ;;
+esac

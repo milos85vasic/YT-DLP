@@ -1,21 +1,216 @@
+# =============================================================================
+# YT-DLP Docker/Podman Project - Git Ignore File
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Environment and Secrets
+# -----------------------------------------------------------------------------
 .env
+.env.local
+.env.*.local
 *.env
-jdownloader2
+!.env.example
+
+# VPN authentication files
+vpn-auth.txt
+*.auth
+*.key
+*.pem
+*.crt
+
+# SSH keys and certificates
+*.pub
+id_rsa
+id_ed25519
+
+# -----------------------------------------------------------------------------
+# Application Data and Configurations
+# -----------------------------------------------------------------------------
+
+# yt-dlp runtime data
+yt-dlp/
+!yt-dlp/.gitkeep
+yt-dlp/config/*
+!yt-dlp/config/.gitkeep
+yt-dlp/cookies/*
+!yt-dlp/cookies/.gitkeep
+yt-dlp/archive/*
+!yt-dlp/archive/.gitkeep
+
+# Metube runtime data
+metube/
+!metube/.gitkeep
+metube/config/*
+!metube/config/.gitkeep
+
+# JDownloader (if used alongside)
+jdownloader2/
 jdownloader2/*
 jdownloader2/*.*
-gluetun
+
+# gluetun VPN client
+gluetun/
 gluetun/*
 gluetun/*.*
-vpn-auth.txt
 
-youtubedl-material
+# YoutubeDL-Material (legacy)
+youtubedl-material/
 youtubedl-material/*
 youtubedl-material/*.*
 
-yt-dlp
-yt-dlp/*
-yt-dlp/*.*
+# -----------------------------------------------------------------------------
+# Downloads (user content - never commit)
+# -----------------------------------------------------------------------------
+downloads/
+/Downloads/
+*.mp4
+*.mkv
+*.webm
+*.mp3
+*.m4a
+*.opus
+*.part
+*.ytdl
 
-metube
-metube/*
-metube/*.*
+# -----------------------------------------------------------------------------
+# Container Runtime Files
+# -----------------------------------------------------------------------------
+
+# Podman
+.podman/
+*.container
+*.pod
+
+# Docker
+.docker/
+.dockerignore
+
+# Build artifacts
+build/
+dist/
+
+# -----------------------------------------------------------------------------
+# Editor and IDE
+# -----------------------------------------------------------------------------
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# IntelliJ IDEA / PyCharm
+.idea/
+*.iml
+*.iws
+out/
+
+# Vim
+*.swp
+*.swo
+*~
+.swp
+.swo
+
+# Emacs
+*~
+#*#
+.#*
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# -----------------------------------------------------------------------------
+# OS Generated Files
+# -----------------------------------------------------------------------------
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux
+*~
+.nfs*
+.directory
+.Trash-*
+
+# -----------------------------------------------------------------------------
+# Logs and Databases
+# -----------------------------------------------------------------------------
+*.log
+*.logs
+logs/
+log/
+*.sql
+*.sqlite
+*.sqlite3
+*.db
+
+# -----------------------------------------------------------------------------
+# Temporary Files
+# -----------------------------------------------------------------------------
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+*.backup
+*.old
+*.orig
+*.save
+*.pid
+*.seed
+*.pid.lock
+
+# -----------------------------------------------------------------------------
+# Archives
+# -----------------------------------------------------------------------------
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+*.bz2
+*.xz
+
+# -----------------------------------------------------------------------------
+# Documentation Build Artifacts
+# -----------------------------------------------------------------------------
+docs/_build/
+site/
+
+# -----------------------------------------------------------------------------
+# Testing
+# -----------------------------------------------------------------------------
+.coverage
+.pytest_cache/
+__pycache__/
+*.py[cod]
+*$py.class
+.tox/
+.nox/
+*.egg-info/
+dist/
+
+# -----------------------------------------------------------------------------
+# Backup Files
+# -----------------------------------------------------------------------------
+*.backup
+*.bak
+*~
+.bak/
+backup/
+backups/

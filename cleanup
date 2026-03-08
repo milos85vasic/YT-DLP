@@ -1,67 +1,110 @@
 #!/bin/bash
-
-# cleanup - Clean up containers
+#
+# Cleanup script for YT-DLP containers
+# Supports both Podman and Docker
+#
 
 set -e
 
+# Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+CYAN='\033[0;36m'
 NC='\033[0m'
 
-echo -e "${BLUE}=== Cleanup Script ===${NC}"
+# =============================================================================
+# Container Runtime Detection
+# =============================================================================
+
+detect_container_runtime() {
+    if command -v podman &> /dev/null; then
+        echo "podman"
+    elif command -v docker &> /dev/null; then
+        echo "docker"
+    else
+        echo "none"
+    fi
+}
+
+get_compose_cmd() {
+    local runtime="$1"
+    if [ "$runtime" = "podman" ]; then
+        if command -v podman-compose &> /dev/null; then
+            echo "podman-compose"
+        else
+            echo "podman compose"
+        fi
+    else
+        if command -v docker-compose &> /dev/null; then
+            echo "docker-compose"
+        else
+            echo "docker compose"
+        fi
+    fi
+}
+
+CONTAINER_RUNTIME=$(detect_container_runtime)
+
+if [ "$CONTAINER_RUNTIME" = "none" ]; then
+    echo -e "${YELLOW}WARNING: No container runtime found!${NC}"
+    exit 1
+fi
+
+COMPOSE_CMD=$(get_compose_cmd "$CONTAINER_RUNTIME")
+
+# =============================================================================
+# Main
+# =============================================================================
+
+echo -e "${BLUE}============================================${NC}"
+echo -e "${BLUE}           Cleanup Script${NC}"
+echo -e "${BLUE}============================================${NC}"
+echo ""
+echo -e "${CYAN}Container Runtime:${NC} $CONTAINER_RUNTIME"
 echo ""
 
 # Check what to clean
 if [ "$1" == "all" ]; then
-    CONTAINERS_TO_REMOVE=("openvpn" "jdownloader2" "openvpn-yt-dlp" "yt-dlp")
-    echo "Cleaning up ALL containers (JDownloader and yt-dlp)..."
+    echo -e "${YELLOW}Cleaning up ALL containers (JDownloader and yt-dlp)...${NC}"
+    $COMPOSE_CMD --profile vpn --profile no-vpn down --remove-orphans
+    echo -e "${GREEN}✓ All containers removed${NC}"
 elif [ "$1" == "ytdlp" ]; then
-    CONTAINERS_TO_REMOVE=("openvpn-yt-dlp" "yt-dlp")
-    echo "Cleaning up only yt-dlp containers..."
+    echo -e "${YELLOW}Cleaning up only yt-dlp containers...${NC}"
+    CONTAINERS_TO_REMOVE=("openvpn-yt-dlp" "yt-dlp-cli" "metube" "metube-direct")
+    
+    for container in "${CONTAINERS_TO_REMOVE[@]}"; do
+        if $CONTAINER_RUNTIME ps -a --format "table {{.Names}}" | grep -q "^${container}$"; then
+            echo -e "  Stopping and removing: $container"
+            $CONTAINER_RUNTIME stop $container 2>/dev/null || true
+            $CONTAINER_RUNTIME rm $container 2>/dev/null || true
+        fi
+    done
+    echo -e "${GREEN}✓ yt-dlp containers removed${NC}"
+    
 elif [ "$1" == "jdownloader" ]; then
+    echo -e "${YELLOW}Cleaning up only JDownloader containers...${NC}"
     CONTAINERS_TO_REMOVE=("openvpn" "jdownloader2")
-    echo "Cleaning up only JDownloader containers..."
+    
+    for container in "${CONTAINERS_TO_REMOVE[@]}"; do
+        if $CONTAINER_RUNTIME ps -a --format "table {{.Names}}" | grep -q "^${container}$"; then
+            echo -e "  Stopping and removing: $container"
+            $CONTAINER_RUNTIME stop $container 2>/dev/null || true
+            $CONTAINER_RUNTIME rm $container 2>/dev/null || true
+        fi
+    done
+    echo -e "${GREEN}✓ JDownloader containers removed${NC}"
+    
 else
     echo "Usage: ./cleanup [all|ytdlp|jdownloader]"
     echo ""
     echo "Options:"
-    echo "  all         - Remove all containers"
+    echo "  all         - Remove all containers and networks"
     echo "  ytdlp       - Remove only yt-dlp containers"
     echo "  jdownloader - Remove only JDownloader containers"
+    echo ""
     exit 1
-fi
-
-echo ""
-
-# Remove specified containers
-for container in "${CONTAINERS_TO_REMOVE[@]}"; do
-    if docker ps -a --format "table {{.Names}}" | grep -q "^${container}$"; then
-        echo -e "${YELLOW}Found container: $container${NC}"
-        
-        # Stop the container if running
-        if docker ps --format "table {{.Names}}" | grep -q "^${container}$"; then
-            echo -e "  Stopping $container..."
-            docker stop $container
-        fi
-        
-        # Remove the container
-        echo -e "  Removing $container..."
-        docker rm $container
-        echo -e "${GREEN}  ✓ Removed $container${NC}"
-    fi
-done
-
-# Clean up networks
-echo ""
-echo -e "${BLUE}Cleaning up networks...${NC}"
-
-if [ "$1" == "all" ] || [ "$1" == "ytdlp" ]; then
-    if docker network ls | grep -q "yt-dlp_default"; then
-        echo -e "${YELLOW}Removing yt-dlp network...${NC}"
-        docker network rm yt-dlp_default 2>/dev/null || true
-    fi
 fi
 
 echo ""

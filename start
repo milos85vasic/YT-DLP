@@ -1,44 +1,132 @@
 #!/bin/bash
+#
+# Start YT-DLP services with automatic container runtime detection
+# Supports both Podman and Docker (prefers Podman)
+#
 
 set -e
 
-# Load .env file
+# Colors
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+# Script directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# =============================================================================
+# Container Runtime Detection
+# =============================================================================
+
+detect_container_runtime() {
+    if command -v podman &> /dev/null; then
+        echo "podman"
+    elif command -v docker &> /dev/null; then
+        echo "docker"
+    else
+        echo "none"
+    fi
+}
+
+get_compose_cmd() {
+    local runtime="$1"
+    if [ "$runtime" = "podman" ]; then
+        if command -v podman-compose &> /dev/null; then
+            echo "podman-compose"
+        else
+            echo "podman compose"
+        fi
+    else
+        if command -v docker-compose &> /dev/null; then
+            echo "docker-compose"
+        else
+            echo "docker compose"
+        fi
+    fi
+}
+
+CONTAINER_RUNTIME=$(detect_container_runtime)
+
+if [ "$CONTAINER_RUNTIME" = "none" ]; then
+    echo -e "${RED}ERROR: No container runtime found!${NC}"
+    echo "Please install Podman or Docker."
+    exit 1
+fi
+
+COMPOSE_CMD=$(get_compose_cmd "$CONTAINER_RUNTIME")
+
+# =============================================================================
+# Load Environment
+# =============================================================================
+
 if [ -f .env ]; then
-    
     set -a
     source .env
     set +a
 fi
 
-./init
+# =============================================================================
+# Initialize Environment
+# =============================================================================
+
+echo -e "${BLUE}============================================${NC}"
+echo -e "${BLUE}       Initializing Environment${NC}"
+echo -e "${BLUE}============================================${NC}"
+echo ""
+
+"$SCRIPT_DIR/init"
+
+echo ""
+echo -e "${BLUE}============================================${NC}"
+echo -e "${BLUE}       Starting Services${NC}"
+echo -e "${BLUE}============================================${NC}"
+echo ""
+
+# =============================================================================
+# Start Services
+# =============================================================================
 
 if [ "$USE_VPN" = "true" ]; then
-
-    echo "Starting services with VPN..."
-    docker-compose --profile vpn up -d
-
+    echo -e "${CYAN}Starting services WITH VPN...${NC}"
+    echo -e "Runtime: ${CONTAINER_RUNTIME}"
+    echo ""
+    $COMPOSE_CMD --profile vpn up -d
 else
-    
-    echo "Starting services without VPN..."
-    docker-compose --profile no-vpn up -d
+    echo -e "${CYAN}Starting services WITHOUT VPN...${NC}"
+    echo -e "Runtime: ${CONTAINER_RUNTIME}"
+    echo ""
+    $COMPOSE_CMD --profile no-vpn up -d
 fi
 
 echo ""
-echo "Services started successfully!"
+echo -e "${GREEN}============================================${NC}"
+echo -e "${GREEN}    Services started successfully!${NC}"
+echo -e "${GREEN}============================================${NC}"
 echo ""
-echo "Quick commands:"
-echo "  • Download single video:"
-echo "    docker exec yt-dlp yt-dlp 'https://www.youtube.com/watch?v=VIDEO_ID'"
+
+echo -e "${CYAN}Container Runtime:${NC} $CONTAINER_RUNTIME"
+echo -e "${CYAN}Compose Command:${NC} $COMPOSE_CMD"
 echo ""
-echo "  • Download from batch file:"
-echo "    docker exec yt-dlp yt-dlp --batch-file /config/urls.txt"
+
+echo -e "${BLUE}Quick Commands:${NC}"
 echo ""
-echo "  • Check container logs:"
-echo "    docker-compose logs -f yt-dlp"
+echo "Download single video:"
+echo "  $CONTAINER_RUNTIME exec yt-dlp-cli yt-dlp 'https://www.youtube.com/watch?v=VIDEO_ID'"
+echo ""
+echo "Download from batch file:"
+echo "  $CONTAINER_RUNTIME exec yt-dlp-cli yt-dlp --batch-file /config/urls.txt"
+echo ""
+echo "Check container logs:"
+echo "  $COMPOSE_CMD logs -f"
 echo ""
 
 if [ "$USE_VPN" = "true" ]; then
-    
-    echo "  • Check VPN connection:"
-    echo "    docker exec openvpn wget -qO- ifconfig.me"
+    echo "Check VPN connection:"
+    echo "  $CONTAINER_RUNTIME exec openvpn-yt-dlp wget -qO- ifconfig.me"
+    echo ""
 fi
+
+echo -e "${BLUE}View web interface:${NC}"
+echo "  http://localhost:${METUBE_PORT:-8086}"

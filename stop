@@ -1,13 +1,78 @@
 #!/bin/bash
+#
+# Stop YT-DLP services
+# Works with both Podman and Docker
+#
 
 set -e
 
-if [ -f .env ]; then
+# Colors
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
 
+# =============================================================================
+# Container Runtime Detection
+# =============================================================================
+
+detect_container_runtime() {
+    if command -v podman &> /dev/null; then
+        echo "podman"
+    elif command -v docker &> /dev/null; then
+        echo "docker"
+    else
+        echo "none"
+    fi
+}
+
+get_compose_cmd() {
+    local runtime="$1"
+    if [ "$runtime" = "podman" ]; then
+        if command -v podman-compose &> /dev/null; then
+            echo "podman-compose"
+        else
+            echo "podman compose"
+        fi
+    else
+        if command -v docker-compose &> /dev/null; then
+            echo "docker-compose"
+        else
+            echo "docker compose"
+        fi
+    fi
+}
+
+CONTAINER_RUNTIME=$(detect_container_runtime)
+
+if [ "$CONTAINER_RUNTIME" = "none" ]; then
+    echo -e "${YELLOW}WARNING: No container runtime found!${NC}"
+    echo "Cannot stop services."
+    exit 1
+fi
+
+COMPOSE_CMD=$(get_compose_cmd "$CONTAINER_RUNTIME")
+
+# =============================================================================
+# Load Environment
+# =============================================================================
+
+if [ -f .env ]; then
     set -a
     source .env
     set +a
 fi
 
-echo "Stopping all services..."
-docker-compose --profile vpn --profile no-vpn down
+# =============================================================================
+# Stop Services
+# =============================================================================
+
+echo -e "${BLUE}Stopping all services...${NC}"
+echo -e "Runtime: ${CONTAINER_RUNTIME}"
+echo ""
+
+# Stop both vpn and no-vpn profiles
+$COMPOSE_CMD --profile vpn --profile no-vpn down
+
+echo ""
+echo -e "${GREEN}All services stopped.${NC}
