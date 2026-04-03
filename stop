@@ -72,9 +72,15 @@ echo -e "Runtime: ${CONTAINER_RUNTIME}"
 echo ""
 
 if [ "$CONTAINER_RUNTIME" = "docker" ]; then
-    $COMPOSE_CMD --profile vpn --profile no-vpn --profile docker down
+    $COMPOSE_CMD --profile docker down 2>/dev/null || true
 else
-    $COMPOSE_CMD --profile vpn --profile no-vpn down
+    $COMPOSE_CMD down 2>/dev/null || true
+fi
+
+# Clean up any remaining resources
+if [ "$CONTAINER_RUNTIME" = "podman" ]; then
+    podman pod ls --format "{{.Name}}" | grep -E "^pod_yt-dlp$" | xargs -r podman pod rm -f 2>/dev/null || true
+    podman network rm yt-dlp_default 2>/dev/null || true
 fi
 
 echo ""
