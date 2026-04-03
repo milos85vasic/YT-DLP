@@ -13,14 +13,13 @@ services:
       - ./vpn-auth.txt:/vpn/vpn.auth:ro
     ports:
       - "3130:3129/tcp"
-      - "8086:8081/tcp"  # Metube Web UI
     environment:
       - TZ=Europe/Moscow
     security_opt:
-      - label:disable
+      - label=disable
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "ping", "-c", "1", "8.8.8.8"]
+      test: ["CMD", "ping", "-c", 1, "8.8.8.8"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -40,19 +39,33 @@ services:
       - DOWNLOAD_DIR=/downloads
       - STATE_DIR=/config
       - DELETE_FILE_ON_TRASHCAN=true
-      # Quality settings
       - DEFAULT_THEME=dark
       - OUTPUT_TEMPLATE=%(title)s.%(ext)s
-      - YTDL_OPTIONS={"writesubtitles":true,"subtitleslangs":["en","es","fr"],"postprocessors":[{"key":"FFmpegEmbedSubtitle","already_have_subtitle":false}],"format":"bestvideo[height<=?1080]+bestaudio/best","cookiefile":"/config/youtube_cookies.txt"}
+      - YTDL_OPTIONS={"writesubtitles":true,"subtitleslangs":["en","es","fr"],"postprocessors":[{"key":"FFmpegEmbedSubtitle","already_have_subtitle":false}],"format":"bestvideo[height<=?1080]+bestaudio/best"}
     volumes:
       - ${DOWNLOAD_DIR}:/downloads
       - ./metube/config:/config
-      - ./yt-dlp/cookies/youtube_cookies.txt:/config/youtube_cookies.txt:ro
     restart: unless-stopped
     labels:
      - "com.centurylinklabs.watchtower.enable=true"
-  
-  # Keep yt-dlp CLI for command-line usage
+
+  landing-vpn:
+    build:
+      context: ./landing
+      dockerfile: Dockerfile
+    container_name: metube-landing-vpn
+    profiles:
+      - vpn
+    ports:
+      - "8087:80/tcp"
+    environment:
+      - METUBE_URL=http://metube:8081
+      - PROXY_PORT=80
+    depends_on:
+      metube:
+        condition: service_started
+    restart: unless-stopped
+
   yt-dlp-cli:
     image: thr3a/yt-dlp:latest
     container_name: yt-dlp-cli
@@ -78,7 +91,6 @@ services:
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
 
-  # WITHOUT VPN version
   metube-direct:
     image: ghcr.io/alexta69/metube:latest
     container_name: metube-direct
@@ -92,18 +104,33 @@ services:
       - DOWNLOAD_DIR=/downloads
       - STATE_DIR=/config
       - DELETE_FILE_ON_TRASHCAN=true
-      # Quality settings
       - DEFAULT_THEME=dark
       - OUTPUT_TEMPLATE=%(title)s.%(ext)s
-      - YTDL_OPTIONS={"writesubtitles":true,"subtitleslangs":["en","es","fr"],"postprocessors":[{"key":"FFmpegEmbedSubtitle","already_have_subtitle":false}],"format":"bestvideo[height<=?1080]+bestaudio/best","cookiefile":"/config/youtube_cookies.txt"}
+      - YTDL_OPTIONS={"writesubtitles":true,"subtitleslangs":["en","es","fr"],"postprocessors":[{"key":"FFmpegEmbedSubtitle","already_have_subtitle":false}],"format":"bestvideo[height<=?1080]+bestaudio/best"}
     volumes:
       - ${DOWNLOAD_DIR}:/downloads
       - ./metube/config:/config
-      - ./yt-dlp/cookies/youtube_cookies.txt:/config/youtube_cookies.txt:ro
     restart: unless-stopped
     labels:
      - "com.centurylinklabs.watchtower.enable=true"
-   
+
+  landing-no-vpn:
+    build:
+      context: ./landing
+      dockerfile: Dockerfile
+    container_name: metube-landing
+    profiles:
+      - no-vpn
+    ports:
+      - "8087:80/tcp"
+    environment:
+      - METUBE_URL=http://metube-direct:8081
+      - PROXY_PORT=80
+    depends_on:
+      metube-direct:
+        condition: service_started
+    restart: unless-stopped
+
   watchtower:
     image: containrrr/watchtower:latest
     container_name: watchtower
@@ -115,7 +142,7 @@ services:
       - WATCHTOWER_CLEANUP=true
       - WATCHTOWER_INCLUDE_RESTARTING=false
       - WATCHTOWER_NO_STARTUP_CHECK=true
-      - WATCHTOWER_SCHEDULE=0 0 */3 * * *  # Every 3 hours
+      - WATCHTOWER_SCHEDULE=0 0 */3 * * *
       - DOCKER_API_VERSION=1.44
     labels:
       - "com.centurylinklabs.watchtower.enable=false"
