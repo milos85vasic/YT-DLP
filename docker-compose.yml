@@ -43,16 +43,15 @@ services:
       # Quality settings
       - DEFAULT_THEME=dark
       - OUTPUT_TEMPLATE=%(title)s.%(ext)s
-      - YTDL_OPTIONS={"writesubtitles":true,"subtitleslangs":["en","es","fr"],"postprocessors":[{"key":"FFmpegEmbedSubtitle","already_have_subtitle":false}],"format":"bestvideo[height<=?1080]+bestaudio/best"}
+      - YTDL_OPTIONS={"writesubtitles":true,"subtitleslangs":["en","es","fr"],"postprocessors":[{"key":"FFmpegEmbedSubtitle","already_have_subtitle":false}],"format":"bestvideo[height<=?1080]+bestaudio/best","cookiefile":"/config/youtube_cookies.txt"}
     volumes:
       - ${DOWNLOAD_DIR}:/downloads
       - ./metube/config:/config
-      # Share cookies if needed
-      - ./yt-dlp/cookies:/cookies:ro
+      - ./yt-dlp/cookies/youtube_cookies.txt:/config/youtube_cookies.txt:ro
     restart: unless-stopped
     labels:
      - "com.centurylinklabs.watchtower.enable=true"
- 
+  
   # Keep yt-dlp CLI for command-line usage
   yt-dlp-cli:
     image: thr3a/yt-dlp:latest
@@ -96,15 +95,15 @@ services:
       # Quality settings
       - DEFAULT_THEME=dark
       - OUTPUT_TEMPLATE=%(title)s.%(ext)s
-      - YTDL_OPTIONS={"writesubtitles":true,"subtitleslangs":["en","es","fr"],"postprocessors":[{"key":"FFmpegEmbedSubtitle","already_have_subtitle":false}],"format":"bestvideo[height<=?1080]+bestaudio/best"}
+      - YTDL_OPTIONS={"writesubtitles":true,"subtitleslangs":["en","es","fr"],"postprocessors":[{"key":"FFmpegEmbedSubtitle","already_have_subtitle":false}],"format":"bestvideo[height<=?1080]+bestaudio/best","cookiefile":"/config/youtube_cookies.txt"}
     volumes:
       - ${DOWNLOAD_DIR}:/downloads
       - ./metube/config:/config
-      - ./yt-dlp/cookies:/cookies:ro
+      - ./yt-dlp/cookies/youtube_cookies.txt:/config/youtube_cookies.txt:ro
     restart: unless-stopped
     labels:
      - "com.centurylinklabs.watchtower.enable=true"
-  
+   
   watchtower:
     image: containrrr/watchtower:latest
     container_name: watchtower

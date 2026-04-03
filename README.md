@@ -520,6 +520,29 @@ Change the port in `.env`:
 METUBE_PORT=8087  # Use different port
 ```
 
+### YouTube Downloads Failing - "No video formats found" or Bot Detection
+
+This is caused by YouTube's bot detection. YouTube requires cookies from a browser session to download videos.
+
+**Quick Fix:**
+```bash
+# Run the cookie setup helper
+./yt-dlp/cookies/setup-cookies.sh
+
+# Or manually:
+# 1. Install "Get cookies.txt LOCALLY" extension for Firefox/Chrome
+# 2. Go to youtube.com (logged in)
+# 3. Export cookies as youtube_cookies.txt in ./yt-dlp/cookies/
+# 4. Restart: ./stop && ./start_no_vpn
+```
+
+**Detailed instructions:** See [docs/YOUTUBE_DOWNLOAD_FIX.md](docs/YOUTUBE_DOWNLOAD_FIX.md)
+
+**Troubleshooting:**
+- Ensure cookies file exists: `cat ./yt-dlp/cookies/youtube_cookies.txt`
+- Check container logs: `podman logs metube-direct | grep -i error`
+- Cookies may expire - re-export periodically
+
 ## Port Reference
 
 | Port | Service | Description |
@@ -537,6 +560,7 @@ METUBE_PORT=8087  # Use different port
 - **[TEST_RESULTS.md](TEST_RESULTS.md)** - Comprehensive test results report
 - **[AGENTS.md](AGENTS.md)** - Development guide and coding standards
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** - Contribution guidelines
+- **[docs/YOUTUBE_DOWNLOAD_FIX.md](docs/YOUTUBE_DOWNLOAD_FIX.md)** - YouTube cookie authentication guide
 - **[tests/README.md](tests/README.md)** - Testing documentation
 
 ## Contributing
