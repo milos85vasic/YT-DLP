@@ -117,13 +117,13 @@ ss -tuln 2>/dev/null | grep -E ':(3129|3130|5800|5900|8080|8081|8086|8087|8088)'
             echo "  • Port $PORT: yt-dlp API (internal)"
             ;;
         8086)
-            echo "  • Port $PORT: Landing Page"
+            echo "  • Port $PORT: Landing Page (No VPN)"
             ;;
         8087)
             echo "  • Port $PORT: Landing Page (VPN)"
             ;;
         8088)
-            echo "  • Port $PORT: Metube Web UI"
+            echo "  • Port $PORT: Metube Direct (No VPN)"
             ;;
     esac
 done || echo "  (Unable to check ports - install 'iproute2' or 'net-tools')"
