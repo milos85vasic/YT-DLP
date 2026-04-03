@@ -12,8 +12,7 @@ import requests
 
 app = Flask(__name__)
 
-METUBE_URL = os.environ.get("METUBE_URL", "http://localhost:8086")
-METUBE_PUBLIC_URL = os.environ.get("METUBE_PUBLIC_URL", "http://localhost:8086")
+METUBE_URL = os.environ.get("METUBE_URL", "http://metube-direct:8081")
 PROXY_PORT = int(os.environ.get("PROXY_PORT", "8080"))
 
 app.sessions = {}
@@ -507,8 +506,16 @@ INDEX_TEMPLATE = """
 def index():
     session_id = str(uuid.uuid4())
     app.sessions[session_id] = {"created": time.time()}
-    metube_url = request.host_url.rstrip("/") if request.host_url else METUBE_PUBLIC_URL
-    metube_url = metube_url.replace(":8087", ":8086")
+    import re
+
+    me_port = os.environ.get("METUBE_PUBLIC_PORT", "8088")
+    host = request.host_url.rstrip("/") if request.host_url else f"http://localhost"
+    match = re.search(r":(\d+)$", host)
+    if match:
+        landing_port = match.group(1)
+        metube_url = host.replace(f":{landing_port}", f":{me_port}")
+    else:
+        metube_url = f"http://localhost:{me_port}"
     return render_template_string(
         INDEX_TEMPLATE, session_id=session_id, metube_url=metube_url
     )
