@@ -13,6 +13,7 @@ import requests
 app = Flask(__name__)
 
 METUBE_URL = os.environ.get("METUBE_URL", "http://localhost:8086")
+METUBE_PUBLIC_URL = os.environ.get("METUBE_PUBLIC_URL", "http://localhost:8086")
 PROXY_PORT = int(os.environ.get("PROXY_PORT", "8080"))
 
 app.sessions = {}
@@ -220,7 +221,7 @@ INDEX_TEMPLATE = """
                 if (data.success) {
                     goToStep(3);
                     showLoading('Success! Redirecting...');
-                    setTimeout(() => window.location.href = BASE_URL + '/app', 1500);
+                    setTimeout(() => window.location.href = METUBE_URL, 1500);
                 } else {
                     hideLoading();
                     alert('Upload failed: ' + (data.error || 'Unknown error'));
@@ -367,12 +368,43 @@ INDEX_TEMPLATE = """
     </div>
     
     <script>
+        const METUBE_URL = '{{ metube_url }}';
+        const BASE_URL = window.location.origin;
         let currentStep = 1;
         const SESSION = '{{ session_id }}';
         
         function showLoading(text) {
             document.getElementById('loadingText').textContent = text;
             document.getElementById('loadingOverlay').classList.add('active');
+        }
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('active');
+        }
+        
+        function goToStep(n) {
+            currentStep = n;
+            
+            for (let i = 1; i <= 3; i++) {
+                document.getElementById('step' + i).className = 'step';
+                document.getElementById('content' + i).classList.remove('active');
+                if (i < 3) document.getElementById('conn' + i).className = 'step-connector';
+            }
+            
+            for (let i = 1; i < n; i++) {
+                document.getElementById('step' + i).classList.add('done');
+                if (i < 3) document.getElementById('conn' + i).classList.add('active');
+            }
+            document.getElementById('step' + n).classList.add('active');
+            document.getElementById('content' + n).classList.add('active');
+            
+            if (n === 2) {
+                window.open('https://www.youtube.com/', '_blank');
+                setupUpload();
+            }
+            
+            if (n === 3) {
+                document.getElementById('metubeLink').href = METUBE_URL;
+            }
         }
         function hideLoading() {
             document.getElementById('loadingOverlay').classList.remove('active');
@@ -457,7 +489,7 @@ INDEX_TEMPLATE = """
                 if (data.has_cookies && data.metube_reachable) {
                     goToStep(3);
                     showLoading('Already authenticated! Redirecting...');
-                    setTimeout(() => window.location.href = '/app', 800);
+                    setTimeout(() => window.location.href = METUBE_URL, 800);
                 }
             } catch (e) {
                 console.log('Auth check failed');
@@ -475,7 +507,11 @@ INDEX_TEMPLATE = """
 def index():
     session_id = str(uuid.uuid4())
     app.sessions[session_id] = {"created": time.time()}
-    return render_template_string(INDEX_TEMPLATE, session_id=session_id)
+    metube_url = request.host_url.rstrip("/") if request.host_url else METUBE_PUBLIC_URL
+    metube_url = metube_url.replace(":8087", ":8086")
+    return render_template_string(
+        INDEX_TEMPLATE, session_id=session_id, metube_url=metube_url
+    )
 
 
 @app.route("/app")
