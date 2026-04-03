@@ -1,5 +1,35 @@
 # Summary of Changes
 
+## 🚀 Latest Updates (April 2026)
+
+### 6. **Landing Page & Cookie Authentication** (NEW)
+- **Flask-based Landing Page** at ports 8086 (No VPN) and 8087 (VPN)
+- **Seamless cookie authentication flow**:
+  - Automatic YouTube cookie status check on page load
+  - Step-by-step guide for cookie export via browser extension
+  - Drag-and-drop cookie file upload
+  - Auto-redirect to MeTube when cookies are authenticated
+- **Updated port mapping**:
+  - 8086: Landing Page (No VPN) - Cookie gateway
+  - 8087: Landing Page (VPN) - Cookie gateway
+  - 8088: MeTube Web UI (No VPN)
+- **New files:**
+  - `landing/Dockerfile` - Landing page container
+  - `landing/app.py` - Flask app with cookie auth flow
+  - `landing/requirements.txt` - Python dependencies
+
+### 7. **YouTube Cookie Fix** (FIX)
+- Added cookie file mounting to docker-compose.yml
+- Created comprehensive cookie export scripts:
+  - `yt-dlp/cookies/setup-cookies.sh` - Interactive setup
+  - `yt-dlp/cookies/export-cookies-chromium.sh` - Chromium export
+  - `yt-dlp/cookies/export-cookies-playwright.py` - Playwright automation
+  - `yt-dlp/cookies/export-cookies-final.py` - Direct SQLite export
+- Added cookie authentication documentation in `docs/`
+- Verified working: Successfully downloaded "Rick Astley - Never Gonna Give You Up" (33MB)
+
+---
+
 ## 🎉 Major Enhancements Completed
 
 ### 1. **Comprehensive Test Suite** (NEW)

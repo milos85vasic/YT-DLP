@@ -61,16 +61,24 @@ The exported cookies work for most videos. The browser (Chromium) is not logged 
 
 ## Manual Testing
 
-### Test via Web UI:
+### Test via Landing Page:
 1. Open http://localhost:8086
-2. Add a YouTube URL (e.g., https://www.youtube.com/watch?v=dQw4w9WgXcQ)
-3. Click Add and wait for download
+2. Upload cookies or follow the guide
+3. Once authenticated, you'll be redirected to MeTube
+4. Add a YouTube URL (e.g., https://www.youtube.com/watch?v=dQw4w9WgXcQ)
+
+### Test via MeTube Direct (port 8088):
+```bash
+curl -X POST -H "Content-Type: application/json" \
+  -d '{"url":"https://www.youtube.com/watch?v=dQw4w9WgXcQ","quality":"best","download_type":"video","format":"any"}' \
+  http://localhost:8088/add
+```
 
 ### Test via API:
 ```bash
 curl -X POST -H "Content-Type: application/json" \
   -d '{"url":"https://www.youtube.com/watch?v=dQw4w9WgXcQ","quality":"best","download_type":"video","format":"any"}' \
-  http://localhost:8086/add
+  http://localhost:8088/api/add
 ```
 
 ### Check Status:

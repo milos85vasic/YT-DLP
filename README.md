@@ -8,7 +8,9 @@ Run [yt-dlp](https://github.com/yt-dlp/yt-dlp) inside a container with optional 
 
 - **Dual Runtime Support**: Works with both Podman (preferred) and Docker
 - **VPN Integration**: Route downloads through OpenVPN for privacy
+- **Landing Page**: Seamless cookie authentication flow for YouTube
 - **Web Interface**: Metube provides a clean, modern web UI
+- **Cookie Authentication**: Built-in support for YouTube browser cookies
 - **CLI Access**: Direct yt-dlp command-line access
 - **Batch Processing**: Download from URL lists and channel subscriptions
 - **Multi-Service**: Designed to work alongside JDownloader
@@ -155,12 +157,20 @@ TZ=America/New_York
 
 ### Web Interface (Metube)
 
-Once running, access the web UI at:
+Once running, access the Landing Page at:
 ```
 http://localhost:8086
 ```
 
-Features:
+The Landing Page handles cookie authentication and redirects to MeTube when ready.
+
+**Landing Page Features:**
+- Automatic YouTube cookie status check
+- Step-by-step guide for cookie export
+- Drag-and-drop cookie upload
+- Auto-redirect to MeTube when authenticated
+
+**MeTube UI (at http://localhost:8088):**
 - Paste URLs to download
 - View download queue and progress
 - Select format/quality
@@ -401,14 +411,24 @@ Edit `./yt-dlp/config/yt-dlp.conf`:
 
 ### Using Cookies
 
-To access age-restricted or subscriber-only content:
+YouTube requires browser cookies to download videos. The easiest method is using the Landing Page:
+
+1. **Open http://localhost:8086** - The Landing Page will guide you
+2. **Export cookies** from your browser using "Get cookies.txt LOCALLY" extension
+3. **Upload cookies** via drag-and-drop on the Landing Page
+4. **Auto-redirect** to MeTube when authenticated
+
+Alternatively, to access age-restricted or subscriber-only content:
 
 1. **Export cookies** from your browser using an extension
-2. **Place cookies file** at `./yt-dlp/cookies/cookies.txt`
-3. **Enable in `.env`:**
-   ```bash
-   YOUTUBE_COOKIES=true
-   ```
+2. **Place cookies file** at `./yt-dlp/cookies/youtube_cookies.txt`
+3. Restart: `./stop && ./start`
+
+**Cookie Helper Scripts:**
+```bash
+# Interactive cookie setup
+./yt-dlp/cookies/setup-cookies.sh
+```
 
 ### Service Mode
 
@@ -547,7 +567,9 @@ This is caused by YouTube's bot detection. YouTube requires cookies from a brows
 
 | Port | Service | Description |
 |------|---------|-------------|
-| 8086 | Metube | Web interface for yt-dlp |
+| 8086 | Landing Page | Cookie authentication & redirect (No VPN) |
+| 8087 | Landing Page | Cookie authentication & redirect (VPN) |
+| 8088 | Metube | Web interface for yt-dlp (No VPN) |
 | 8081 | Metube API | Internal API (container) |
 | 3130 | yt-dlp VPN | VPN proxy port |
 | 3129 | JDownloader VPN | VPN proxy (if using JDownloader) |

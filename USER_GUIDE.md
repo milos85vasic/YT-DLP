@@ -178,11 +178,14 @@ TZ=America/New_York
 
 Once started, open your browser:
 
-```
-http://localhost:8086
-```
+**Landing Page (http://localhost:8086):**
+- Cookie authentication gateway
+- Auto-checks YouTube cookie status
+- Guides user through cookie export
+- Drag-and-drop cookie upload
+- Auto-redirects to MeTube when authenticated
 
-**Features:**
+**MeTube UI (http://localhost:8088):**
 - Paste URLs to download
 - View download progress
 - Select video quality
@@ -262,14 +265,28 @@ Edit `./yt-dlp/config/yt-dlp.conf`:
 
 ### Using Cookies
 
+YouTube requires browser cookies. Use the Landing Page for easiest setup:
+
+1. **Open http://localhost:8086** - The Landing Page guides you
+2. **Export cookies** from browser using "Get cookies.txt LOCALLY" extension  
+3. **Upload cookies** via drag-and-drop
+4. **Auto-redirect** to MeTube when authenticated
+
+**Manual cookie setup:**
+
 For age-restricted or subscriber-only content:
 
 1. **Export cookies** from your browser using an extension
-2. **Place cookies file** at `./yt-dlp/cookies/cookies.txt`
-3. **Enable in `.env`:**
+2. **Place cookies file** at `./yt-dlp/cookies/youtube_cookies.txt`
+3. **Restart services:**
    ```bash
-   YOUTUBE_COOKIES=true
+   ./stop && ./start
    ```
+
+**Cookie helper:**
+```bash
+./yt-dlp/cookies/setup-cookies.sh
+```
 
 ### Service Mode
 

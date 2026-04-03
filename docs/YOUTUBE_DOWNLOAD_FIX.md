@@ -72,16 +72,17 @@ Cookies may expire periodically. To refresh:
 
 ## Testing the Fix
 
-### Via Web UI
+### Via Landing Page (Recommended)
 1. Open http://localhost:8086
-2. Add a YouTube URL
-3. Submit and wait for download
+2. Upload cookies via drag-and-drop or follow the guide
+3. Auto-redirect to MeTube when authenticated
+4. Add a YouTube URL
 
-### Via API
+### Via MeTube Direct (port 8088)
 ```bash
 curl -X POST -H "Content-Type: application/json" \
   -d '{"url":"https://www.youtube.com/watch?v=dQw4w9WgXcQ","quality":"best","download_type":"video","format":"any"}' \
-  http://localhost:8086/add
+  http://localhost:8088/add
 ```
 
 ### Check Status

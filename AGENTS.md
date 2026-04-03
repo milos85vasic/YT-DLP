@@ -308,7 +308,9 @@ echo -e "${CYAN}Container Runtime:${NC} $CONTAINER_RUNTIME"
 
 ## Service Ports
 
-- 8086: Metube Web UI
+- 8086: Landing Page (No VPN) - Cookie authentication
+- 8087: Landing Page (VPN) - Cookie authentication
+- 8088: Metube Web UI (No VPN)
 - 8081: Metube API (internal)
 - 3130: yt-dlp VPN proxy
 - 3129: JDownloader VPN (if used)
