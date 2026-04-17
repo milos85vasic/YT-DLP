@@ -2,6 +2,18 @@
 
 ## 🚀 Latest Updates (April 2026)
 
+### 9. **YouTube Download Fix - Updated Configuration** (CRITICAL FIX)
+- **Problem:** yt-dlp was failing with "No video formats found!" error
+- **Root Cause:** YouTube now requires Deno runtime + updated player clients
+- **Solution:** 
+  - Switched to `ghcr.io/jim60105/yt-dlp:pot` (includes Deno)
+  - Added `no-vpn` profile for yt-dlp-cli
+  - Added `yt-dlp-cli-vpn` service for VPN profile
+  - Added `--extractor-args "youtube:player_client=web,mweb,android"` to download script
+  - Added `--cookies /cookies/cookies.txt` with root user execution
+  - Added `-o /downloads/` output path
+- **Note:** Cookie file requires fresh export - existing cookies were expired
+
 ### 8. **YouTube Download Fix - Deno Runtime** (CRITICAL FIX)
 - **Problem:** yt-dlp was failing with "No video formats found!" error
 - **Root Cause:** YouTube now requires an external JavaScript runtime (Deno) to solve JS challenges for format extraction

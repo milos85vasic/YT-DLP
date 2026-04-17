@@ -72,6 +72,28 @@ services:
     profiles:
       - vpn
       - vpn-cli
+      - no-vpn
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Moscow
+    volumes:
+      - ./yt-dlp/config:/config:rw
+      - ${DOWNLOAD_DIR}:/downloads:rw
+      - ./yt-dlp/cookies:/cookies:rw
+      - ./yt-dlp/archive:/archive:rw
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "-c", "while true; do sleep 3600; done"]
+    command: []
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  yt-dlp-cli-vpn:
+    image: ghcr.io/jim60105/yt-dlp:pot
+    container_name: yt-dlp-cli-vpn
+    profiles:
+      - vpn
+      - vpn-cli
     depends_on:
       openvpn-yt-dlp:
         condition: service_healthy
