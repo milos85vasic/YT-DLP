@@ -2,6 +2,15 @@
 
 ## 🚀 Latest Updates (April 2026)
 
+### 8. **YouTube Download Fix - Deno Runtime** (CRITICAL FIX)
+- **Problem:** yt-dlp was failing with "No video formats found!" error
+- **Root Cause:** YouTube now requires an external JavaScript runtime (Deno) to solve JS challenges for format extraction
+- **Solution:** Switched from `thr3a/yt-dlp:latest` to `ghcr.io/jim60105/yt-dlp:pot` (POT = Proof of Origin Token)
+- **Changes made:**
+  - Updated `docker-compose.yml` yt-dlp-cli image to `ghcr.io/jim60105/yt-dlp:pot`
+  - The pot variant includes Deno for YouTube JS challenge solving
+- **Reference:** https://github.com/yt-dlp/yt-dlp/issues/15012
+
 ### 6. **Landing Page & Cookie Authentication** (NEW)
 - **Flask-based Landing Page** at ports 8086 (No VPN) and 8087 (VPN)
 - **Seamless cookie authentication flow**:

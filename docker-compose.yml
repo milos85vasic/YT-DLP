@@ -67,7 +67,7 @@ services:
     restart: unless-stopped
 
   yt-dlp-cli:
-    image: thr3a/yt-dlp:latest
+    image: ghcr.io/jim60105/yt-dlp:pot
     container_name: yt-dlp-cli
     profiles:
       - vpn
