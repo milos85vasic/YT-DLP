@@ -2,6 +2,13 @@
 
 ## 🚀 Latest Updates (April 2026)
 
+### 10. **Release v1.2.0** (NEW RELEASE)
+- Created new release v1.2.0
+- Comprehensive release documentation in RELEASE_v1.2.0.md
+- Tag pushed to all upstreams (origin, github, upstream)
+- GitHub release creation attempted (token permission issue)
+- GitLab: No GitLab remote configured (GitHub-only repo)
+
 ### 9. **YouTube Download Fix - Updated Configuration** (CRITICAL FIX)
 - **Problem:** yt-dlp was failing with "No video formats found!" error
 - **Root Cause:** YouTube now requires Deno runtime + updated player clients
