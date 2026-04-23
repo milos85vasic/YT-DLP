@@ -20,8 +20,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Verify environment
+        run: |
+          echo "=== Tool versions ==="
+          bash --version | head -1
+          docker --version || echo "docker NOT FOUND"
+          docker compose version || echo "docker compose NOT FOUND"
+          curl --version | head -1
+          echo ""
+          echo "=== User info ==="
+          id
+          echo ""
+          echo "=== Working directory ==="
+          pwd
+          ls -la
+
       - name: Setup environment
         run: |
+          set -x
           # Create required directories
           mkdir -p /tmp/test-downloads
           mkdir -p yt-dlp/cookies
@@ -47,19 +63,58 @@ jobs:
           sed -i 's|DOWNLOAD_DIR=/mnt/downloads|DOWNLOAD_DIR=/tmp/test-downloads|' .env
           sed -i 's/PUID=1000/PUID=1001/' .env
           sed -i 's/PGID=1000/PGID=1001/' .env
-          sed -i 's/USE_VPN=false/USE_VPN=false/' .env
+
+          # Ensure CONTAINER_RUNTIME is set to docker for CI
+          if grep -q "^CONTAINER_RUNTIME=" .env; then
+            sed -i 's/^CONTAINER_RUNTIME=.*/CONTAINER_RUNTIME=docker/' .env
+          else
+            echo "CONTAINER_RUNTIME=docker" >> .env
+          fi
+
+          echo "=== .env contents ==="
+          cat .env | grep -E "USE_VPN|DOWNLOAD_DIR|PUID|PGID|CONTAINER_RUNTIME"
 
       - name: Initialize project
-        run: ./init
-
-      - name: Start services
         run: |
-          export CONTAINER_RUNTIME=docker
-          ./start
+          set -x
+          ./init
+
+      - name: Build and start containers
+        run: |
+          set -x
+          # Sync cookies the same way ./start does
+          if [ -f "yt-dlp/cookies/cookies.txt" ] && grep -qE "youtube\.com|youtu\.be" yt-dlp/cookies/cookies.txt 2>/dev/null; then
+            cp -f yt-dlp/cookies/cookies.txt metube/config/cookies.txt
+            chmod 644 metube/config/cookies.txt
+            echo "Cookies synced to metube/config/cookies.txt"
+          fi
+
+          # Validate compose config before starting
+          docker compose config > /dev/null
+
+          # Pull images first (with error tolerance)
+          for image in ghcr.io/alexta69/metube:latest th3a/yt-dlp:latest; do
+            echo "Pulling: $image"
+            docker pull "$image" || echo "WARNING: Failed to pull $image"
+          done
+
+          # Start services
+          docker compose --profile no-vpn up -d
+
+          # Wait for containers to be running
+          for i in {1..30}; do
+            if docker ps --format "{{.Names}}" | grep -qE "(metube-direct|metube-landing|yt-dlp-dashboard)"; then
+              echo "Containers are starting..."
+              break
+            fi
+            echo "Waiting for containers... ($i/30)"
+            sleep 2
+          done
         timeout-minutes: 15
 
       - name: Wait for services to be ready
         run: |
+          set -x
           echo "Waiting for dashboard..."
           for i in {1..60}; do
             if curl -s --max-time 5 http://localhost:9090/ | grep -q '<title>YT-DLP Dashboard</title>'; then
@@ -129,11 +184,5 @@ jobs:
       - name: Stop services
         if: always()
         run: |
-          export CONTAINER_RUNTIME=docker
-          ./stop || true
-
-      - name: Cleanup
-        if: always()
-        run: |
-          rm -f .env vpn-auth.txt
+          docker compose --profile no-vpn down || true
           docker system prune -f || true
