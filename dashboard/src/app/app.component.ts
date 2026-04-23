@@ -1,6 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { Subscription } from 'rxjs';
+import { MetubeService } from './services/metube.service';
 
 @Component({
   selector: 'app-root',
@@ -19,9 +21,11 @@ import { CommonModule } from '@angular/common';
           </a>
           <a routerLink="/queue" routerLinkActive="active">
             ⏳ Queue
+            <span class="badge" *ngIf="queueCount > 0">{{ queueCount }}</span>
           </a>
           <a routerLink="/history" routerLinkActive="active">
             📜 History
+            <span class="badge error" *ngIf="errorCount > 0">{{ errorCount }}</span>
           </a>
         </nav>
       </header>
@@ -82,6 +86,7 @@ import { CommonModule } from '@angular/common';
       gap: 4px;
     }
     .nav a {
+      position: relative;
       padding: 8px 16px;
       border-radius: 10px;
       font-size: 13px;
@@ -92,6 +97,24 @@ import { CommonModule } from '@angular/common';
     }
     .nav a:hover { color: #fff; background: rgba(255,255,255,0.05); }
     .nav a.active { color: #fff; background: rgba(255,0,80,0.12); }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      margin-left: 6px;
+      background: rgba(0,150,255,0.2);
+      color: #66b3ff;
+      border-radius: 9px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+    .badge.error {
+      background: rgba(255,0,80,0.2);
+      color: #ff5588;
+    }
     .main { flex: 1; }
     .footer {
       display: flex;
@@ -103,6 +126,25 @@ import { CommonModule } from '@angular/common';
     }
   `],
 })
-export class AppComponent {
+export class AppComponent implements OnInit, OnDestroy {
   title = 'YT-DLP Dashboard';
+  queueCount = 0;
+  errorCount = 0;
+  private sub?: Subscription;
+
+  constructor(private metube: MetubeService) {}
+
+  ngOnInit(): void {
+    this.sub = this.metube.getHistoryPolling(2000).subscribe({
+      next: (data) => {
+        this.queueCount = (data.queue?.length || 0) + (data.pending?.length || 0);
+        this.errorCount = (data.done || []).filter((i) => i.status === 'error').length;
+      },
+      error: (err) => console.error('Nav poll error', err),
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.sub?.unsubscribe();
+  }
 }

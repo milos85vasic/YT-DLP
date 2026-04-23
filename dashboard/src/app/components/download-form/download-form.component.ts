@@ -1,7 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MetubeService } from '../../services/metube.service';
+import { Subscription, timer } from 'rxjs';
+import { switchMap, take } from 'rxjs/operators';
+import { MetubeService, DownloadInfo } from '../../services/metube.service';
+
+type TrackState = 'idle' | 'adding' | 'queued' | 'downloading' | 'finished' | 'error' | 'timeout';
 
 @Component({
   selector: 'app-download-form',
@@ -66,23 +70,28 @@ import { MetubeService } from '../../services/metube.service';
           <span *ngIf="loading">Adding…</span>
         </button>
 
-        <div *ngIf="message" class="alert" [class.error]="isError" [class.success]="!isError">
-          {{ message }}
-        </div>
-      </div>
-
-      <!-- Recent activity -->
-      <div class="card activity" *ngIf="recentItems.length > 0">
-        <h3>📋 Recent Activity</h3>
-        <div class="activity-list">
-          <div class="activity-item" *ngFor="let item of recentItems" [class.error]="item.status === 'error'">
-            <span class="act-icon">
-              <span *ngIf="item.status === 'error'">❌</span>
-              <span *ngIf="item.status === 'finished'">✅</span>
-              <span *ngIf="item.status !== 'error' && item.status !== 'finished'">⏳</span>
+        <!-- Live tracking panel -->
+        <div *ngIf="tracker.state !== 'idle'" class="tracker" [class.error]="tracker.state === 'error'" [class.success]="tracker.state === 'finished'">
+          <div class="tracker-header">
+            <span class="tracker-icon">
+              <span *ngIf="tracker.state === 'adding'">⏳</span>
+              <span *ngIf="tracker.state === 'queued'">📥</span>
+              <span *ngIf="tracker.state === 'downloading'">⬇️</span>
+              <span *ngIf="tracker.state === 'finished'">✅</span>
+              <span *ngIf="tracker.state === 'error'">❌</span>
+              <span *ngIf="tracker.state === 'timeout'">⏱️</span>
             </span>
-            <span class="act-title" [title]="item.title">{{ item.title || item.url || 'Untitled' }}</span>
-            <span class="act-status" [class]="item.status">{{ item.status }}</span>
+            <span class="tracker-title">{{ trackerTitle }}</span>
+          </div>
+          <div *ngIf="tracker.item?.title" class="tracker-subtitle">{{ tracker.item?.title }}</div>
+          <div *ngIf="tracker.item?.msg" class="tracker-msg">{{ tracker.item?.msg }}</div>
+          <div *ngIf="tracker.item?.status === 'error'" class="tracker-actions">
+            <button class="btn-retry" (click)="retryTracked()">↻ Retry</button>
+            <a routerLink="/history" class="link-history">View in History →</a>
+          </div>
+          <div *ngIf="tracker.item?.status === 'finished'" class="tracker-actions">
+            <span class="tracker-filename" *ngIf="tracker.item?.filename">📁 {{ tracker.item?.filename }}</span>
+            <a routerLink="/history" class="link-history">View in History →</a>
           </div>
         </div>
       </div>
@@ -153,57 +162,80 @@ import { MetubeService } from '../../services/metube.service';
       opacity: 0.5;
       cursor: not-allowed;
     }
-    .alert {
-      margin-top: 14px;
-      padding: 10px 14px;
-      border-radius: 10px;
-      font-size: 13px;
+    .tracker {
+      margin-top: 16px;
+      padding: 14px 16px;
+      background: rgba(0,150,255,0.06);
+      border: 1px solid rgba(0,150,255,0.15);
+      border-radius: 12px;
     }
-    .alert.success {
-      background: rgba(0,255,136,0.1);
-      border: 1px solid rgba(0,255,136,0.2);
-      color: #00ff88;
+    .tracker.error {
+      background: rgba(255,0,80,0.06);
+      border-color: rgba(255,0,80,0.2);
     }
-    .alert.error {
-      background: rgba(255,0,80,0.1);
-      border: 1px solid rgba(255,0,80,0.2);
-      color: #ff5588;
+    .tracker.success {
+      background: rgba(0,255,136,0.06);
+      border-color: rgba(0,255,136,0.2);
     }
-    .activity-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .activity-item {
+    .tracker-header {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 10px 14px;
-      background: rgba(0,0,0,0.2);
-      border-radius: 10px;
-      font-size: 13px;
     }
-    .activity-item.error { border: 1px solid rgba(255,0,80,0.15); }
-    .act-icon { font-size: 14px; }
-    .act-title {
-      flex: 1;
-      min-width: 0;
+    .tracker-icon { font-size: 18px; }
+    .tracker-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+    }
+    .tracker-subtitle {
+      margin-top: 6px;
+      font-size: 13px;
+      color: #ccc;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      color: #ccc;
     }
-    .act-status {
-      padding: 2px 8px;
-      border-radius: 6px;
-      font-size: 10px;
+    .tracker-msg {
+      margin-top: 8px;
+      padding: 8px 12px;
+      background: rgba(255,0,80,0.08);
+      border-radius: 8px;
+      font-size: 12px;
+      color: #ff5588;
+      font-family: monospace;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .tracker-actions {
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .btn-retry {
+      padding: 6px 14px;
+      border-radius: 8px;
+      border: none;
+      background: rgba(0,255,136,0.12);
+      color: #00ff88;
+      cursor: pointer;
+      font-size: 13px;
       font-weight: 600;
-      text-transform: uppercase;
     }
-    .act-status.pending { background: rgba(255,200,0,0.12); color: #ffcc00; }
-    .act-status.downloading { background: rgba(0,255,136,0.12); color: #00ff88; }
-    .act-status.finished { background: rgba(0,255,136,0.12); color: #00ff88; }
-    .act-status.error { background: rgba(255,0,80,0.12); color: #ff5588; }
+    .btn-retry:hover { background: rgba(0,255,136,0.25); }
+    .link-history {
+      color: #66b3ff;
+      text-decoration: none;
+      font-size: 13px;
+    }
+    .link-history:hover { text-decoration: underline; }
+    .tracker-filename {
+      font-size: 11px;
+      color: #666;
+      font-family: monospace;
+    }
     .platform-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -225,15 +257,15 @@ import { MetubeService } from '../../services/metube.service';
     .platform .badge { font-size: 11px; }
   `],
 })
-export class DownloadFormComponent implements OnInit {
+export class DownloadFormComponent implements OnInit, OnDestroy {
   url = '';
   quality = 'best';
   format = 'any';
   folder = '';
   loading = false;
-  message = '';
-  isError = false;
-  recentItems: Array<{ title: string; url: string; status: string }> = [];
+
+  tracker: { state: TrackState; item: DownloadInfo | null } = { state: 'idle', item: null };
+  private trackSub?: Subscription;
 
   platforms = [
     { name: 'YouTube', icon: '📺', ok: true },
@@ -254,59 +286,99 @@ export class DownloadFormComponent implements OnInit {
 
   constructor(private metube: MetubeService) {}
 
-  ngOnInit(): void {
-    this.loadRecent();
+  ngOnInit(): void {}
+
+  ngOnDestroy(): void {
+    this.trackSub?.unsubscribe();
+  }
+
+  get trackerTitle(): string {
+    switch (this.tracker.state) {
+      case 'adding': return 'Tracking download…';
+      case 'queued': return 'In queue';
+      case 'downloading': return 'Downloading';
+      case 'finished': return 'Download complete!';
+      case 'error': return 'Download failed';
+      case 'timeout': return 'Still processing — check Queue/History';
+      default: return '';
+    }
   }
 
   addDownload(): void {
     if (!this.url.trim()) return;
     this.loading = true;
-    this.message = '';
+    this.tracker = { state: 'adding', item: null };
+    this.trackSub?.unsubscribe();
+
+    const submittedUrl = this.url.trim();
 
     this.metube
       .addDownload({
-        url: this.url.trim(),
+        url: submittedUrl,
         quality: this.quality,
         format: this.format,
         folder: this.folder.trim(),
       })
       .subscribe({
         next: (res) => {
-          this.loading = false;
-          if (res.status === 'ok') {
-            this.message = 'Added to queue! Check the Queue tab to track progress.';
-            this.isError = false;
-            // Save to recent
-            this.saveRecent(this.url.trim(), 'Added');
-            // Clear form
-            this.url = '';
-            this.folder = '';
-            // Auto-clear message after 5s
-            setTimeout(() => (this.message = ''), 5000);
-          } else {
-            this.message = res.msg || 'Failed to add download';
-            this.isError = true;
+          if (res.status !== 'ok') {
+            this.loading = false;
+            this.tracker = { state: 'error', item: { id: '', title: '', url: submittedUrl, quality: '', format: '', folder: '', status: 'error', msg: res.msg || 'Unknown error' } as DownloadInfo };
+            return;
           }
+          // Start polling for the result
+          this.trackDownload(submittedUrl);
         },
         error: (err) => {
           this.loading = false;
-          this.isError = true;
-          this.message = err.error?.msg || err.message || 'Network error — check if MeTube API is reachable';
+          this.tracker = { state: 'error', item: { id: '', title: '', url: submittedUrl, quality: '', format: '', folder: '', status: 'error', msg: err.error?.msg || err.message || 'Network error' } as DownloadInfo };
         },
       });
   }
 
-  private loadRecent(): void {
-    try {
-      const raw = localStorage.getItem('ytdlp_recent');
-      if (raw) this.recentItems = JSON.parse(raw);
-    } catch {}
+  private trackDownload(targetUrl: string): void {
+    let attempts = 0;
+    const maxAttempts = 30; // 15 seconds of polling
+
+    this.trackSub = timer(0, 500).pipe(
+      switchMap(() => this.metube.getHistory()),
+      take(maxAttempts)
+    ).subscribe({
+      next: (data) => {
+        attempts++;
+        const all = [...(data.pending || []), ...(data.queue || []), ...(data.done || [])];
+        const match = all.find((item) => item.url === targetUrl);
+
+        if (match) {
+          if (match.status === 'error') {
+            this.loading = false;
+            this.tracker = { state: 'error', item: match };
+            this.trackSub?.unsubscribe();
+          } else if (match.status === 'finished') {
+            this.loading = false;
+            this.tracker = { state: 'finished', item: match };
+            this.trackSub?.unsubscribe();
+          } else if (match.status === 'downloading') {
+            this.tracker = { state: 'downloading', item: match };
+          } else {
+            this.tracker = { state: 'queued', item: match };
+          }
+        } else if (attempts >= maxAttempts) {
+          this.loading = false;
+          this.tracker = { state: 'timeout', item: null };
+        }
+      },
+      error: () => {
+        this.loading = false;
+        this.tracker = { state: 'timeout', item: null };
+      },
+    });
   }
 
-  private saveRecent(url: string, status: string): void {
-    const title = url.length > 50 ? url.slice(0, 50) + '…' : url;
-    this.recentItems.unshift({ title, url, status });
-    if (this.recentItems.length > 5) this.recentItems.pop();
-    localStorage.setItem('ytdlp_recent', JSON.stringify(this.recentItems));
+  retryTracked(): void {
+    if (!this.tracker.item) return;
+    this.url = this.tracker.item.url;
+    this.tracker = { state: 'idle', item: null };
+    this.addDownload();
   }
 }

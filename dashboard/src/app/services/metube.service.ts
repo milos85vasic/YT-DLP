@@ -71,4 +71,21 @@ export class MetubeService {
   getVersion(): Observable<{ version: string; yt_dlp_version: string }> {
     return this.http.get<{ version: string; yt_dlp_version: string }>(`${this.base}/version`);
   }
+
+  /**
+   * Poll history until we find an item matching the given URL
+   * in queue, pending, or done. Returns the item or null after max attempts.
+   */
+  pollForItem(url: string, maxAttempts = 20, intervalMs = 500): Observable<DownloadInfo | null> {
+    return timer(0, intervalMs).pipe(
+      switchMap(() => this.getHistory()),
+      switchMap((data) => {
+        const all = [...(data.pending || []), ...(data.queue || []), ...(data.done || [])];
+        const match = all.find((item) => item.url === url);
+        return [match || null];
+      }),
+      // Stop after maxAttempts
+      // Note: caller should use take(maxAttempts) or similar
+    );
+  }
 }
