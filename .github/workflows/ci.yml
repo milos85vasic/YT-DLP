@@ -65,7 +65,9 @@ jobs:
           EOF
 
       - name: Validate Docker Compose configuration
-        run: docker compose config > /dev/null
+        run: |
+          docker compose version || docker-compose version || true
+          docker compose config > /dev/null || docker-compose config > /dev/null
 
   build-dashboard:
     name: Build Angular Dashboard
