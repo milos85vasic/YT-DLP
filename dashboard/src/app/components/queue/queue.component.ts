@@ -58,7 +58,7 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
           </div>
 
           <div class="actions">
-            <button *ngIf="item.status === 'error'" class="btn-retry" (click)="retry(item.id)" title="Retry">↻</button>
+            <button *ngIf="item.status === 'error'" class="btn-retry" (click)="retry(item)" title="Retry">↻</button>
             <button class="btn-delete" (click)="delete(item.id, 'queue')" title="Cancel">✕</button>
           </div>
         </div>
@@ -221,11 +221,20 @@ export class QueueComponent implements OnInit, OnDestroy {
     this.metube.deleteDownloads([id], where).subscribe();
   }
 
-  retry(id: string): void {
-    this.metube.startDownloads([id]).subscribe({
-      next: () => {},
-      error: (err) => console.error('Retry failed', err),
-    });
+  retry(item: DownloadInfo): void {
+    // For queue items, startDownloads only works on pending.
+    // For error items in queue, we must delete and re-add.
+    if (item.status === 'error') {
+      this.metube.retryDownload(item).subscribe({
+        next: () => {},
+        error: (err) => console.error('Retry failed', err),
+      });
+    } else {
+      this.metube.startDownloads([item.id]).subscribe({
+        next: () => {},
+        error: (err) => console.error('Retry failed', err),
+      });
+    }
   }
 
   formatSize(size: number | string): string {

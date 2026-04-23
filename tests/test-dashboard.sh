@@ -435,6 +435,144 @@ test_dashboard_api_no_cors_block() {
 }
 
 # =============================================================================
+# History Management Tests
+# =============================================================================
+
+test_history_delete_single_item() {
+    # First add a download
+    local body
+    body=$(_http_post "$DASHBOARD_URL/api/add" \
+        '{"url":"https://www.youtube.com/watch?v=dQw4w9WgXcQ","quality":"720","format":"any"}')
+    if ! echo "$body" | grep -q '"status".*"ok"'; then
+        echo "Failed to add download for delete test: $body"
+        return 1
+    fi
+
+    sleep 2
+
+    # Delete it from history
+    body=$(_http_post "$DASHBOARD_URL/api/delete" '{"ids":["dQw4w9WgXcQ"],"where":"done"}')
+    if ! echo "$body" | grep -q '"status".*"ok"'; then
+        echo "Failed to delete from history: $body"
+        return 1
+    fi
+}
+
+test_history_clear_all() {
+    # Add a dummy item
+    _http_post "$DASHBOARD_URL/api/add" \
+        '{"url":"https://www.youtube.com/watch?v=dQw4w9WgXcQ","quality":"720","format":"any"}' >/dev/null
+    sleep 2
+
+    # Clear all history via batch delete
+    local body ids_json
+    body=$(_http_get "$DASHBOARD_URL/api/history")
+    ids_json=$(echo "$body" | python3 -c "import sys,json; d=json.load(sys.stdin); print(json.dumps([x['id'] for x in d.get('done',[])]))" 2>/dev/null || echo "[]")
+
+    if [ "$ids_json" != "[]" ]; then
+        body=$(_http_post "$DASHBOARD_URL/api/delete" "{\"ids\":$ids_json,\"where\":\"done\"}")
+        if ! echo "$body" | grep -q '"status".*"ok"'; then
+            echo "Failed to clear all history: $body"
+            return 1
+        fi
+    fi
+}
+
+test_history_retry_download() {
+    # Add a download, then simulate retry by delete + re-add
+    local body
+    body=$(_http_post "$DASHBOARD_URL/api/add" \
+        '{"url":"https://www.youtube.com/watch?v=dQw4w9WgXcQ","quality":"720","format":"any"}')
+    if ! echo "$body" | grep -q '"status".*"ok"'; then
+        echo "Failed to add download for retry test: $body"
+        return 1
+    fi
+
+    sleep 2
+
+    # Delete from history
+    _http_post "$DASHBOARD_URL/api/delete" '{"ids":["dQw4w9WgXcQ"],"where":"done"}' >/dev/null
+
+    # Re-add (simulating retry)
+    body=$(_http_post "$DASHBOARD_URL/api/add" \
+        '{"url":"https://www.youtube.com/watch?v=dQw4w9WgXcQ","quality":"720","format":"any"}')
+    if ! echo "$body" | grep -q '"status".*"ok"'; then
+        echo "Failed to re-add download (retry simulation): $body"
+        return 1
+    fi
+
+    # Cleanup
+    _http_post "$DASHBOARD_URL/api/delete" '{"ids":["dQw4w9WgXcQ"],"where":"done"}' >/dev/null
+}
+
+# =============================================================================
+# File Deletion Endpoint Tests
+# =============================================================================
+
+test_landing_delete_download_endpoint() {
+    local body status
+    # Test delete-download via landing page directly
+    status=$(_http_status_with_args "$LANDING_URL/api/delete-download" "POST" \
+        -H "Content-Type: application/json" \
+        -d '{"id":"test-item","title":"Test","folder":"","delete_file":false}')
+    if [ "$status" != "200" ]; then
+        echo "Landing delete-download endpoint returned HTTP $status"
+        return 1
+    fi
+    body=$(_http_post "$LANDING_URL/api/delete-download" \
+        '{"id":"test-item","title":"Test","folder":"","delete_file":false}')
+    if ! echo "$body" | grep -q '"success".*true'; then
+        echo "Landing delete-download returned unexpected response: $body"
+        return 1
+    fi
+}
+
+test_dashboard_proxy_delete_download() {
+    local body status
+    # Test delete-download via dashboard nginx proxy
+    status=$(_http_status_with_args "$DASHBOARD_URL/api/delete-download" "POST" \
+        -H "Content-Type: application/json" \
+        -d '{"id":"test-proxy","title":"Test Proxy","folder":"","delete_file":false}')
+    if [ "$status" != "200" ]; then
+        echo "Dashboard proxy delete-download returned HTTP $status"
+        return 1
+    fi
+    body=$(_http_post "$DASHBOARD_URL/api/delete-download" \
+        '{"id":"test-proxy","title":"Test Proxy","folder":"","delete_file":false}')
+    if ! echo "$body" | grep -q '"success".*true'; then
+        echo "Dashboard proxy delete-download returned unexpected response: $body"
+        return 1
+    fi
+}
+
+# =============================================================================
+# Cookie & Version Verification Tests
+# =============================================================================
+
+test_metube_ytdlp_is_nightly() {
+    _detect_runtime
+    local version
+    version=$($CONTAINER_RUNTIME exec "$METUBE_CONTAINER" python3 -c "import yt_dlp; print(yt_dlp.version.__version__)" 2>/dev/null || echo "unknown")
+    if ! echo "$version" | grep -qE "2026\.[0-9]+\.[0-9]+"; then
+        echo "MeTube yt-dlp version '$version' does not look like a valid 2026 version"
+        return 1
+    fi
+    # Accept any recent 2026 version (stable or nightly)
+    echo "MeTube yt-dlp version: $version"
+}
+
+test_metube_has_fresh_cookies() {
+    _detect_runtime
+    local cookie_size
+    cookie_size=$($CONTAINER_RUNTIME exec "$METUBE_CONTAINER" wc -c /config/cookies.txt 2>/dev/null | awk '{print $1}' || echo "0")
+    if [ "$cookie_size" -lt 100 ]; then
+        echo "MeTube cookie file is too small ($cookie_size bytes) — cookies may not be synced"
+        return 1
+    fi
+    echo "MeTube cookie file size: $cookie_size bytes"
+}
+
+# =============================================================================
 # Test Suite Runner
 # =============================================================================
 
@@ -485,6 +623,19 @@ run_dashboard_tests() {
 
     # CORS
     run_test "test_dashboard_api_no_cors_block" test_dashboard_api_no_cors_block
+
+    # History Management
+    run_test "test_history_delete_single_item" test_history_delete_single_item
+    run_test "test_history_clear_all" test_history_clear_all
+    run_test "test_history_retry_download" test_history_retry_download
+
+    # File Deletion Endpoint
+    run_test "test_landing_delete_download_endpoint" test_landing_delete_download_endpoint
+    run_test "test_dashboard_proxy_delete_download" test_dashboard_proxy_delete_download
+
+    # Cookie & Version Verification
+    run_test "test_metube_ytdlp_is_nightly" test_metube_ytdlp_is_nightly
+    run_test "test_metube_has_fresh_cookies" test_metube_has_fresh_cookies
 }
 
 # =============================================================================

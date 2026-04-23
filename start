@@ -72,7 +72,16 @@ fi
 # Only remove if cookies don't contain YouTube domains (legacy bad cookies)
 # =============================================================================
 
-if [ -f "$SCRIPT_DIR/metube/config/cookies.txt" ]; then
+# =============================================================================
+# Sync fresh cookies from yt-dlp to metube (yt-dlp/cookies.txt is user-managed
+# and usually fresher than the metube upload)
+# =============================================================================
+
+if [ -f "$SCRIPT_DIR/yt-dlp/cookies/cookies.txt" ] && grep -qE "youtube\.com|youtu\.be" "$SCRIPT_DIR/yt-dlp/cookies/cookies.txt" 2>/dev/null; then
+    echo -e "${GREEN}✓ Fresh YouTube cookies found in yt-dlp/cookies/cookies.txt — syncing to metube${NC}"
+    cp -f "$SCRIPT_DIR/yt-dlp/cookies/cookies.txt" "$SCRIPT_DIR/metube/config/cookies.txt"
+    chmod 644 "$SCRIPT_DIR/metube/config/cookies.txt"
+elif [ -f "$SCRIPT_DIR/metube/config/cookies.txt" ]; then
     if [ "${YOUTUBE_COOKIES:-}" = "false" ]; then
         echo -e "${YELLOW}⚠ YOUTUBE_COOKIES=false — removing metube/config/cookies.txt${NC}"
         rm -f "$SCRIPT_DIR/metube/config/cookies.txt"
@@ -135,6 +144,36 @@ else
     else
         $COMPOSE_CMD --profile no-vpn up -d
     fi
+fi
+
+# =============================================================================
+# Post-startup: update yt-dlp inside metube containers and sync cookies
+# =============================================================================
+
+echo ""
+echo -e "${BLUE}============================================${NC}"
+echo -e "${BLUE}    Post-startup Updates${NC}"
+echo -e "${BLUE}============================================${NC}"
+echo ""
+
+# Update yt-dlp inside metube containers to nightly (YouTube changes frequently)
+for container in metube metube-direct; do
+    if $CONTAINER_RUNTIME ps --format "{{.Names}}" | grep -q "^${container}$"; then
+        echo -e "${BLUE}Updating yt-dlp in $container...${NC}"
+        $CONTAINER_RUNTIME exec "$container" pip install --quiet --upgrade \
+            "yt-dlp@https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/latest/download/yt-dlp.tar.gz" 2>/dev/null || true
+        $CONTAINER_RUNTIME exec "$container" python3 -c "import yt_dlp; print('yt-dlp version:', yt_dlp.version.__version__)" 2>/dev/null || true
+    fi
+done
+
+# Sync fresh cookies from yt-dlp to metube if available
+if [ -f "$SCRIPT_DIR/yt-dlp/cookies/cookies.txt" ]; then
+    for container in metube metube-direct; do
+        if $CONTAINER_RUNTIME ps --format "{{.Names}}" | grep -q "^${container}$"; then
+            echo -e "${BLUE}Syncing cookies to $container...${NC}"
+            $CONTAINER_RUNTIME cp "$SCRIPT_DIR/yt-dlp/cookies/cookies.txt" "$container:/config/cookies.txt" 2>/dev/null || true
+        fi
+    done
 fi
 
 echo ""

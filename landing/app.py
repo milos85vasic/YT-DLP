@@ -646,7 +646,67 @@ def favicon():
     return "", 204
 
 
+DOWNLOAD_DIR = os.environ.get("DOWNLOAD_DIR", "/downloads")
+
+
+@app.route("/api/delete-download", methods=["POST"])
+def delete_download():
+    """Remove item from MeTube history and optionally delete downloaded files."""
+    try:
+        data = request.get_json() or {}
+        item_id = data.get("id")
+        title = data.get("title", "")
+        folder = data.get("folder", "")
+        delete_file = data.get("delete_file", False)
+
+        if not item_id:
+            return jsonify({"success": False, "error": "Missing id"}), 400
+
+        # 1. Remove from MeTube history
+        try:
+            resp = requests.post(
+                f"{METUBE_URL}/delete",
+                json={"ids": [item_id], "where": "done"},
+                timeout=10
+            )
+            history_deleted = resp.status_code == 200
+        except Exception as e:
+            return jsonify({"success": False, "error": f"Failed to remove from history: {e}"}), 500
+
+        deleted_files = []
+        if delete_file and title:
+            # 2. Find and delete matching files
+            target_dir = os.path.join(DOWNLOAD_DIR, folder) if folder else DOWNLOAD_DIR
+            target_dir = os.path.abspath(target_dir)
+            # Security: ensure we stay within DOWNLOAD_DIR
+            if not target_dir.startswith(os.path.abspath(DOWNLOAD_DIR)):
+                return jsonify({"success": False, "error": "Invalid folder path"}), 400
+
+            if os.path.isdir(target_dir):
+                # Search for files containing the title
+                safe_title = "".join(c for c in title if c.isalnum() or c in " ._-").strip()
+                for root, _dirs, files in os.walk(target_dir):
+                    for fname in files:
+                        # Match by title substring (case-insensitive) or exact id in filename
+                        if safe_title.lower() in fname.lower() or item_id in fname:
+                            fpath = os.path.join(root, fname)
+                            try:
+                                os.remove(fpath)
+                                deleted_files.append(fname)
+                            except Exception:
+                                pass
+
+        return jsonify({
+            "success": True,
+            "history_deleted": history_deleted,
+            "files_deleted": deleted_files,
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 if __name__ == "__main__":
     print(f"Starting MeTube Landing Page on port {PROXY_PORT}")
     print(f"MeTube URL: {METUBE_URL}")
+    print(f"Download dir: {DOWNLOAD_DIR}")
     app.run(host="0.0.0.0", port=PROXY_PORT, debug=False)

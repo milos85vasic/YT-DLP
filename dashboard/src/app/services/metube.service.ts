@@ -27,6 +27,14 @@ export interface DownloadInfo {
   size?: number | string;
   filename?: string;
   timestamp?: number;
+  download_type?: string;
+  codec?: string;
+  custom_name_prefix?: string;
+  playlist_item_limit?: number;
+  split_by_chapters?: boolean;
+  chapter_template?: string;
+  subtitle_language?: string;
+  subtitle_mode?: string;
 }
 
 export interface HistoryResponse {
@@ -64,6 +72,73 @@ export class MetubeService {
     return this.http.post<{ status: string }>(`${this.base}/delete`, { ids, where });
   }
 
+  /** Clear all history entries (does NOT delete files). */
+  clearHistory(): Observable<{ status: string }> {
+    return new Observable((observer) => {
+      this.getHistory().subscribe({
+        next: (data) => {
+          const ids = (data.done || []).map((item) => item.id);
+          if (ids.length === 0) {
+            observer.next({ status: 'ok' });
+            observer.complete();
+            return;
+          }
+          this.deleteDownloads(ids, 'done').subscribe({
+            next: (res) => {
+              observer.next(res);
+              observer.complete();
+            },
+            error: (err) => observer.error(err),
+          });
+        },
+        error: (err) => observer.error(err),
+      });
+    });
+  }
+
+  /** Retry a failed/completed download by removing from history and re-adding. */
+  retryDownload(item: DownloadInfo): Observable<{ status: string; msg?: string }> {
+    return new Observable((observer) => {
+      // 1. Remove from history
+      this.deleteDownloads([item.id], 'done').subscribe({
+        next: () => {
+          // 2. Re-add with same settings
+          const req: AddDownloadRequest = {
+            url: item.url,
+            quality: item.quality || 'best',
+            format: item.format || 'any',
+            folder: item.folder || '',
+            download_type: item.download_type || 'video',
+          };
+          this.addDownload(req).subscribe({
+            next: (res) => {
+              observer.next(res);
+              observer.complete();
+            },
+            error: (err) => observer.error(err),
+          });
+        },
+        error: (err) => observer.error(err),
+      });
+    });
+  }
+
+  /** Delete download from history AND optionally delete files from disk. */
+  deleteDownloadWithFile(
+    item: DownloadInfo,
+    deleteFile: boolean
+  ): Observable<{ success: boolean; files_deleted?: string[]; error?: string }> {
+    return this.http.post<{ success: boolean; files_deleted?: string[]; error?: string }>(
+      `${this.base}/delete-download`,
+      {
+        id: item.id,
+        title: item.title,
+        folder: item.folder || '',
+        delete_file: deleteFile,
+      }
+    );
+  }
+
   getCookieStatus(): Observable<{ status: string; has_cookies: boolean }> {
     return this.http.get<{ status: string; has_cookies: boolean }>(`${this.base}/cookie-status`);
   }
@@ -83,8 +158,7 @@ export class MetubeService {
         const all = [...(data.pending || []), ...(data.queue || []), ...(data.done || [])];
         const match = all.find((item) => item.url === url);
         return [match || null];
-      }),
-      // Stop after maxAttempts
+      })
       // Note: caller should use take(maxAttempts) or similar
     );
   }

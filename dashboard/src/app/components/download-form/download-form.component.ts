@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { Subscription, timer } from 'rxjs';
 import { switchMap, take } from 'rxjs/operators';
 import { MetubeService, DownloadInfo } from '../../services/metube.service';
@@ -10,7 +11,7 @@ type TrackState = 'idle' | 'adding' | 'queued' | 'downloading' | 'finished' | 'e
 @Component({
   selector: 'app-download-form',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   template: `
     <div class="page">
       <div class="card">
