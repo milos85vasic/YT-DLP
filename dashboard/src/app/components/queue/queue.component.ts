@@ -11,7 +11,7 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
     <div class="page">
       <h2>⏳ Download Queue</h2>
 
-      <div *ngIf="queue.length === 0 && pending.length === 0" class="empty">
+      <div *ngIf="allItems.length === 0" class="empty">
         <div class="empty-icon">📭</div>
         <p>Queue is empty. Add a download from the Download tab.</p>
       </div>
@@ -19,10 +19,12 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
       <div class="list">
         <!-- Pending items -->
         <div class="item pending" *ngFor="let item of pending">
+          <div class="thumb">⏳</div>
           <div class="info">
-            <div class="title" [title]="item.title">{{ item.title || 'Untitled' }}</div>
+            <div class="title" [title]="item.title">{{ item.title || 'Preparing...' }}</div>
             <div class="meta">
               <span class="status pending">pending</span>
+              <span *ngIf="item.url" class="url" [title]="item.url">{{ item.url }}</span>
             </div>
           </div>
           <button class="btn-delete" (click)="delete(item.id, 'queue')" title="Cancel">✕</button>
@@ -30,6 +32,10 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
 
         <!-- Queue items -->
         <div class="item" *ngFor="let item of queue" [class.error]="item.status === 'error'">
+          <div class="thumb">
+            <span *ngIf="item.status === 'error'">❌</span>
+            <span *ngIf="item.status !== 'error'">⬇️</span>
+          </div>
           <div class="info">
             <div class="title" [title]="item.title">{{ item.title || 'Untitled' }}</div>
             <div class="meta">
@@ -38,7 +44,10 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
               <span *ngIf="item.eta">• ETA {{ item.eta }}</span>
               <span *ngIf="item.size">• {{ formatSize(item.size) }}</span>
             </div>
+            <!-- Error message -->
             <div *ngIf="item.msg" class="msg">{{ item.msg }}</div>
+            <!-- URL for context -->
+            <div *ngIf="item.url && item.status === 'error'" class="url" [title]="item.url">{{ item.url }}</div>
           </div>
 
           <div class="progress-wrap" *ngIf="item.status === 'downloading' || item.status === 'preparing'">
@@ -48,7 +57,10 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
             <span class="percent">{{ item.percent || 0 }}%</span>
           </div>
 
-          <button class="btn-delete" (click)="delete(item.id, 'queue')" title="Cancel">✕</button>
+          <div class="actions">
+            <button *ngIf="item.status === 'error'" class="btn-retry" (click)="retry(item.id)" title="Retry">↻</button>
+            <button class="btn-delete" (click)="delete(item.id, 'queue')" title="Cancel">✕</button>
+          </div>
         </div>
       </div>
     </div>
@@ -65,8 +77,8 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
     .list { display: flex; flex-direction: column; gap: 12px; }
     .item {
       display: flex;
-      align-items: center;
-      gap: 16px;
+      align-items: flex-start;
+      gap: 14px;
       padding: 16px 20px;
       background: rgba(255,255,255,0.04);
       border: 1px solid rgba(255,255,255,0.06);
@@ -74,8 +86,9 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
       transition: background 0.2s;
     }
     .item:hover { background: rgba(255,255,255,0.06); }
-    .item.error { border-color: rgba(255,0,80,0.3); }
+    .item.error { border-color: rgba(255,0,80,0.3); background: rgba(255,0,80,0.03); }
     .item.pending { border-color: rgba(255,200,0,0.15); }
+    .thumb { font-size: 20px; margin-top: 2px; }
     .info { flex: 1; min-width: 0; }
     .title {
       font-size: 14px;
@@ -92,6 +105,7 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
+      align-items: center;
     }
     .status {
       padding: 2px 8px;
@@ -106,12 +120,32 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
     .status.processing { background: rgba(150,0,255,0.12); color: #cc88ff; }
     .status.finished { background: rgba(0,255,136,0.12); color: #00ff88; }
     .status.error { background: rgba(255,0,80,0.12); color: #ff5588; }
-    .msg { margin-top: 6px; font-size: 12px; color: #ff5588; }
+    .msg {
+      margin-top: 8px;
+      padding: 8px 12px;
+      background: rgba(255,0,80,0.08);
+      border: 1px solid rgba(255,0,80,0.15);
+      border-radius: 8px;
+      font-size: 12px;
+      color: #ff5588;
+      font-family: monospace;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .url {
+      margin-top: 4px;
+      font-size: 11px;
+      color: #555;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
     .progress-wrap {
       display: flex;
       align-items: center;
       gap: 10px;
-      width: 200px;
+      width: 180px;
+      margin-top: 4px;
     }
     .progress-bar {
       flex: 1;
@@ -127,6 +161,11 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
       transition: width 0.5s ease;
     }
     .percent { font-size: 12px; color: #aaa; width: 36px; text-align: right; }
+    .actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
     .btn-delete {
       width: 32px;
       height: 32px;
@@ -139,6 +178,18 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
       transition: background 0.2s;
     }
     .btn-delete:hover { background: rgba(255,0,80,0.25); }
+    .btn-retry {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: none;
+      background: rgba(0,255,136,0.1);
+      color: #00ff88;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.2s;
+    }
+    .btn-retry:hover { background: rgba(0,255,136,0.25); }
   `],
 })
 export class QueueComponent implements OnInit, OnDestroy {
@@ -149,7 +200,7 @@ export class QueueComponent implements OnInit, OnDestroy {
   constructor(private metube: MetubeService) {}
 
   ngOnInit(): void {
-    this.sub = this.metube.getHistoryPolling().subscribe({
+    this.sub = this.metube.getHistoryPolling(1000).subscribe({
       next: (data) => {
         this.queue = data.queue || [];
         this.pending = data.pending || [];
@@ -162,8 +213,19 @@ export class QueueComponent implements OnInit, OnDestroy {
     this.sub?.unsubscribe();
   }
 
+  get allItems(): DownloadInfo[] {
+    return [...this.pending, ...this.queue];
+  }
+
   delete(id: string, where: 'queue' | 'done'): void {
     this.metube.deleteDownloads([id], where).subscribe();
+  }
+
+  retry(id: string): void {
+    this.metube.startDownloads([id]).subscribe({
+      next: () => {},
+      error: (err) => console.error('Retry failed', err),
+    });
   }
 
   formatSize(size: number | string): string {

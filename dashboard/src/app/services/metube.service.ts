@@ -26,6 +26,7 @@ export interface DownloadInfo {
   eta?: string;
   size?: number | string;
   filename?: string;
+  timestamp?: number;
 }
 
 export interface HistoryResponse {
@@ -44,11 +45,15 @@ export class MetubeService {
     return this.http.post<{ status: string; msg?: string }>(`${this.base}/add`, req);
   }
 
+  startDownloads(ids: string[]): Observable<{ status: string }> {
+    return this.http.post<{ status: string }>(`${this.base}/start`, { ids });
+  }
+
   getHistory(): Observable<HistoryResponse> {
     return this.http.get<HistoryResponse>(`${this.base}/history`);
   }
 
-  getHistoryPolling(intervalMs = 2000): Observable<HistoryResponse> {
+  getHistoryPolling(intervalMs = 1000): Observable<HistoryResponse> {
     return timer(0, intervalMs).pipe(
       switchMap(() => this.getHistory()),
       shareReplay(1)

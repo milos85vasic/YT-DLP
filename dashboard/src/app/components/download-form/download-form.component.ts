@@ -71,6 +71,22 @@ import { MetubeService } from '../../services/metube.service';
         </div>
       </div>
 
+      <!-- Recent activity -->
+      <div class="card activity" *ngIf="recentItems.length > 0">
+        <h3>📋 Recent Activity</h3>
+        <div class="activity-list">
+          <div class="activity-item" *ngFor="let item of recentItems" [class.error]="item.status === 'error'">
+            <span class="act-icon">
+              <span *ngIf="item.status === 'error'">❌</span>
+              <span *ngIf="item.status === 'finished'">✅</span>
+              <span *ngIf="item.status !== 'error' && item.status !== 'finished'">⏳</span>
+            </span>
+            <span class="act-title" [title]="item.title">{{ item.title || item.url || 'Untitled' }}</span>
+            <span class="act-status" [class]="item.status">{{ item.status }}</span>
+          </div>
+        </div>
+      </div>
+
       <div class="card platforms">
         <h3>✅ Supported Platforms</h3>
         <div class="platform-grid">
@@ -153,6 +169,41 @@ import { MetubeService } from '../../services/metube.service';
       border: 1px solid rgba(255,0,80,0.2);
       color: #ff5588;
     }
+    .activity-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .activity-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 10px;
+      font-size: 13px;
+    }
+    .activity-item.error { border: 1px solid rgba(255,0,80,0.15); }
+    .act-icon { font-size: 14px; }
+    .act-title {
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #ccc;
+    }
+    .act-status {
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .act-status.pending { background: rgba(255,200,0,0.12); color: #ffcc00; }
+    .act-status.downloading { background: rgba(0,255,136,0.12); color: #00ff88; }
+    .act-status.finished { background: rgba(0,255,136,0.12); color: #00ff88; }
+    .act-status.error { background: rgba(255,0,80,0.12); color: #ff5588; }
     .platform-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -182,6 +233,7 @@ export class DownloadFormComponent implements OnInit {
   loading = false;
   message = '';
   isError = false;
+  recentItems: Array<{ title: string; url: string; status: string }> = [];
 
   platforms = [
     { name: 'YouTube', icon: '📺', ok: true },
@@ -202,7 +254,9 @@ export class DownloadFormComponent implements OnInit {
 
   constructor(private metube: MetubeService) {}
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.loadRecent();
+  }
 
   addDownload(): void {
     if (!this.url.trim()) return;
@@ -220,9 +274,15 @@ export class DownloadFormComponent implements OnInit {
         next: (res) => {
           this.loading = false;
           if (res.status === 'ok') {
-            this.message = 'Added to queue successfully!';
+            this.message = 'Added to queue! Check the Queue tab to track progress.';
             this.isError = false;
+            // Save to recent
+            this.saveRecent(this.url.trim(), 'Added');
+            // Clear form
             this.url = '';
+            this.folder = '';
+            // Auto-clear message after 5s
+            setTimeout(() => (this.message = ''), 5000);
           } else {
             this.message = res.msg || 'Failed to add download';
             this.isError = true;
@@ -231,8 +291,22 @@ export class DownloadFormComponent implements OnInit {
         error: (err) => {
           this.loading = false;
           this.isError = true;
-          this.message = err.error?.msg || err.message || 'Network error';
+          this.message = err.error?.msg || err.message || 'Network error — check if MeTube API is reachable';
         },
       });
+  }
+
+  private loadRecent(): void {
+    try {
+      const raw = localStorage.getItem('ytdlp_recent');
+      if (raw) this.recentItems = JSON.parse(raw);
+    } catch {}
+  }
+
+  private saveRecent(url: string, status: string): void {
+    const title = url.length > 50 ? url.slice(0, 50) + '…' : url;
+    this.recentItems.unshift({ title, url, status });
+    if (this.recentItems.length > 5) this.recentItems.pop();
+    localStorage.setItem('ytdlp_recent', JSON.stringify(this.recentItems));
   }
 }
