@@ -9,6 +9,19 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
   imports: [CommonModule],
   template: `
     <div class="page">
+      <!-- Safety Banner -->
+      <div class="safety-banner">
+        <strong>🛡️ Safe History Management</strong>
+        <p>
+          Our dashboard <strong>never deletes your files</strong> when clearing history.
+          Only the list entries are removed. Files stay in your downloads folder.
+        </p>
+        <p class="warning-small">
+          ⚠️ <strong>Warning:</strong> The original MeTube Classic interface (port 8088)
+          may still delete files when using "Clear Completed". Use this dashboard for safety.
+        </p>
+      </div>
+
       <div class="header-row">
         <h2>📜 Download History</h2>
         <button
@@ -83,6 +96,30 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
   `,
   styles: [`
     .page { padding: 24px; max-width: 900px; margin: 0 auto; }
+    .safety-banner {
+      margin-bottom: 20px;
+      padding: 16px 20px;
+      background: rgba(0,255,136,0.06);
+      border: 1px solid rgba(0,255,136,0.15);
+      border-radius: 14px;
+      color: #ccc;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .safety-banner strong {
+      display: block;
+      color: #00ff88;
+      font-size: 15px;
+      margin-bottom: 6px;
+    }
+    .safety-banner p { margin: 0 0 6px; }
+    .safety-banner .warning-small {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255,200,0,0.15);
+      color: #ffcc66;
+      font-size: 12px;
+    }
     .header-row {
       display: flex;
       justify-content: space-between;
@@ -347,7 +384,13 @@ export class HistoryComponent implements OnInit, OnDestroy {
   }
 
   clearAll(): void {
-    if (!confirm('Remove all items from history?\nDownloaded files will NOT be deleted.')) {
+    if (!confirm(
+      '🛡️ SAFETY CONFIRMATION\n\n' +
+      'Remove ALL items from history?\n\n' +
+      '✅ YOUR DOWNLOADED FILES WILL BE KEPT.\n' +
+      '✅ Only the history list entries will be removed.\n\n' +
+      'Press OK to proceed.'
+    )) {
       return;
     }
     this.metube.clearHistory().subscribe({
