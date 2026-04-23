@@ -128,7 +128,8 @@ for i in {1..10}; do
     if ! ./status 2>/dev/null | grep -q "running"; then
         echo -e "${GREEN}✓ All containers stopped${NC}"
         break
-    fi    sleep 1
+    fi
+    sleep 1
 done
 
 echo ""

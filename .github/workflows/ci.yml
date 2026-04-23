@@ -1,0 +1,122 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  shell-checks:
+    name: Shell Script Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate shell script syntax
+        run: |
+          for script in init start stop restart download cleanup status check-vpn update-images setup-auto-update start_no_vpn prepare-release.sh; do
+            if [ -f "$script" ]; then
+              echo "Checking: $script"
+              bash -n "$script"
+            fi
+          done
+
+      - name: Validate test script syntax
+        run: |
+          for script in tests/*.sh; do
+            echo "Checking: $script"
+            bash -n "$script"
+          done
+
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create test directories
+        run: mkdir -p /tmp/test-downloads
+
+      - name: Run unit tests
+        run: ./tests/run-tests.sh -p unit
+
+  compose-validation:
+    name: Docker Compose Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create minimal .env for compose validation
+        run: |
+          cat > .env << 'EOF'
+          USE_VPN=false
+          DOWNLOAD_DIR=/tmp/test-downloads
+          PUID=1001
+          PGID=1001
+          EOF
+
+      - name: Validate Docker Compose configuration
+        run: docker compose config > /dev/null
+
+  build-dashboard:
+    name: Build Angular Dashboard
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: dashboard/package-lock.json
+
+      - name: Install dependencies
+        working-directory: dashboard
+        run: npm ci --legacy-peer-deps
+
+      - name: Build Angular dashboard
+        working-directory: dashboard
+        run: npx ng build --configuration production
+
+  python-validation:
+    name: Python Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate Python syntax
+        run: python3 -m py_compile landing/app.py
+
+  code-quality:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check for executable scripts
+        run: |
+          for script in init start stop restart download cleanup status check-vpn update-images setup-auto-update start_no_vpn; do
+            if [ -f "$script" ] && [ ! -x "$script" ]; then
+              echo "WARNING: $script is not executable"
+            fi
+          done
+
+      - name: Check for trailing whitespace in scripts
+        run: |
+          find . -name "*.sh" -o -name "init" -o -name "start" -o -name "stop" -o -name "restart" -o -name "download" -o -name "cleanup" -o -name "status" -o -name "check-vpn" -o -name "update-images" -o -name "setup-auto-update" -o -name "start_no_vpn" | while read f; do
+            if grep -n '[[:space:]]$' "$f" 2>/dev/null; then
+              echo "WARNING: $f has trailing whitespace"
+            fi
+          done
