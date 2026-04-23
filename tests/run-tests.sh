@@ -331,11 +331,16 @@ run_error_tests() {
     log_warn "Error tests not loaded"
 }
 
+run_media_services_tests() {
+    log_warn "Media services tests not loaded"
+}
+
 # Source all test files (these will override the stubs above)
 source "$TEST_DIR/test-unit.sh" 2>/dev/null || true
 source "$TEST_DIR/test-integration.sh" 2>/dev/null || true
 source "$TEST_DIR/test-scenarios.sh" 2>/dev/null || true
 source "$TEST_DIR/test-errors.sh" 2>/dev/null || true
+source "$TEST_DIR/test-media-services.sh" 2>/dev/null || true
 
 # =============================================================================
 # Main Test Runner
@@ -501,6 +506,8 @@ main() {
             fi
             log_section "Running Integration Tests"
             run_integration_tests
+            log_section "Running Media Services Tests"
+            run_media_services_tests
             # Stop containers if we started them
             if [ "$containers_started_by_test" = true ] && [ "$DRY_RUN" = false ]; then
                 stop_test_containers
@@ -536,6 +543,7 @@ main() {
             fi
             
             run_integration_tests
+            run_media_services_tests
             run_scenario_tests
             run_error_tests
             

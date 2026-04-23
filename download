@@ -7,6 +7,7 @@
 set -e
 
 # Colors
+RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
@@ -59,6 +60,7 @@ show_help() {
     echo ""
     echo "Examples:"
     echo "  ./download 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'"
+    echo "  ./download 'https://vkvideo.ru/video/playlist/-220068665_92'"
     echo "  ./download --batch"
     echo "  ./download --channels"
     echo ""
@@ -95,12 +97,26 @@ if ! $CONTAINER_RUNTIME ps --format "table {{.Names}}" | grep -q "^${CONTAINER_N
     exit 1
 fi
 
+# =============================================================================
+# Build base YT-DLP arguments (config + optional cookies)
+# =============================================================================
+
+BASE_ARGS=("--config-location" "/config/yt-dlp.conf")
+
+if [ -s ./yt-dlp/cookies/cookies.txt ]; then
+    BASE_ARGS+=("--cookies" "/cookies/cookies.txt")
+fi
+
+# =============================================================================
 # Handle download operations
+# =============================================================================
+
 case "$1" in
     --batch)
         echo -e "${BLUE}Downloading from urls.txt...${NC}"
         if [ -f ./yt-dlp/config/urls.txt ]; then
-            $CONTAINER_RUNTIME exec --user root $CONTAINER_NAME yt-dlp --extractor-args "youtube:player_client=web,mweb,android" --cookies /cookies/cookies.txt --batch-file /config/urls.txt
+            $CONTAINER_RUNTIME exec --user root $CONTAINER_NAME \
+                yt-dlp "${BASE_ARGS[@]}" --batch-file /config/urls.txt
         else
             echo -e "${YELLOW}urls.txt not found. Creating template...${NC}"
             cat > ./yt-dlp/config/urls.txt << 'EOF'
@@ -108,6 +124,7 @@ case "$1" in
 # Example:
 # https://www.youtube.com/watch?v=VIDEO_ID
 # https://www.youtube.com/playlist?list=PLAYLIST_ID
+# https://vkvideo.ru/video/playlist/-220068665_92
 EOF
             echo -e "${GREEN}✓${NC} Created urls.txt at ./yt-dlp/config/urls.txt"
             echo "Please add URLs to the file and run again."
@@ -116,7 +133,8 @@ EOF
     --channels)
         echo -e "${BLUE}Downloading from subscribed channels...${NC}"
         if [ -f ./yt-dlp/config/channels.txt ]; then
-            $CONTAINER_RUNTIME exec --user root $CONTAINER_NAME yt-dlp --extractor-args "youtube:player_client=web,mweb,android" --cookies /cookies/cookies.txt --batch-file /config/channels.txt --dateafter now-7days
+            $CONTAINER_RUNTIME exec --user root $CONTAINER_NAME \
+                yt-dlp "${BASE_ARGS[@]}" --batch-file /config/channels.txt --dateafter now-7days
         else
             echo -e "${YELLOW}channels.txt not found. Creating template...${NC}"
             cat > ./yt-dlp/config/channels.txt << 'EOF'
@@ -134,6 +152,16 @@ EOF
         URL="$1"
         echo -e "${BLUE}Downloading:${NC} $URL"
         shift
-        $CONTAINER_RUNTIME exec --user root $CONTAINER_NAME yt-dlp --extractor-args "youtube:player_client=web,mweb,android" --cookies /cookies/cookies.txt -o /downloads/ "$@" "$URL"
+
+        # Build per-URL args
+        URL_ARGS=("${BASE_ARGS[@]}")
+
+        # Only add YouTube-specific extractor args for YouTube URLs
+        if echo "$URL" | grep -qiE '(youtube\.com|youtu\.be|youtube-nocookie\.com)'; then
+            URL_ARGS+=("--extractor-args" "youtube:player_client=web,mweb,android")
+        fi
+
+        $CONTAINER_RUNTIME exec --user root $CONTAINER_NAME \
+            yt-dlp "${URL_ARGS[@]}" "$@" "$URL"
         ;;
 esac

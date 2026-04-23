@@ -2,6 +2,30 @@
 
 ## 🚀 Latest Updates (April 2026)
 
+### 12. **Media Services Automated Test Suite** (NEW)
+- **New test file:** `tests/test-media-services.sh`
+- **Purpose:** Automated validation of yt-dlp extraction across 15 major video platforms
+- **Platforms tested:**
+  - ✅ Working (11): YouTube, Vimeo, Dailymotion, Twitch, Instagram, Reddit, Rumble, VK, PeerTube, SoundCloud, Bandcamp
+  - ⚠️ Skipped (4): TikTok (IP-blocked), Bilibili (geo-restricted), Facebook (upstream yt-dlp bug), Twitter/X (stale test data)
+- **Integration:** Added to `run-tests.sh` as part of integration and `all` profiles
+- **Standalone usage:** `./tests/test-media-services.sh`
+- **Test method:** Uses `--simulate` with Chrome User-Agent to verify extraction without downloading
+
+### 11. **VK Video & Non-YouTube Download Fix** (CRITICAL FIX)
+- **Problem:** `download` script failed for VK Video and other non-YouTube sites with `ERROR: unable to open for writing: [Errno 21] Is a directory: '/downloads/'`
+- **Root Cause:** The `download` script had three bugs:
+  1. **Broken output path:** `-o /downloads/` is a directory, not a file template — yt-dlp needs a filename pattern
+  2. **Missing config:** The script ignored `yt-dlp.conf` entirely, so user-agent, archive, subtitles, and quality settings were lost
+  3. **Forced YouTube args:** `--extractor-args "youtube:player_client=web,mweb,android"` and `--cookies` were applied to ALL URLs, which can break non-YouTube extractors
+- **Solution:**
+  - Replaced broken `-o /downloads/` with `--config-location /config/yt-dlp.conf` (config has proper output template)
+  - Made YouTube extractor args conditional (only for youtube.com / youtu.be URLs)
+  - Made `--cookies` conditional (only if `./yt-dlp/cookies/cookies.txt` exists and is non-empty)
+  - Added `RED` color variable that was referenced but missing
+- **MeTube Web UI:** Added `http_headers` with Chrome User-Agent to `YTDL_OPTIONS` in `docker-compose.yml` for both `metube` and `metube-direct` services. This ensures sites like VK that require a modern browser user-agent work correctly through the web UI.
+- **Tested:** Verified working with `https://vkvideo.ru/video/playlist/-220068665_92`
+
 ### 10. **Release v1.2.0** (NEW RELEASE)
 - Created new release v1.2.0
 - Comprehensive release documentation in RELEASE_v1.2.0.md

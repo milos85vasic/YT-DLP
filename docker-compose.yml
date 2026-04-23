@@ -41,7 +41,7 @@ services:
       - DELETE_FILE_ON_TRASHCAN=true
       - DEFAULT_THEME=dark
       - OUTPUT_TEMPLATE=%(title)s.%(ext)s
-      - YTDL_OPTIONS={"writesubtitles":true,"subtitleslangs":["en","es","fr"],"postprocessors":[{"key":"FFmpegEmbedSubtitle","already_have_subtitle":false}],"format":"bestvideo[height<=?1080]+bestaudio/best"}
+      - YTDL_OPTIONS={"writesubtitles":true,"subtitleslangs":["en","es","fr"],"postprocessors":[{"key":"FFmpegEmbedSubtitle","already_have_subtitle":false}],"format":"bestvideo[height<=?1080]+bestaudio/best","http_headers":{"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}}
     volumes:
       - ${DOWNLOAD_DIR}:/downloads
       - ./metube/config:/config
@@ -128,7 +128,7 @@ services:
       - DELETE_FILE_ON_TRASHCAN=true
       - DEFAULT_THEME=dark
       - OUTPUT_TEMPLATE=%(title)s.%(ext)s
-      - YTDL_OPTIONS={"writesubtitles":true,"subtitleslangs":["en","es","fr"],"postprocessors":[{"key":"FFmpegEmbedSubtitle","already_have_subtitle":false}],"format":"bestvideo[height<=?1080]+bestaudio/best"}
+      - YTDL_OPTIONS={"writesubtitles":true,"subtitleslangs":["en","es","fr"],"postprocessors":[{"key":"FFmpegEmbedSubtitle","already_have_subtitle":false}],"format":"bestvideo[height<=?1080]+bestaudio/best","http_headers":{"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}}
     volumes:
       - ${DOWNLOAD_DIR}:/downloads
       - ./metube/config:/config

@@ -8,6 +8,7 @@ This test suite provides full coverage of all scenarios and combinations:
 
 - **Unit Tests**: Individual function and component testing
 - **Integration Tests**: Script workflow and interaction testing
+- **Media Services Tests**: Cross-platform extraction validation (YouTube, Vimeo, Twitch, etc.)
 - **Scenario Tests**: Combination testing (Podman/Docker × VPN/No-VPN)
 - **Error Tests**: Edge cases and error condition testing
 
@@ -29,9 +30,12 @@ This test suite provides full coverage of all scenarios and combinations:
 
 # Run specific test categories without container management
 ./tests/run-tests.sh -p unit          # Unit tests only
-./tests/run-tests.sh -p integration   # Integration tests only
+./tests/run-tests.sh -p integration   # Integration + Media Services tests
 ./tests/run-tests.sh -p scenario      # Scenario tests only
 ./tests/run-tests.sh -p error         # Error tests only
+
+# Run media services compatibility test standalone
+./tests/test-media-services.sh
 
 # Run with specific runtime
 ./tests/run-tests.sh -r podman        # Test with Podman only
@@ -78,6 +82,33 @@ Tests script workflows and interactions:
 - `status` and `check-vpn` scripts
 - `setup-auto-update` script
 
+### Media Services Tests (`test-media-services.sh`)
+
+Tests yt-dlp extraction across major video platforms:
+
+| Platform | Status | Notes |
+|----------|--------|-------|
+| YouTube | ✅ Working | Requires PO tokens (included in image) |
+| Vimeo | ✅ Working | |
+| Dailymotion | ✅ Working | |
+| Twitch VOD | ✅ Working | |
+| Instagram | ✅ Working | |
+| Reddit | ✅ Working | |
+| Rumble | ✅ Working | |
+| VK | ✅ Working | Requires Chrome User-Agent |
+| PeerTube | ✅ Working | |
+| SoundCloud | ✅ Working | |
+| Bandcamp | ✅ Working | |
+| TikTok | ⚠️ Skipped | IP-blocked for most data-center IPs |
+| Bilibili | ⚠️ Skipped | Geo-restricted (requires Chinese network) |
+| Facebook | ⚠️ Skipped | Broken in yt-dlp 2026.03.17 (upstream) |
+| Twitter/X | ⚠️ Skipped | Test data stale (no video in tweet) |
+
+Run standalone:
+```bash
+./tests/test-media-services.sh
+```
+
 ### Scenario Tests (`test-scenarios.sh`)
 
 Tests combinations of configurations:
@@ -112,16 +143,17 @@ Tests error conditions and edge cases:
 
 ```
 tests/
-├── run-tests.sh          # Main test runner
-├── test-unit.sh          # Unit tests
-├── test-integration.sh   # Integration tests
-├── test-scenarios.sh     # Scenario tests
-├── test-errors.sh        # Error tests
-├── config/               # Test configuration files
-│   ├── .env.no-vpn       # No VPN test config
-│   └── .env.with-vpn     # VPN test config
-├── logs/                 # Test execution logs
-└── results/              # Test results and reports
+├── run-tests.sh              # Main test runner
+├── test-unit.sh              # Unit tests
+├── test-integration.sh       # Integration tests
+├── test-media-services.sh    # Media platform compatibility tests
+├── test-scenarios.sh         # Scenario tests
+├── test-errors.sh            # Error tests
+├── config/                   # Test configuration files
+│   ├── .env.no-vpn           # No VPN test config
+│   └── .env.with-vpn         # VPN test config
+├── logs/                     # Test execution logs
+└── results/                  # Test results and reports
 ```
 
 ## Writing Tests
