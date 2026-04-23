@@ -14,7 +14,9 @@ FROM nginx:alpine
 COPY --from=builder /app/dist/yt-dlp-dashboard/browser /usr/share/nginx/html
 COPY nginx.conf.template /etc/nginx/conf.d/default.conf.template
 COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+RUN chmod +x /entrypoint.sh && \
+    chmod -R 777 /etc/nginx/conf.d /var/cache/nginx /var/run /usr/share/nginx/html && \
+    sed -i 's/user nginx;/user 1000;/g' /etc/nginx/nginx.conf
 
-EXPOSE 80
+EXPOSE 8080
 ENTRYPOINT ["/entrypoint.sh"]

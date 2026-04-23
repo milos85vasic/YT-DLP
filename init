@@ -103,6 +103,35 @@ source .env
 set +a
 
 # =============================================================================
+# User/Group ID Detection (file ownership inside containers)
+# =============================================================================
+
+CURRENT_PUID=$(id -u)
+CURRENT_PGID=$(id -g)
+
+if [ -z "${PUID:-}" ] || [ "$PUID" != "$CURRENT_PUID" ]; then
+    PUID="$CURRENT_PUID"
+    # Update .env file
+    if grep -q "^PUID=" .env 2>/dev/null; then
+        sed -i "s/^PUID=.*/PUID=$PUID/" .env
+    else
+        echo "PUID=$PUID" >> .env
+    fi
+fi
+
+if [ -z "${PGID:-}" ] || [ "$PGID" != "$CURRENT_PGID" ]; then
+    PGID="$CURRENT_PGID"
+    if grep -q "^PGID=" .env 2>/dev/null; then
+        sed -i "s/^PGID=.*/PGID=$PGID/" .env
+    else
+        echo "PGID=$PGID" >> .env
+    fi
+fi
+
+echo -e "${GREEN}✓${NC} File ownership: UID=$PUID, GID=$PGID ($(id -un))"
+echo ""
+
+# =============================================================================
 # Variable Validation
 # =============================================================================
 

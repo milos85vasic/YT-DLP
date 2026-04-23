@@ -153,7 +153,7 @@ case "$1" in
     --batch)
         echo -e "${BLUE}Downloading from urls.txt...${NC}"
         if [ -f ./yt-dlp/config/urls.txt ]; then
-            $CONTAINER_RUNTIME exec --user root $CONTAINER_NAME \
+            $CONTAINER_RUNTIME exec $CONTAINER_NAME \
                 yt-dlp "${BASE_ARGS[@]}" --batch-file /config/urls.txt
         else
             echo -e "${YELLOW}urls.txt not found. Creating template...${NC}"
@@ -171,7 +171,7 @@ EOF
     --channels)
         echo -e "${BLUE}Downloading from subscribed channels...${NC}"
         if [ -f ./yt-dlp/config/channels.txt ]; then
-            $CONTAINER_RUNTIME exec --user root $CONTAINER_NAME \
+            $CONTAINER_RUNTIME exec $CONTAINER_NAME \
                 yt-dlp "${BASE_ARGS[@]}" --batch-file /config/channels.txt --dateafter now-7days
         else
             echo -e "${YELLOW}channels.txt not found. Creating template...${NC}"
@@ -200,7 +200,7 @@ EOF
             URL_ARGS+=("--extractor-args" "youtube:player_client=android,mweb,web")
         fi
 
-        $CONTAINER_RUNTIME exec --user root $CONTAINER_NAME \
+        $CONTAINER_RUNTIME exec $CONTAINER_NAME \
             yt-dlp "${URL_ARGS[@]}" "$@" "$URL"
         ;;
 esac

@@ -133,7 +133,9 @@ if [ "$USE_VPN" = "true" ]; then
     if [ "$CONTAINER_RUNTIME" = "docker" ]; then
         $COMPOSE_CMD --profile vpn --profile docker up -d
     else
-        $COMPOSE_CMD --profile vpn up -d
+        # Podman rootless: keep host UID inside containers so files are created
+        # with correct ownership (milosvasic:milosvasic).
+        $COMPOSE_CMD --in-pod false --podman-run-args="--userns=keep-id" --profile vpn up -d
     fi
 else
     echo -e "${CYAN}Starting services WITHOUT VPN...${NC}"
@@ -142,7 +144,7 @@ else
     if [ "$CONTAINER_RUNTIME" = "docker" ]; then
         $COMPOSE_CMD --profile no-vpn --profile docker up -d
     else
-        $COMPOSE_CMD --profile no-vpn up -d
+        $COMPOSE_CMD --in-pod false --podman-run-args="--userns=keep-id" --profile no-vpn up -d
     fi
 fi
 
@@ -174,6 +176,16 @@ if [ -f "$SCRIPT_DIR/yt-dlp/cookies/cookies.txt" ]; then
             $CONTAINER_RUNTIME cp "$SCRIPT_DIR/yt-dlp/cookies/cookies.txt" "$container:/config/cookies.txt" 2>/dev/null || true
         fi
     done
+fi
+
+# Fix ownership of existing files so everything belongs to the host user
+HOST_UID=$(id -u)
+HOST_GID=$(id -g)
+echo -e "${BLUE}Fixing file ownership to UID=$HOST_UID GID=$HOST_GID...${NC}"
+chown -R "$HOST_UID:$HOST_GID" "$SCRIPT_DIR/metube/config" 2>/dev/null || true
+chown -R "$HOST_UID:$HOST_GID" "$SCRIPT_DIR/yt-dlp" 2>/dev/null || true
+if [ -n "${DOWNLOAD_DIR:-}" ] && [ -d "$DOWNLOAD_DIR" ]; then
+    chown -R "$HOST_UID:$HOST_GID" "$DOWNLOAD_DIR" 2>/dev/null || true
 fi
 
 echo ""
