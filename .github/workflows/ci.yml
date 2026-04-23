@@ -61,6 +61,7 @@ jobs:
           DOWNLOAD_DIR=/tmp/test-downloads
           PUID=1001
           PGID=1001
+          VPN_OVPN_PATH=/tmp/test-vpn/config.ovpn
           EOF
 
       - name: Validate Docker Compose configuration
