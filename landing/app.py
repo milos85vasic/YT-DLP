@@ -143,110 +143,6 @@ INDEX_TEMPLATE = """
         .upload-zone p { color: #888; font-size: 0.95rem; }
         .upload-zone .big { font-size: 2.5rem; margin-bottom: 10px; }
         
-        const BASE_URL = window.location.origin;
-        let currentStep = 1;
-        const SESSION = '{{ session_id }}';
-        
-        function showLoading(text) {
-            document.getElementById('loadingText').textContent = text;
-            document.getElementById('loadingOverlay').classList.add('active');
-        }
-        function hideLoading() {
-            document.getElementById('loadingOverlay').classList.remove('active');
-        }
-        
-        function goToStep(n) {
-            currentStep = n;
-            
-            for (let i = 1; i <= 3; i++) {
-                document.getElementById('step' + i).className = 'step';
-                document.getElementById('content' + i).classList.remove('active');
-                if (i < 3) document.getElementById('conn' + i).className = 'step-connector';
-            }
-            
-            for (let i = 1; i < n; i++) {
-                document.getElementById('step' + i).classList.add('done');
-                if (i < 3) document.getElementById('conn' + i).classList.add('active');
-            }
-            document.getElementById('step' + n).classList.add('active');
-            document.getElementById('content' + n).classList.add('active');
-            
-            if (n === 2) {
-                window.open('https://www.youtube.com/', '_blank');
-                setupUpload();
-            }
-            
-            if (n === 3) {
-                document.getElementById('metubeLink').href = BASE_URL + '/app';
-            }
-        }
-        
-        function setupUpload() {
-            const zone = document.getElementById('dropZone');
-            const input = document.getElementById('cookieFile');
-            
-            zone.addEventListener('click', () => input.click());
-            
-            zone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                zone.classList.add('dragover');
-            });
-            zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
-            zone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                zone.classList.remove('dragover');
-                if (e.dataTransfer.files[0]) uploadFile(e.dataTransfer.files[0]);
-            });
-            
-            input.addEventListener('change', () => {
-                if (input.files[0]) uploadFile(input.files[0]);
-            });
-        }
-        
-        async function uploadFile(file) {
-            showLoading('Uploading cookies...');
-            
-            const formData = new FormData();
-            formData.append('session', SESSION);
-            formData.append('cookies', file);
-            
-            try {
-                const resp = await fetch('/api/upload-cookies', {
-                    method: 'POST',
-                    body: formData
-                });
-                const data = await resp.json();
-                
-                if (data.success) {
-                    goToStep(3);
-                    showLoading('Success! Redirecting...');
-                    setTimeout(() => window.location.href = METUBE_URL, 1500);
-                } else {
-                    hideLoading();
-                    alert('Upload failed: ' + (data.error || 'Unknown error'));
-                }
-            } catch (e) {
-                hideLoading();
-                alert('Error: ' + e.message);
-            }
-        }
-        
-        async function checkAuth() {
-            try {
-                const resp = await fetch('/api/cookie-status');
-                const data = await resp.json();
-                if (data.has_cookies && data.metube_reachable) {
-                    goToStep(3);
-                    showLoading('Already authenticated! Redirecting...');
-                    setTimeout(() => window.location.href = BASE_URL + '/app', 800);
-                }
-            } catch (e) {
-                console.log('Auth check failed');
-            }
-        }
-        
-        checkAuth();
-        
         .loading-overlay {
             display: none;
             position: fixed;
@@ -565,9 +461,10 @@ INDEX_TEMPLATE = """
                 const data = await resp.json();
                 if (data.has_cookies && data.metube_reachable) {
                     goToStep(3);
-                    // Show cookie freshness banner instead of auto-redirecting
-                    hideLoading();
                     showCookieBanner(data);
+                    // Auto-redirect to Dashboard after brief delay
+                    showLoading('Redirecting to Dashboard...');
+                    setTimeout(() => window.location.href = DASHBOARD_URL, 2500);
                 }
             } catch (e) {
                 console.log('Auth check failed');
