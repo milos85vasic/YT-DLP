@@ -83,8 +83,9 @@ services:
       - ${DOWNLOAD_DIR}:/downloads:rw
       - ./yt-dlp/cookies:/cookies:rw
       - ./yt-dlp/archive:/archive:rw
+      - ./metube/config:/metube-cookies:ro
     restart: unless-stopped
-    entrypoint: ["/bin/sh", "-c", "while true; do sleep 3600; done"]
+    entrypoint: ["/bin/sh", "-c", "yt-dlp --update-to nightly 2>/dev/null || true; cp /metube-cookies/cookies.txt /tmp/metube-cookies.txt 2>/dev/null || true; while true; do sleep 3600; done"]
     command: []
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
@@ -108,8 +109,9 @@ services:
       - ${DOWNLOAD_DIR}:/downloads:rw
       - ./yt-dlp/cookies:/cookies:rw
       - ./yt-dlp/archive:/archive:rw
+      - ./metube/config:/metube-cookies:ro
     restart: unless-stopped
-    entrypoint: ["/bin/sh", "-c", "while true; do sleep 3600; done"]
+    entrypoint: ["/bin/sh", "-c", "yt-dlp --update-to nightly 2>/dev/null || true; cp /metube-cookies/cookies.txt /tmp/metube-cookies.txt 2>/dev/null || true; while true; do sleep 3600; done"]
     command: []
     labels:
       - "com.centurylinklabs.watchtower.enable=true"

@@ -84,8 +84,32 @@ type TrackState = 'idle' | 'adding' | 'queued' | 'downloading' | 'finished' | 'e
             <span class="tracker-title">{{ trackerTitle }}</span>
           </div>
           <div *ngIf="tracker.item?.title" class="tracker-subtitle">{{ tracker.item?.title }}</div>
-          <div *ngIf="tracker.item?.msg" class="tracker-msg">{{ tracker.item?.msg }}</div>
-          <div *ngIf="tracker.item?.status === 'error'" class="tracker-actions">
+
+          <!-- Bot detection / cookie error -->
+          <div *ngIf="isBotError" class="tracker-hint bot">
+            <strong>🔒 YouTube bot detection triggered</strong>
+            <p>YouTube requires fresh browser cookies for this video.</p>
+            <ol>
+              <li>Open the <a href="http://localhost:8086" target="_blank">Landing Page</a></li>
+              <li>Sign in to YouTube in your browser</li>
+              <li>Export fresh cookies using the "Get cookies.txt" extension</li>
+              <li>Upload via the Landing Page</li>
+              <li>Return here and retry</li>
+            </ol>
+            <p class="hint-small">Cookies expire quickly — always export them right before downloading.</p>
+          </div>
+
+          <!-- Stale cookies error -->
+          <div *ngIf="isStaleCookieError" class="tracker-hint stale">
+            <strong>🍪 Your cookies have expired</strong>
+            <p>YouTube rotated your session cookies as a security measure.</p>
+            <p>Go to the <a href="http://localhost:8086" target="_blank">Landing Page</a> to export fresh cookies and retry.</p>
+          </div>
+
+          <!-- Generic error message -->
+          <div *ngIf="tracker.item?.msg && !isBotError && !isStaleCookieError" class="tracker-msg">{{ tracker.item?.msg }}</div>
+
+          <div *ngIf="tracker.item?.status === 'error' && !isBotError && !isStaleCookieError" class="tracker-actions">
             <button class="btn-retry" (click)="retryTracked()">↻ Retry</button>
             <a routerLink="/history" class="link-history">View in History →</a>
           </div>
@@ -207,6 +231,41 @@ type TrackState = 'idle' | 'adding' | 'queued' | 'downloading' | 'finished' | 'e
       white-space: pre-wrap;
       word-break: break-word;
     }
+    .tracker-hint {
+      margin-top: 10px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+    }
+    .tracker-hint.bot {
+      background: rgba(255,200,0,0.08);
+      border: 1px solid rgba(255,200,0,0.2);
+      color: #ffcc66;
+    }
+    .tracker-hint.stale {
+      background: rgba(255,150,0,0.08);
+      border: 1px solid rgba(255,150,0,0.2);
+      color: #ffaa55;
+    }
+    .tracker-hint strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+    .tracker-hint ol {
+      margin: 8px 0;
+      padding-left: 20px;
+      line-height: 1.7;
+    }
+    .tracker-hint a {
+      color: #66b3ff;
+      text-decoration: underline;
+    }
+    .hint-small {
+      margin-top: 8px;
+      font-size: 11px;
+      color: #888;
+    }
     .tracker-actions {
       margin-top: 10px;
       display: flex;
@@ -304,6 +363,16 @@ export class DownloadFormComponent implements OnInit, OnDestroy {
     }
   }
 
+  get isBotError(): boolean {
+    const msg = this.tracker.item?.msg || '';
+    return msg.includes('not a bot') || msg.includes('Sign in to confirm');
+  }
+
+  get isStaleCookieError(): boolean {
+    const msg = this.tracker.item?.msg || '';
+    return msg.includes('no longer valid') || msg.includes('rotated in the browser');
+  }
+
   addDownload(): void {
     if (!this.url.trim()) return;
     this.loading = true;
@@ -326,7 +395,6 @@ export class DownloadFormComponent implements OnInit, OnDestroy {
             this.tracker = { state: 'error', item: { id: '', title: '', url: submittedUrl, quality: '', format: '', folder: '', status: 'error', msg: res.msg || 'Unknown error' } as DownloadInfo };
             return;
           }
-          // Start polling for the result
           this.trackDownload(submittedUrl);
         },
         error: (err) => {
@@ -338,7 +406,7 @@ export class DownloadFormComponent implements OnInit, OnDestroy {
 
   private trackDownload(targetUrl: string): void {
     let attempts = 0;
-    const maxAttempts = 30; // 15 seconds of polling
+    const maxAttempts = 30;
 
     this.trackSub = timer(0, 500).pipe(
       switchMap(() => this.metube.getHistory()),

@@ -98,13 +98,51 @@ if ! $CONTAINER_RUNTIME ps --format "table {{.Names}}" | grep -q "^${CONTAINER_N
 fi
 
 # =============================================================================
+# Cookie validation helper
+# =============================================================================
+
+warn_stale_cookies() {
+    echo ""
+    echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${YELLOW}⚠  WARNING: Your YouTube cookies may be stale or expired.${NC}"
+    echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo ""
+    echo "YouTube periodically rotates cookies as a security measure."
+    echo "If downloads fail with 'Sign in to confirm you're not a bot',"
+    echo "your cookies need to be refreshed."
+    echo ""
+    echo "To fix:"
+    echo "  1. Go to the Landing Page: http://localhost:8086"
+    echo "  2. Sign in to YouTube in your browser"
+    echo "  3. Export fresh cookies (Get cookies.txt extension)"
+    echo "  4. Upload via the Landing Page"
+    echo ""
+    echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo ""
+}
+
+# =============================================================================
 # Build base YT-DLP arguments (config + optional cookies)
 # =============================================================================
 
 BASE_ARGS=("--config-location" "/config/yt-dlp.conf")
 
-if [ -s ./yt-dlp/cookies/cookies.txt ]; then
+# Prefer metube cookies (user-uploaded via landing page, usually fresher)
+# Fall back to yt-dlp CLI cookies
+COOKIE_SOURCE=""
+if [ -s ./metube/config/cookies.txt ] && grep -qE "youtube\.com|youtu\.be" ./metube/config/cookies.txt 2>/dev/null; then
+    BASE_ARGS+=("--cookies" "/tmp/metube-cookies.txt")
+    COOKIE_SOURCE="metube"
+    # Warn if cookies are older than 1 hour (very likely stale for YouTube)
+    if [ "$(find ./metube/config/cookies.txt -mmin +60 2>/dev/null)" ]; then
+        warn_stale_cookies
+    fi
+elif [ -s ./yt-dlp/cookies/cookies.txt ]; then
     BASE_ARGS+=("--cookies" "/cookies/cookies.txt")
+    COOKIE_SOURCE="yt-dlp"
+    if [ "$(find ./yt-dlp/cookies/cookies.txt -mmin +60 2>/dev/null)" ]; then
+        warn_stale_cookies
+    fi
 fi
 
 # =============================================================================
@@ -157,8 +195,9 @@ EOF
         URL_ARGS=("${BASE_ARGS[@]}")
 
         # Only add YouTube-specific extractor args for YouTube URLs
+        # Use android client first — web client often triggers bot detection
         if echo "$URL" | grep -qiE '(youtube\.com|youtu\.be|youtube-nocookie\.com)'; then
-            URL_ARGS+=("--extractor-args" "youtube:player_client=web,mweb,android")
+            URL_ARGS+=("--extractor-args" "youtube:player_client=android,mweb,web")
         fi
 
         $CONTAINER_RUNTIME exec --user root $CONTAINER_NAME \

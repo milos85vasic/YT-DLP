@@ -69,15 +69,18 @@ fi
 
 # =============================================================================
 # Clean up stale cookies that can break non-YouTube downloads
+# Only remove if cookies don't contain YouTube domains (legacy bad cookies)
 # =============================================================================
 
 if [ -f "$SCRIPT_DIR/metube/config/cookies.txt" ]; then
-    if [ "${YOUTUBE_COOKIES:-false}" != "true" ]; then
-        echo -e "${YELLOW}⚠ Removing stale cookies file that can break VK and other sites${NC}"
+    if [ "${YOUTUBE_COOKIES:-}" = "false" ]; then
+        echo -e "${YELLOW}⚠ YOUTUBE_COOKIES=false — removing metube/config/cookies.txt${NC}"
         rm -f "$SCRIPT_DIR/metube/config/cookies.txt"
+    elif grep -qE "youtube\.com|youtu\.be" "$SCRIPT_DIR/metube/config/cookies.txt" 2>/dev/null; then
+        echo -e "${GREEN}✓ YouTube cookies found in metube/config/cookies.txt — keeping${NC}"
     else
-        echo -e "${YELLOW}⚠ YOUTUBE_COOKIES=true — keeping metube/config/cookies.txt${NC}"
-        echo -e "${YELLOW}  If VK or other sites fail, remove this file and restart${NC}"
+        echo -e "${YELLOW}⚠ Removing stale cookies file (no YouTube domains found)${NC}"
+        rm -f "$SCRIPT_DIR/metube/config/cookies.txt"
     fi
 fi
 

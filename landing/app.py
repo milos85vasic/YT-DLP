@@ -279,6 +279,25 @@ INDEX_TEMPLATE = """
         .step-content { display: none; }
         .step-content.active { display: block; }
         
+        .cookie-banner {
+            margin-bottom: 20px;
+            padding: 14px 18px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            text-align: left;
+        }
+        .cookie-banner.stale {
+            background: rgba(255,200,0,0.08);
+            border: 1px solid rgba(255,200,0,0.2);
+            color: #ffcc66;
+        }
+        .cookie-banner.fresh {
+            background: rgba(0,255,136,0.06);
+            border: 1px solid rgba(0,255,136,0.15);
+            color: #00ff88;
+        }
+        .cookie-banner strong { display: block; margin-bottom: 4px; }
+        .cookie-banner a { color: inherit; text-decoration: underline; }
         .services { margin-top: 28px; text-align: left; }
         .services h3 {
             font-size: 0.95rem;
@@ -406,7 +425,9 @@ INDEX_TEMPLATE = """
                 <h2>You're All Set!</h2>
                 <p>Redirecting you to the YT-DLP Dashboard...</p>
                 <a href="/app" class="metube-link" id="metubeLink">→ Open Dashboard</a>
-                
+
+                <div id="cookieBanner" class="cookie-banner" style="display:none;margin-top:16px;"></div>
+
                 <div class="services">
                     <h3>🚀 Available Services</h3>
                     <div class="service-grid">
@@ -544,14 +565,33 @@ INDEX_TEMPLATE = """
                 const data = await resp.json();
                 if (data.has_cookies && data.metube_reachable) {
                     goToStep(3);
-                    showLoading('Already authenticated! Redirecting to Dashboard...');
-                    setTimeout(() => window.location.href = DASHBOARD_URL, 800);
+                    // Show cookie freshness banner instead of auto-redirecting
+                    hideLoading();
+                    showCookieBanner(data);
                 }
             } catch (e) {
                 console.log('Auth check failed');
             }
         }
-        
+
+        function showCookieBanner(data) {
+            const banner = document.getElementById('cookieBanner');
+            if (!banner) return;
+            const ageMin = data.cookie_age_minutes || 0;
+            if (ageMin > 60) {
+                banner.className = 'cookie-banner stale';
+                banner.innerHTML = `
+                    <strong>⚠ Your cookies are ${Math.round(ageMin)} minutes old</strong>
+                    YouTube cookies expire quickly. If downloads fail with "Sign in to confirm you're not a bot",
+                    <a href="#" onclick="goToStep(2); return false;">export fresh cookies</a> and re-upload.
+                `;
+            } else {
+                banner.className = 'cookie-banner fresh';
+                banner.innerHTML = `<strong>✅ Cookies look fresh (${Math.round(ageMin)} min old)</strong>`;
+            }
+            banner.style.display = 'block';
+        }
+
         checkAuth();
     </script>
 </body>
@@ -672,14 +712,36 @@ def upload_cookies():
 
 @app.route("/api/cookie-status")
 def cookie_status():
+    """Return cookie status including freshness (age in minutes)."""
+    has_cookies = False
+    cookie_age_minutes = 0
     try:
-        resp = requests.get(f"{METUBE_URL}/cookie-status", timeout=5)
-        data = resp.json()
-        return jsonify(
-            {"has_cookies": data.get("has_cookies", False), "metube_reachable": True}
-        )
-    except:
-        return jsonify({"has_cookies": False, "metube_reachable": False}), 500
+        # Check the cookie file directly for age info
+        cookie_path = "/config/cookies.txt"
+        if os.path.exists(cookie_path):
+            has_cookies = True
+            mtime = os.path.getmtime(cookie_path)
+            cookie_age_minutes = (time.time() - mtime) / 60
+        else:
+            # Fall back to MeTube API
+            resp = requests.get(f"{METUBE_URL}/cookie-status", timeout=5)
+            data = resp.json()
+            has_cookies = data.get("has_cookies", False)
+    except Exception:
+        pass
+
+    metube_reachable = False
+    try:
+        requests.get(f"{METUBE_URL}/history", timeout=3)
+        metube_reachable = True
+    except Exception:
+        pass
+
+    return jsonify({
+        "has_cookies": has_cookies,
+        "metube_reachable": metube_reachable,
+        "cookie_age_minutes": round(cookie_age_minutes, 1),
+    })
 
 
 @app.route("/favicon.ico")
