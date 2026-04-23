@@ -9,7 +9,8 @@ Run [yt-dlp](https://github.com/yt-dlp/yt-dlp) inside a container with optional 
 - **Dual Runtime Support**: Works with both Podman (preferred) and Docker
 - **VPN Integration**: Route downloads through OpenVPN for privacy
 - **Landing Page**: Seamless cookie authentication flow for YouTube
-- **Web Interface**: Metube provides a clean, modern web UI
+- **Web Interface**: MeTube provides a clean, modern web UI
+- **Angular Dashboard**: Modern standalone dashboard on port 9090
 - **Cookie Authentication**: Built-in support for YouTube browser cookies
 - **CLI Access**: Direct yt-dlp command-line access
 - **Batch Processing**: Download from URL lists and channel subscriptions
@@ -46,7 +47,8 @@ cp .env.example .env
 ./start
 
 # 4. Access the web interface
-# Open http://localhost:8086 in your browser
+# Open http://localhost:9090 for the Angular Dashboard
+# Or http://localhost:8086 for the Landing Page
 ```
 
 ## Installation
@@ -157,10 +159,11 @@ TZ=America/New_York
 
 ### Web Interface (Metube)
 
-Once running, access the Landing Page at:
-```
-http://localhost:8086
-```
+Once running, access the services at:
+
+- **YT-DLP Dashboard** (new): http://localhost:9090 — Modern Angular UI with queue, history, and download management
+- **Landing Page**: http://localhost:8086 — Cookie authentication flow
+- **MeTube UI**: http://localhost:8088 — Original MeTube web interface
 
 The Landing Page handles cookie authentication and redirects to MeTube when ready.
 
@@ -169,6 +172,13 @@ The Landing Page handles cookie authentication and redirects to MeTube when read
 - Step-by-step guide for cookie export
 - Drag-and-drop cookie upload
 - Auto-redirect to MeTube when authenticated
+
+**YT-DLP Dashboard (at http://localhost:9090):**
+- Modern Angular standalone application
+- Add downloads with quality/format selection
+- Real-time queue and history tracking
+- 15+ supported platforms indicator
+- Dark theme UI
 
 **MeTube UI (at http://localhost:8088):**
 - Paste URLs to download
@@ -570,6 +580,7 @@ This is caused by YouTube's bot detection. YouTube requires cookies from a brows
 | 8086 | Landing Page | Cookie authentication & redirect (No VPN) |
 | 8087 | Landing Page | Cookie authentication & redirect (VPN) |
 | 8088 | Metube | Web interface for yt-dlp (No VPN) |
+| 9090 | Dashboard | Angular dashboard for yt-dlp (No VPN) |
 | 8081 | Metube API | Internal API (container) |
 | 3130 | yt-dlp VPN | VPN proxy port |
 | 3129 | JDownloader VPN | VPN proxy (if using JDownloader) |

@@ -6,7 +6,8 @@
 
 This project is a **Docker/Podman-based orchestration system** for running [yt-dlp](https://github.com/yt-dlp/yt-dlp) (a YouTube/video downloader) with optional VPN support. It manages multiple services including:
 
-- **MeTube Web UI** (`ghcr.io/alexta69/metube:latest`) — A modern web interface for managing downloads
+- **MeTube Web UI** (`ghcr.io/alexta69/metube:latest`) — Original web interface for managing downloads
+- **YT-DLP Dashboard** (custom Angular 19 app) — Modern standalone dashboard on port 9090
 - **yt-dlp CLI** (`ghcr.io/jim60105/yt-dlp:pot`) — The actual downloader with Deno support for YouTube JS challenges
 - **OpenVPN Client** (`dperson/openvpn-client`) — VPN tunnel for privacy/anonymity
 - **Landing Page** (custom Python/Flask app) — Cookie authentication gateway that guides users through exporting/uploading YouTube cookies
@@ -26,6 +27,7 @@ This project is a **Docker/Podman-based orchestration system** for running [yt-d
 | **Orchestration** | Docker Compose / Podman Compose |
 | **CLI / Downloader** | yt-dlp (`ghcr.io/jim60105/yt-dlp:pot`) |
 | **Web UI** | MeTube (`ghcr.io/alexta69/metube:latest`) |
+| **Dashboard** | Angular 19 + nginx (`dashboard/`) |
 | **VPN** | OpenVPN Client (`dperson/openvpn-client`) |
 | **Landing Page** | Python 3.11 + Flask + requests |
 | **Auto-Updates (Docker)** | Watchtower (`containrrr/watchtower:latest`) |
@@ -33,7 +35,7 @@ This project is a **Docker/Podman-based orchestration system** for running [yt-d
 | **Orchestration Scripts** | Bash (`#!/bin/bash`, `set -e`) |
 | **Configuration** | `.env` file + `docker-compose.yml` |
 
-**Note:** There is no `pyproject.toml`, `package.json`, `Cargo.toml`, or similar language-specific manifest at the project root. The only build step is the Flask landing page Docker image (`landing/Dockerfile`).
+**Note:** There is no `pyproject.toml`, `package.json`, `Cargo.toml`, or similar language-specific manifest at the project root. Build steps are the Flask landing page (`landing/Dockerfile`) and the Angular dashboard (`dashboard/Dockerfile`).
 
 ---
 
@@ -41,7 +43,7 @@ This project is a **Docker/Podman-based orchestration system** for running [yt-d
 
 ```
 .
-├── docker-compose.yml          # Service definitions (7 services, 4 profiles)
+├── docker-compose.yml          # Service definitions (8 services, 4 profiles)
 ├── .env.example               # Configuration template
 ├── .env                       # Live configuration (not in git)
 ├── .gitignore                # Comprehensive git ignore
@@ -66,6 +68,14 @@ This project is a **Docker/Podman-based orchestration system** for running [yt-d
 │   ├── app.py                # Flask landing page proxy + cookie upload handler
 │   ├── Dockerfile            # python:3.11-slim, installs flask + requests
 │   └── requirements.txt      # flask>=2.0, requests>=2.25
+│
+├── dashboard/
+│   ├── src/app/              # Angular 19 standalone components
+│   │   ├── components/       # download-form, queue, history
+│   │   ├── services/         # MetubeService (HTTP + polling)
+│   │   └── app.routes.ts     # Lazy-loaded routes
+│   ├── Dockerfile            # Multi-stage: node:22-alpine → nginx:alpine
+│   └── nginx.conf            # SPA fallback + /api proxy to metube-direct
 │
 ├── yt-dlp/
 │   ├── config/
@@ -197,6 +207,7 @@ docker compose --profile vpn up -d
 | `yt-dlp-cli-vpn` | `ghcr.io/jim60105/yt-dlp:pot` | `vpn`, `vpn-cli` | `service:openvpn-yt-dlp` | — | CLI forced through VPN |
 | `metube-direct` | `ghcr.io/alexta69/metube:latest` | `no-vpn` | bridge | `8088:8081/tcp` | Direct MeTube web UI |
 | `landing-no-vpn` | Build `./landing` | `no-vpn` | bridge | `8086:80/tcp` | Cookie auth gateway → MeTube direct |
+| `dashboard` | Build `./dashboard` | `no-vpn` | bridge | `9090:80/tcp` | Angular dashboard → MeTube API |
 | `watchtower` | `containrrr/watchtower:latest` | `docker` | bridge | — | Auto-image updates every 3h |
 
 ### Port Mapping
@@ -206,6 +217,7 @@ docker compose --profile vpn up -d
 | **8086** | Landing Page (No VPN) |
 | **8087** | Landing Page (VPN) |
 | **8088** | MeTube Direct (No VPN) |
+| **9090** | YT-DLP Dashboard (No VPN) |
 | **8081** | MeTube API (internal) |
 | **3130** | yt-dlp VPN proxy |
 

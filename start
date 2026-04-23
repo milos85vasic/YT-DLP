@@ -160,6 +160,7 @@ else
     echo "  Landing Page:     http://localhost:8086"
     echo "  MeTube Direct:    http://localhost:8088"
     echo "  MeTube API:       http://localhost:8088/api/json/v1/"
+    echo "  YT-DLP Dashboard: http://localhost:9090"
     echo ""
 fi
 

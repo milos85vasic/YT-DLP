@@ -278,6 +278,63 @@ INDEX_TEMPLATE = """
         
         .step-content { display: none; }
         .step-content.active { display: block; }
+        
+        .services { margin-top: 28px; text-align: left; }
+        .services h3 {
+            font-size: 0.95rem;
+            color: #aaa;
+            margin-bottom: 14px;
+            text-align: center;
+        }
+        .service-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .service-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            text-decoration: none;
+            color: #ccc;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .service-card:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.15);
+            transform: translateY(-1px);
+        }
+        .service-card.primary {
+            border-color: rgba(255,0,80,0.25);
+            background: rgba(255,0,80,0.06);
+        }
+        .service-card.primary:hover {
+            border-color: rgba(255,0,80,0.4);
+            background: rgba(255,0,80,0.1);
+        }
+        .service-card .s-icon { font-size: 20px; }
+        .service-card .s-name {
+            font-weight: 600;
+            color: #fff;
+            font-size: 0.95rem;
+        }
+        .service-card .s-port {
+            font-size: 0.8rem;
+            color: #888;
+            font-family: monospace;
+            margin-left: auto;
+        }
+        .service-card .s-desc {
+            width: 100%;
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 2px;
+        }
     </style>
 </head>
 <body>
@@ -347,8 +404,32 @@ INDEX_TEMPLATE = """
             <div class="step-content success-view" id="content3">
                 <div class="icon">🎉</div>
                 <h2>You're All Set!</h2>
-                <p>Redirecting you to MeTube...</p>
-                <a href="/app" class="metube-link" id="metubeLink">→ Open MeTube</a>
+                <p>Redirecting you to the YT-DLP Dashboard...</p>
+                <a href="/app" class="metube-link" id="metubeLink">→ Open Dashboard</a>
+                
+                <div class="services">
+                    <h3>🚀 Available Services</h3>
+                    <div class="service-grid">
+                        <a class="service-card primary" href="{{ dashboard_url }}" target="_blank">
+                            <span class="s-icon">📊</span>
+                            <span class="s-name">YT-DLP Dashboard</span>
+                            <span class="s-port">:9090</span>
+                            <span class="s-desc">Modern Angular UI — recommended</span>
+                        </a>
+                        <a class="service-card" href="{{ metube_url }}" target="_blank">
+                            <span class="s-icon">🎬</span>
+                            <span class="s-name">MeTube Classic</span>
+                            <span class="s-port">:8088</span>
+                            <span class="s-desc">Original web interface</span>
+                        </a>
+                        <a class="service-card" href="{{ dashboard_url }}/api/history" target="_blank">
+                            <span class="s-icon">📡</span>
+                            <span class="s-name">MeTube API</span>
+                            <span class="s-port">/api</span>
+                            <span class="s-desc">JSON API endpoint</span>
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
         
@@ -358,7 +439,7 @@ INDEX_TEMPLATE = """
             <div class="feature">📝 <span>Subtitles</span></div>
         </div>
         
-        <p class="footer">MeTube Landing Page</p>
+        <p class="footer">YT-DLP Landing Page</p>
     </div>
     
     <div class="loading-overlay" id="loadingOverlay">
@@ -368,6 +449,7 @@ INDEX_TEMPLATE = """
     
     <script>
         const METUBE_URL = '{{ metube_url }}';
+        const DASHBOARD_URL = '{{ dashboard_url }}';
         const BASE_URL = window.location.origin;
         let currentStep = 1;
         const SESSION = '{{ session_id }}';
@@ -402,32 +484,7 @@ INDEX_TEMPLATE = """
             }
             
             if (n === 3) {
-                document.getElementById('metubeLink').href = METUBE_URL;
-            }
-        }
-        function hideLoading() {
-            document.getElementById('loadingOverlay').classList.remove('active');
-        }
-        
-        function goToStep(n) {
-            currentStep = n;
-            
-            for (let i = 1; i <= 3; i++) {
-                document.getElementById('step' + i).className = 'step';
-                document.getElementById('content' + i).classList.remove('active');
-                if (i < 3) document.getElementById('conn' + i).className = 'step-connector';
-            }
-            
-            for (let i = 1; i < n; i++) {
-                document.getElementById('step' + i).classList.add('done');
-                if (i < 3) document.getElementById('conn' + i).classList.add('active');
-            }
-            document.getElementById('step' + n).classList.add('active');
-            document.getElementById('content' + n).classList.add('active');
-            
-            if (n === 2) {
-                window.open('https://www.youtube.com/', '_blank');
-                setupUpload();
+                document.getElementById('metubeLink').href = DASHBOARD_URL;
             }
         }
         
@@ -469,8 +526,8 @@ INDEX_TEMPLATE = """
                 
                 if (data.success) {
                     goToStep(3);
-                    showLoading('Success! Redirecting...');
-                    setTimeout(() => window.location.href = '/app', 1500);
+                    showLoading('Success! Redirecting to Dashboard...');
+                    setTimeout(() => window.location.href = DASHBOARD_URL, 1500);
                 } else {
                     hideLoading();
                     alert('Upload failed: ' + (data.error || 'Unknown error'));
@@ -487,8 +544,8 @@ INDEX_TEMPLATE = """
                 const data = await resp.json();
                 if (data.has_cookies && data.metube_reachable) {
                     goToStep(3);
-                    showLoading('Already authenticated! Redirecting...');
-                    setTimeout(() => window.location.href = METUBE_URL, 800);
+                    showLoading('Already authenticated! Redirecting to Dashboard...');
+                    setTimeout(() => window.location.href = DASHBOARD_URL, 800);
                 }
             } catch (e) {
                 console.log('Auth check failed');
@@ -509,15 +566,19 @@ def index():
     import re
 
     me_port = os.environ.get("METUBE_PUBLIC_PORT", "8088")
+    dashboard_port = os.environ.get("DASHBOARD_PORT", "9090")
     host = request.host_url.rstrip("/") if request.host_url else f"http://localhost"
     match = re.search(r":(\d+)$", host)
     if match:
         landing_port = match.group(1)
         metube_url = host.replace(f":{landing_port}", f":{me_port}")
+        dashboard_url = host.replace(f":{landing_port}", f":{dashboard_port}")
     else:
         metube_url = f"http://localhost:{me_port}"
+        dashboard_url = f"http://localhost:{dashboard_port}"
     return render_template_string(
-        INDEX_TEMPLATE, session_id=session_id, metube_url=metube_url
+        INDEX_TEMPLATE, session_id=session_id, metube_url=metube_url,
+        dashboard_url=dashboard_url
     )
 
 
