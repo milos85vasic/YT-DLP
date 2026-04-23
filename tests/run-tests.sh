@@ -335,12 +335,17 @@ run_media_services_tests() {
     log_warn "Media services tests not loaded"
 }
 
+run_dashboard_tests() {
+    log_warn "Dashboard tests not loaded"
+}
+
 # Source all test files (these will override the stubs above)
 source "$TEST_DIR/test-unit.sh" 2>/dev/null || true
 source "$TEST_DIR/test-integration.sh" 2>/dev/null || true
 source "$TEST_DIR/test-scenarios.sh" 2>/dev/null || true
 source "$TEST_DIR/test-errors.sh" 2>/dev/null || true
 source "$TEST_DIR/test-media-services.sh" 2>/dev/null || true
+source "$TEST_DIR/test-dashboard.sh" 2>/dev/null || true
 
 # =============================================================================
 # Main Test Runner
@@ -401,6 +406,21 @@ list_tests() {
     echo "  - test_scenario_docker_with_vpn"
     echo "  - test_scenario_batch_download"
     echo "  - test_scenario_channel_download"
+    echo ""
+    echo "Dashboard Tests:"
+    echo "  - test_dashboard_container_running"
+    echo "  - test_dashboard_homepage_loads"
+    echo "  - test_dashboard_spa_fallback"
+    echo "  - test_api_proxy_history"
+    echo "  - test_api_proxy_add_download"
+    echo "  - test_api_proxy_cookie_status"
+    echo "  - test_nginx_uses_resolver_directive"
+    echo "  - test_nginx_uses_variable_proxy_pass"
+    echo "  - test_proxy_works_after_container_restart"
+    echo "  - test_landing_page_loads"
+    echo "  - test_landing_has_dashboard_link"
+    echo "  - test_landing_redirects_to_dashboard"
+    echo "  - test_e2e_add_download_via_dashboard"
     echo ""
     echo "Error Tests:"
     echo "  - test_error_no_runtime"
@@ -506,6 +526,8 @@ main() {
             fi
             log_section "Running Integration Tests"
             run_integration_tests
+            log_section "Running Dashboard Tests"
+            run_dashboard_tests
             log_section "Running Media Services Tests"
             run_media_services_tests
             # Stop containers if we started them
@@ -543,6 +565,7 @@ main() {
             fi
             
             run_integration_tests
+            run_dashboard_tests
             run_media_services_tests
             run_scenario_tests
             run_error_tests

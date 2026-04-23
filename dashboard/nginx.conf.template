@@ -9,7 +9,10 @@ server {
     }
 
     location /api/ {
-        proxy_pass http://metube-direct:8081/;
+        resolver ${RESOLVER} valid=10s;
+        set $metube_backend http://metube-direct:8081;
+        rewrite ^/api/(.*) /$1 break;
+        proxy_pass $metube_backend;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -18,7 +21,9 @@ server {
     }
 
     location /socket.io/ {
-        proxy_pass http://metube-direct:8081/socket.io/;
+        resolver ${RESOLVER} valid=10s;
+        set $metube_backend http://metube-direct:8081;
+        proxy_pass $metube_backend;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
