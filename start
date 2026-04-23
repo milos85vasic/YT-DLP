@@ -68,6 +68,20 @@ if [ -f .env ]; then
 fi
 
 # =============================================================================
+# Clean up stale cookies that can break non-YouTube downloads
+# =============================================================================
+
+if [ -f "$SCRIPT_DIR/metube/config/cookies.txt" ]; then
+    if [ "${YOUTUBE_COOKIES:-false}" != "true" ]; then
+        echo -e "${YELLOW}⚠ Removing stale cookies file that can break VK and other sites${NC}"
+        rm -f "$SCRIPT_DIR/metube/config/cookies.txt"
+    else
+        echo -e "${YELLOW}⚠ YOUTUBE_COOKIES=true — keeping metube/config/cookies.txt${NC}"
+        echo -e "${YELLOW}  If VK or other sites fail, remove this file and restart${NC}"
+    fi
+fi
+
+# =============================================================================
 # Initialize Environment
 # =============================================================================
 

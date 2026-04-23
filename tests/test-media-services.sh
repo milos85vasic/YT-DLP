@@ -187,6 +187,89 @@ test_bandcamp() {
 }
 
 # =============================================================================
+# MeTube Web UI Tests
+# =============================================================================
+
+test_metube_api_vk() {
+    local url="https://vkvideo.ru/video/playlist/-220068665_92"
+    local response
+    local exit_code=0
+
+    if [ -z "$CONTAINER_RUNTIME" ]; then
+        if command -v podman &> /dev/null; then
+            CONTAINER_RUNTIME="podman"
+        elif command -v docker &> /dev/null; then
+            CONTAINER_RUNTIME="docker"
+        else
+            echo "ERROR: No container runtime found"
+            return 1
+        fi
+    fi
+
+    # Ensure metube-direct container is running
+    if ! $CONTAINER_RUNTIME ps --format "{{.Names}}" | grep -q "^metube-direct$"; then
+        echo "metube-direct container is not running"
+        return 1
+    fi
+
+    response=$(curl -s -X POST "http://127.0.0.1:8088/add" \
+        -H "Content-Type: application/json" \
+        -d "{\"url\":\"$url\",\"quality\":\"720\"}" \
+        --max-time 60 2>&1) || exit_code=$?
+
+    if [ "$exit_code" -ne 0 ]; then
+        echo "MeTube API request failed (curl exit $exit_code): $response"
+        return 1
+    fi
+
+    if echo "$response" | grep -q '"status" *: *"ok"'; then
+        return 0
+    fi
+
+    echo "MeTube API returned error: $response"
+    return 1
+}
+
+test_metube_api_youtube() {
+    local url="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+    local response
+    local exit_code=0
+
+    if [ -z "$CONTAINER_RUNTIME" ]; then
+        if command -v podman &> /dev/null; then
+            CONTAINER_RUNTIME="podman"
+        elif command -v docker &> /dev/null; then
+            CONTAINER_RUNTIME="docker"
+        else
+            echo "ERROR: No container runtime found"
+            return 1
+        fi
+    fi
+
+    if ! $CONTAINER_RUNTIME ps --format "{{.Names}}" | grep -q "^metube-direct$"; then
+        echo "metube-direct container is not running"
+        return 1
+    fi
+
+    response=$(curl -s -X POST "http://127.0.0.1:8088/add" \
+        -H "Content-Type: application/json" \
+        -d "{\"url\":\"$url\",\"quality\":\"720\"}" \
+        --max-time 120 2>&1) || exit_code=$?
+
+    if [ "$exit_code" -ne 0 ]; then
+        echo "MeTube API request failed (curl exit $exit_code): $response"
+        return 1
+    fi
+
+    if echo "$response" | grep -q '"status" *: *"ok"'; then
+        return 0
+    fi
+
+    echo "MeTube API returned error: $response"
+    return 1
+}
+
+# =============================================================================
 # Known-issue platforms (skipped with explanation)
 # =============================================================================
 
@@ -232,6 +315,8 @@ run_media_services_tests() {
     run_test "test_peertube" test_peertube
     run_test "test_soundcloud" test_soundcloud
     run_test "test_bandcamp" test_bandcamp
+    run_test "test_metube_api_vk" test_metube_api_vk
+    run_test "test_metube_api_youtube" test_metube_api_youtube
     run_test "test_tiktok" test_tiktok
     run_test "test_bilibili" test_bilibili
     run_test "test_facebook" test_facebook

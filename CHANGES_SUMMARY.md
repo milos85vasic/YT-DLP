@@ -2,15 +2,24 @@
 
 ## 🚀 Latest Updates (April 2026)
 
+### 13. **MeTube Cookie Auto-Loading Fix** (CRITICAL FIX)
+- **Problem:** MeTube Web UI failed with `HTTP Error 103: Early Hints` or `registered users required` when adding VK videos
+- **Root Cause:** MeTube auto-detects `/config/cookies.txt` on startup. A stale cookie file containing unrelated site cookies (gitverse.ru, yandex.ru, etc.) was being sent to VK, causing VK to reject the request
+- **Solution:**
+  - `start` script now removes `metube/config/cookies.txt` before starting if `YOUTUBE_COOKIES != true`
+  - `landing/app.py` now validates uploaded cookies — rejects empty files, non-Netscape format, and files with no recognised video-platform domains
+  - Documented that generic browser cookie exports can break site-specific downloads
+- **Tested:** Verified VK playlist `https://vkvideo.ru/video/playlist/-220068665_92` adds successfully through MeTube API
+
 ### 12. **Media Services Automated Test Suite** (NEW)
 - **New test file:** `tests/test-media-services.sh`
-- **Purpose:** Automated validation of yt-dlp extraction across 15 major video platforms
+- **Purpose:** Automated validation of yt-dlp extraction across 15 major video platforms + MeTube Web UI
 - **Platforms tested:**
-  - ✅ Working (11): YouTube, Vimeo, Dailymotion, Twitch, Instagram, Reddit, Rumble, VK, PeerTube, SoundCloud, Bandcamp
+  - ✅ Working (13): YouTube, Vimeo, Dailymotion, Twitch, Instagram, Reddit, Rumble, VK, PeerTube, SoundCloud, Bandcamp, MeTube API (VK), MeTube API (YouTube)
   - ⚠️ Skipped (4): TikTok (IP-blocked), Bilibili (geo-restricted), Facebook (upstream yt-dlp bug), Twitter/X (stale test data)
 - **Integration:** Added to `run-tests.sh` as part of integration and `all` profiles
 - **Standalone usage:** `./tests/test-media-services.sh`
-- **Test method:** Uses `--simulate` with Chrome User-Agent to verify extraction without downloading
+- **Test method:** Uses `--simulate` with Chrome User-Agent to verify extraction without downloading; MeTube API tests use `curl` against `/add` endpoint
 
 ### 11. **VK Video & Non-YouTube Download Fix** (CRITICAL FIX)
 - **Problem:** `download` script failed for VK Video and other non-YouTube sites with `ERROR: unable to open for writing: [Errno 21] Is a directory: '/downloads/'`

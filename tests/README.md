@@ -84,7 +84,7 @@ Tests script workflows and interactions:
 
 ### Media Services Tests (`test-media-services.sh`)
 
-Tests yt-dlp extraction across major video platforms:
+Tests yt-dlp extraction across major video platforms and MeTube Web UI:
 
 | Platform | Status | Notes |
 |----------|--------|-------|
@@ -99,6 +99,8 @@ Tests yt-dlp extraction across major video platforms:
 | PeerTube | ✅ Working | |
 | SoundCloud | ✅ Working | |
 | Bandcamp | ✅ Working | |
+| MeTube API (VK) | ✅ Working | Verifies `/add` endpoint accepts VK URLs |
+| MeTube API (YouTube) | ✅ Working | Verifies `/add` endpoint accepts YouTube URLs |
 | TikTok | ⚠️ Skipped | IP-blocked for most data-center IPs |
 | Bilibili | ⚠️ Skipped | Geo-restricted (requires Chinese network) |
 | Facebook | ⚠️ Skipped | Broken in yt-dlp 2026.03.17 (upstream) |

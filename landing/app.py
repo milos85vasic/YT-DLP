@@ -535,6 +535,56 @@ def proxy():
         return f"Error connecting to MeTube: {e}", 502
 
 
+def _validate_cookie_file(content: str) -> tuple[bool, str]:
+    """Validate Netscape cookie file format and contents.
+
+    Returns (is_valid, error_message).
+    """
+    lines = content.strip().splitlines()
+    if not lines:
+        return False, "Cookie file is empty"
+
+    # Check header
+    if not lines[0].startswith("# Netscape HTTP Cookie File"):
+        return False, "Invalid cookie file format — must be a Netscape HTTP Cookie File"
+
+    # Count valid cookie lines (skip comments and empty lines)
+    valid_domains = set()
+    for line in lines[1:]:
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        parts = line.split("\t")
+        if len(parts) < 7:
+            continue
+        domain = parts[0].lstrip(".")
+        valid_domains.add(domain.lower())
+
+    if not valid_domains:
+        return False, "Cookie file contains no valid cookie entries"
+
+    # Warn if no recognised video-platform domains are present
+    recognised = {
+        "youtube.com", "youtu.be", "google.com",
+        "vimeo.com", "dailymotion.com", "twitch.tv",
+        "instagram.com", "reddit.com", "rumble.com",
+        "vk.com", "vkvideo.ru", "peertube.tv",
+        "soundcloud.com", "bandcamp.com",
+    }
+    has_recognised = any(
+        any(rd in domain for rd in recognised)
+        for domain in valid_domains
+    )
+    if not has_recognised:
+        return False, (
+            "Cookie file does not contain cookies for any recognised video platform. "
+            "Export cookies while signed in to the site you want to download from. "
+            f"Found domains: {', '.join(sorted(valid_domains)[:5])}"
+        )
+
+    return True, ""
+
+
 @app.route("/api/upload-cookies", methods=["POST"])
 def upload_cookies():
     try:
@@ -543,6 +593,10 @@ def upload_cookies():
 
         file = request.files["cookies"]
         content = file.read().decode("utf-8")
+
+        is_valid, error_msg = _validate_cookie_file(content)
+        if not is_valid:
+            return jsonify({"success": False, "error": error_msg}), 400
 
         files = {"cookies": (file.filename, content, "text/plain")}
         resp = requests.post(f"{METUBE_URL}/upload-cookies", files=files, timeout=30)
