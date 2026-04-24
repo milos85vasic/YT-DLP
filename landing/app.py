@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-MeTube Landing Page - Seamless YouTube Authentication
-Flow: Open YouTube → Sign in → Export cookies → Auto-redirect to MeTube
+Боба Landing Page - Seamless YouTube Authentication
+Flow: Open YouTube → Sign in → Export cookies → Auto-redirect to Dashboard
 """
 
 import os
@@ -23,7 +23,7 @@ INDEX_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MeTube - YouTube Downloader</title>
+    <title>Боба — YouTube Downloader</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -33,121 +33,133 @@ INDEX_TEMPLATE = """
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-            color: #fff;
+            background: #0d0d0d;
+            color: #eee;
             padding: 20px;
         }
         .container { text-align: center; max-width: 550px; width: 100%; }
-        .logo { font-size: 80px; margin-bottom: 10px; }
+        .logo-mark {
+            font-size: 64px;
+            margin-bottom: 8px;
+        }
         h1 {
-            font-size: 3rem;
-            margin-bottom: 5px;
+            font-size: 2.8rem;
+            font-weight: 800;
+            margin-bottom: 6px;
             background: linear-gradient(90deg, #ff0050, #ffcc00);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            letter-spacing: -1px;
         }
-        .subtitle { color: #888; margin-bottom: 35px; font-size: 1.1rem; }
-        
+        .subtitle { color: #888; margin-bottom: 32px; font-size: 1.05rem; }
+
         .auth-card {
-            background: rgba(255,255,255,0.05);
-            border-radius: 20px;
-            padding: 45px 40px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.04);
+            border-radius: 16px;
+            padding: 36px 32px;
+            border: 1px solid rgba(255,255,255,0.08);
+            text-align: left;
         }
-        
+
         .step-progress {
             display: flex;
             justify-content: center;
-            gap: 12px;
-            margin-bottom: 35px;
+            gap: 10px;
+            margin-bottom: 28px;
         }
         .step {
-            width: 12px;
-            height: 12px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
-            background: rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.1);
             transition: all 0.4s ease;
         }
-        .step.active { background: #ff0050; transform: scale(1.4); box-shadow: 0 0 15px rgba(255,0,80,0.5); }
+        .step.active { background: #ff0050; transform: scale(1.3); box-shadow: 0 0 12px rgba(255,0,80,0.4); }
         .step.done { background: #00ff88; }
         .step-connector {
-            width: 40px;
+            width: 36px;
             height: 2px;
-            background: rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.1);
             align-self: center;
         }
         .step-connector.active { background: linear-gradient(90deg, #00ff88, #ff0050); }
-        
+
         .action-btn {
             display: inline-flex;
             align-items: center;
-            gap: 12px;
-            background: #ff0000;
+            gap: 10px;
+            background: linear-gradient(90deg, #ff0050, #ff4d79);
             color: #fff;
-            padding: 18px 40px;
-            border-radius: 50px;
-            font-size: 1.25rem;
+            padding: 14px 32px;
+            border-radius: 12px;
+            font-size: 1rem;
             font-weight: 600;
             text-decoration: none;
             cursor: pointer;
             border: none;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 25px rgba(255,0,0,0.35);
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 20px rgba(255,0,80,0.25);
         }
         .action-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 35px rgba(255,0,0,0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 28px rgba(255,0,80,0.4);
         }
-        .action-btn svg { width: 26px; height: 26px; }
-        
+        .action-btn svg { width: 22px; height: 22px; }
+
         .guide {
-            text-align: left;
-            margin-top: 30px;
-            padding: 25px;
+            margin-top: 24px;
+            padding: 20px;
             background: rgba(0,0,0,0.25);
-            border-radius: 16px;
+            border-radius: 12px;
             border: 1px solid rgba(255,255,255,0.05);
         }
         .guide h3 {
             color: #fff;
-            margin-bottom: 15px;
-            font-size: 1rem;
+            margin-bottom: 12px;
+            font-size: 0.95rem;
             display: flex;
             align-items: center;
             gap: 8px;
+            font-weight: 600;
         }
         .guide ol {
             margin: 0;
-            padding-left: 25px;
-            color: #aaa;
-            font-size: 0.95rem;
-            line-height: 1.8;
+            padding-left: 22px;
+            color: #999;
+            font-size: 0.9rem;
+            line-height: 1.7;
         }
-        .guide li { margin-bottom: 8px; }
-        .guide strong { color: #fff; }
-        .guide .highlight { color: #ff0050; font-weight: 600; }
-        
+        .guide li { margin-bottom: 6px; }
+        .guide strong { color: #eee; font-weight: 500; }
+        .guide .highlight {
+            background: linear-gradient(90deg, #ff0050, #ffcc00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 600;
+        }
+
         .upload-zone {
-            border: 2px dashed rgba(255,255,255,0.2);
-            border-radius: 16px;
-            padding: 40px 30px;
-            margin-top: 25px;
+            border: 2px dashed rgba(255,255,255,0.12);
+            border-radius: 14px;
+            padding: 36px 28px;
+            margin-top: 20px;
+            text-align: center;
             transition: all 0.3s ease;
             cursor: pointer;
+            background: rgba(255,255,255,0.02);
         }
         .upload-zone:hover, .upload-zone.dragover {
             border-color: #00ff88;
-            background: rgba(0,255,136,0.05);
+            background: rgba(0,255,136,0.04);
         }
-        .upload-zone p { color: #888; font-size: 0.95rem; }
-        .upload-zone .big { font-size: 2.5rem; margin-bottom: 10px; }
-        
+        .upload-zone p { color: #888; font-size: 0.9rem; }
+        .upload-zone .big { font-size: 2.2rem; margin-bottom: 8px; }
+
         .loading-overlay {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.88);
+            background: rgba(0,0,0,0.92);
             z-index: 1000;
             flex-direction: column;
             align-items: center;
@@ -155,98 +167,146 @@ INDEX_TEMPLATE = """
         }
         .loading-overlay.active { display: flex; }
         .spinner {
-            width: 55px;
-            height: 55px;
-            border: 4px solid rgba(255,255,255,0.1);
+            width: 48px;
+            height: 48px;
+            border: 3px solid rgba(255,255,255,0.08);
             border-top-color: #ff0050;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .loading-text { margin-top: 18px; font-size: 1.15rem; color: #fff; }
-        
-        .features { display: flex; gap: 12px; justify-content: center; margin-top: 30px; flex-wrap: wrap; }
-        .feature { background: rgba(255,255,255,0.05); padding: 12px 20px; border-radius: 10px; font-size: 0.85rem; color: #888; }
-        .feature span { color: #fff; }
-        .footer { margin-top: 30px; color: #555; font-size: 0.8rem; }
-        
+        .loading-text { margin-top: 16px; font-size: 1rem; color: #ccc; }
+
+        .features {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+        .feature {
+            background: rgba(255,255,255,0.04);
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            color: #888;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .feature span { color: #ccc; }
+        .footer {
+            margin-top: 24px;
+            color: #444;
+            font-size: 0.78rem;
+        }
+
         input[type="file"] { display: none; }
-        
+
         .step-content { display: none; }
         .step-content.active { display: block; }
-        
-        .cookie-banner {
-            margin-bottom: 20px;
-            padding: 14px 18px;
-            border-radius: 12px;
+
+        .success-view { text-align: center; }
+        .success-view .icon { font-size: 3rem; margin-bottom: 12px; }
+        .success-view h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+        .success-view p {
+            color: #888;
+            margin-bottom: 16px;
+            font-size: 0.95rem;
+        }
+        .dash-link {
+            display: inline-block;
+            padding: 10px 24px;
+            background: rgba(255,0,80,0.12);
+            color: #ff5588;
+            border: 1px solid rgba(255,0,80,0.2);
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
             font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .dash-link:hover {
+            background: rgba(255,0,80,0.2);
+        }
+
+        .cookie-banner {
+            margin-top: 16px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 0.85rem;
             text-align: left;
         }
         .cookie-banner.stale {
-            background: rgba(255,200,0,0.08);
-            border: 1px solid rgba(255,200,0,0.2);
+            background: rgba(255,200,0,0.06);
+            border: 1px solid rgba(255,200,0,0.15);
             color: #ffcc66;
         }
         .cookie-banner.fresh {
             background: rgba(0,255,136,0.06);
-            border: 1px solid rgba(0,255,136,0.15);
+            border: 1px solid rgba(0,255,136,0.12);
             color: #00ff88;
         }
-        .cookie-banner strong { display: block; margin-bottom: 4px; }
+        .cookie-banner strong { display: block; margin-bottom: 4px; font-weight: 600; }
         .cookie-banner a { color: inherit; text-decoration: underline; }
-        .services { margin-top: 28px; text-align: left; }
+
+        .services { margin-top: 24px; text-align: left; }
         .services h3 {
-            font-size: 0.95rem;
-            color: #aaa;
-            margin-bottom: 14px;
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 12px;
             text-align: center;
+            font-weight: 500;
         }
         .service-grid {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
         }
         .service-card {
             display: flex;
             align-items: center;
             gap: 10px;
             padding: 12px 16px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.06);
             border-radius: 12px;
             text-decoration: none;
-            color: #ccc;
+            color: #aaa;
             transition: all 0.2s ease;
             cursor: pointer;
         }
         .service-card:hover {
-            background: rgba(255,255,255,0.1);
-            border-color: rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.07);
+            border-color: rgba(255,255,255,0.12);
             transform: translateY(-1px);
         }
         .service-card.primary {
-            border-color: rgba(255,0,80,0.25);
-            background: rgba(255,0,80,0.06);
+            border-color: rgba(255,0,80,0.2);
+            background: rgba(255,0,80,0.05);
         }
         .service-card.primary:hover {
-            border-color: rgba(255,0,80,0.4);
-            background: rgba(255,0,80,0.1);
+            border-color: rgba(255,0,80,0.3);
+            background: rgba(255,0,80,0.08);
         }
-        .service-card .s-icon { font-size: 20px; }
+        .service-card .s-icon { font-size: 18px; }
         .service-card .s-name {
             font-weight: 600;
-            color: #fff;
-            font-size: 0.95rem;
+            color: #eee;
+            font-size: 0.9rem;
         }
         .service-card .s-port {
-            font-size: 0.8rem;
-            color: #888;
+            font-size: 0.75rem;
+            color: #666;
             font-family: monospace;
             margin-left: auto;
         }
         .service-card .s-desc {
             width: 100%;
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             color: #888;
             margin-top: 2px;
         }
@@ -254,10 +314,10 @@ INDEX_TEMPLATE = """
 </head>
 <body>
     <div class="container">
-        <div class="logo">🎬</div>
-        <h1>MeTube</h1>
+        <div class="logo-mark">🫘</div>
+        <h1>Боба</h1>
         <p class="subtitle">YouTube Video Downloader</p>
-        
+
         <div class="auth-card">
             <div class="step-progress">
                 <div class="step active" id="step1"></div>
@@ -266,39 +326,41 @@ INDEX_TEMPLATE = """
                 <div class="step-connector" id="conn2"></div>
                 <div class="step" id="step3"></div>
             </div>
-            
+
             <!-- Step 1: Open YouTube -->
             <div class="step-content active" id="content1">
-                <button class="action-btn" onclick="goToStep(2)">
-                    <svg viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                    </svg>
-                    Open YouTube & Sign In
-                </button>
-                
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <button class="action-btn" onclick="goToStep(2)">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                        </svg>
+                        Open YouTube & Sign In
+                    </button>
+                </div>
+
                 <div class="guide">
-                    <h3>📋 How it works:</h3>
+                    <h3>📋 How it works</h3>
                     <ol>
                         <li>Click the button above to open YouTube</li>
                         <li><strong>Sign in to your Google account</strong> on YouTube</li>
                         <li>Come back to this page when done</li>
-                        <li>You'll need to export your cookies using a browser extension</li>
+                        <li>Export your cookies using a browser extension</li>
                     </ol>
                 </div>
             </div>
-            
+
             <!-- Step 2: Export Cookies -->
             <div class="step-content" id="content2">
-                <p style="color: #888; margin-bottom: 20px;">
+                <p style="color: #888; margin-bottom: 16px; font-size: 0.95rem;">
                     Great! Now you need to export your YouTube cookies.<br>
-                    <strong style="color: #fff;">This is required</strong> to download videos.
+                    <strong style="color: #eee;">This is required</strong> to download videos.
                 </p>
-                
+
                 <div class="guide">
-                    <h3>🔧 Export Cookies (takes 30 seconds):</h3>
+                    <h3>🔧 Export Cookies (takes 30 seconds)</h3>
                     <ol>
-                        <li>Install extension: <strong>Get cookies.txt</strong> for 
-                            <span class="highlight">Chrome</span> or 
+                        <li>Install extension: <strong>Get cookies.txt</strong> for
+                            <span class="highlight">Chrome</span> or
                             <span class="highlight">Firefox</span>
                         </li>
                         <li>Go to <strong>youtube.com</strong> (make sure you're signed in)</li>
@@ -307,37 +369,37 @@ INDEX_TEMPLATE = """
                         <li>Drag that file below or click to upload</li>
                     </ol>
                 </div>
-                
+
                 <div class="upload-zone" id="dropZone">
                     <div class="big">🍪</div>
                     <p>Drag & drop your cookies file here<br>or click to select file</p>
                     <input type="file" id="cookieFile" accept=".txt">
                 </div>
             </div>
-            
+
             <!-- Step 3: Success -->
             <div class="step-content success-view" id="content3">
                 <div class="icon">🎉</div>
                 <h2>You're All Set!</h2>
-                <p>Redirecting you to the YT-DLP Dashboard...</p>
-                <a href="/app" class="metube-link" id="metubeLink">→ Open Dashboard</a>
+                <p>Redirecting you to the Боба Dashboard...</p>
+                <a href="/app" class="dash-link" id="dashLink">→ Open Dashboard</a>
 
-                <div id="cookieBanner" class="cookie-banner" style="display:none;margin-top:16px;"></div>
+                <div id="cookieBanner" class="cookie-banner" style="display:none;"></div>
 
                 <div class="services">
                     <h3>🚀 Available Services</h3>
                     <div class="service-grid">
                         <a class="service-card primary" href="{{ dashboard_url }}" target="_blank">
                             <span class="s-icon">📊</span>
-                            <span class="s-name">YT-DLP Dashboard</span>
+                            <span class="s-name">Боба Dashboard</span>
                             <span class="s-port">:9090</span>
                             <span class="s-desc">Modern Angular UI — recommended</span>
                         </a>
                         <a class="service-card" href="{{ metube_url }}" target="_blank">
                             <span class="s-icon">🎬</span>
-                            <span class="s-name">MeTube Classic</span>
+                            <span class="s-name">Classic UI</span>
                             <span class="s-port">:8088</span>
-                            <span class="s-desc">Original web interface</span>
+                            <span class="s-desc">Original MeTube web interface</span>
                         </a>
                         <a class="service-card" href="{{ dashboard_url }}/api/history" target="_blank">
                             <span class="s-icon">📡</span>
@@ -349,28 +411,28 @@ INDEX_TEMPLATE = """
                 </div>
             </div>
         </div>
-        
+
         <div class="features">
             <div class="feature">🎥 <span>HD Video</span></div>
             <div class="feature">🎵 <span>Audio Only</span></div>
             <div class="feature">📝 <span>Subtitles</span></div>
         </div>
-        
-        <p class="footer">YT-DLP Landing Page</p>
+
+        <p class="footer">Боба — powered by yt-dlp & MeTube</p>
     </div>
-    
+
     <div class="loading-overlay" id="loadingOverlay">
         <div class="spinner"></div>
         <p class="loading-text" id="loadingText">Please wait...</p>
     </div>
-    
+
     <script>
         const METUBE_URL = '{{ metube_url }}';
         const DASHBOARD_URL = '{{ dashboard_url }}';
         const BASE_URL = window.location.origin;
         let currentStep = 1;
         const SESSION = '{{ session_id }}';
-        
+
         function showLoading(text) {
             document.getElementById('loadingText').textContent = text;
             document.getElementById('loadingOverlay').classList.add('active');
@@ -378,39 +440,39 @@ INDEX_TEMPLATE = """
         function hideLoading() {
             document.getElementById('loadingOverlay').classList.remove('active');
         }
-        
+
         function goToStep(n) {
             currentStep = n;
-            
+
             for (let i = 1; i <= 3; i++) {
                 document.getElementById('step' + i).className = 'step';
                 document.getElementById('content' + i).classList.remove('active');
                 if (i < 3) document.getElementById('conn' + i).className = 'step-connector';
             }
-            
+
             for (let i = 1; i < n; i++) {
                 document.getElementById('step' + i).classList.add('done');
                 if (i < 3) document.getElementById('conn' + i).classList.add('active');
             }
             document.getElementById('step' + n).classList.add('active');
             document.getElementById('content' + n).classList.add('active');
-            
+
             if (n === 2) {
                 window.open('https://www.youtube.com/', '_blank');
                 setupUpload();
             }
-            
+
             if (n === 3) {
-                document.getElementById('metubeLink').href = DASHBOARD_URL;
+                document.getElementById('dashLink').href = DASHBOARD_URL;
             }
         }
-        
+
         function setupUpload() {
             const zone = document.getElementById('dropZone');
             const input = document.getElementById('cookieFile');
-            
+
             zone.addEventListener('click', () => input.click());
-            
+
             zone.addEventListener('dragover', (e) => {
                 e.preventDefault();
                 zone.classList.add('dragover');
@@ -421,26 +483,26 @@ INDEX_TEMPLATE = """
                 zone.classList.remove('dragover');
                 if (e.dataTransfer.files[0]) uploadFile(e.dataTransfer.files[0]);
             });
-            
+
             input.addEventListener('change', () => {
                 if (input.files[0]) uploadFile(input.files[0]);
             });
         }
-        
+
         async function uploadFile(file) {
             showLoading('Uploading cookies...');
-            
+
             const formData = new FormData();
             formData.append('session', SESSION);
             formData.append('cookies', file);
-            
+
             try {
                 const resp = await fetch('/api/upload-cookies', {
                     method: 'POST',
                     body: formData
                 });
                 const data = await resp.json();
-                
+
                 if (data.success) {
                     goToStep(3);
                     showLoading('Success! Redirecting to Dashboard...');
@@ -454,7 +516,7 @@ INDEX_TEMPLATE = """
                 alert('Error: ' + e.message);
             }
         }
-        
+
         async function checkAuth() {
             try {
                 const resp = await fetch('/api/cookie-status');
@@ -462,7 +524,6 @@ INDEX_TEMPLATE = """
                 if (data.has_cookies && data.metube_reachable) {
                     goToStep(3);
                     showCookieBanner(data);
-                    // Auto-redirect to Dashboard after brief delay
                     showLoading('Redirecting to Dashboard...');
                     setTimeout(() => window.location.href = DASHBOARD_URL, 2500);
                 }
@@ -530,7 +591,7 @@ def proxy():
         response.headers["Content-Type"] = resp.headers.get("Content-Type", "text/html")
         return response
     except Exception as e:
-        return f"Error connecting to MeTube: {e}", 502
+        return f"Error connecting to MeTube backend: {e}", 502
 
 
 def _validate_cookie_file(content: str) -> tuple[bool, str]:
@@ -682,7 +743,7 @@ DOWNLOAD_DIR = os.environ.get("DOWNLOAD_DIR", "/downloads")
 
 @app.route("/api/delete-download", methods=["POST"])
 def delete_download():
-    """Remove item from MeTube history and optionally delete downloaded files."""
+    """Remove item from history and optionally delete downloaded files."""
     try:
         data = request.get_json() or {}
         # MeTube's /delete endpoint uses the download URL as the queue key,
@@ -695,7 +756,7 @@ def delete_download():
         if not item_url:
             return jsonify({"success": False, "error": "Missing url"}), 400
 
-        # 1. Remove from MeTube history
+        # 1. Remove from history
         try:
             resp = requests.post(
                 f"{METUBE_URL}/delete",
@@ -739,7 +800,7 @@ def delete_download():
 
 
 if __name__ == "__main__":
-    print(f"Starting MeTube Landing Page on port {PROXY_PORT}")
-    print(f"MeTube URL: {METUBE_URL}")
+    print(f"Starting Боба Landing Page on port {PROXY_PORT}")
+    print(f"MeTube backend URL: {METUBE_URL}")
     print(f"Download dir: {DOWNLOAD_DIR}")
     app.run(host="0.0.0.0", port=PROXY_PORT, debug=False)
