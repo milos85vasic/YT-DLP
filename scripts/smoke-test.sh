@@ -26,6 +26,13 @@ LANDING_BASE="http://localhost:8086"
 METUBE_DIRECT="http://localhost:8088"
 METUBE_API="http://localhost:9090/api"
 
+# Load .env if present (CI writes CONTAINER_RUNTIME there)
+if [ -f .env ]; then
+    set -a
+    source .env
+    set +a
+fi
+
 # ── Helpers ──────────────────────────────────────────────────────────
 http_get() {
     local url="$1" expect="${2:-200}"
