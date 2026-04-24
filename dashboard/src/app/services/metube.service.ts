@@ -20,12 +20,12 @@ export interface DownloadInfo {
   folder: string;
   status: string;
   msg?: string;
-  error?: string;
-  percent?: number;
-  speed?: string;
-  eta?: string;
-  size?: number | string;
-  filename?: string;
+  error?: string | null;
+  percent?: number | null;
+  speed?: string | null;
+  eta?: string | null;
+  size?: number | string | null;
+  filename?: string | null;
   timestamp?: number;
   download_type?: string;
   codec?: string;
@@ -35,6 +35,11 @@ export interface DownloadInfo {
   chapter_template?: string;
   subtitle_language?: string;
   subtitle_mode?: string;
+  chapter_files?: string[];
+  subtitle_files?: string[];
+  ytdl_options_presets?: string[];
+  ytdl_options_overrides?: Record<string, unknown>;
+  entry?: unknown | null;
 }
 
 export interface HistoryResponse {

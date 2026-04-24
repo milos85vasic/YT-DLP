@@ -169,27 +169,62 @@ components:
           type: string
         status:
           type: string
-          enum: [pending, downloading, finished, error]
+          enum: [pending, preparing, downloading, finished, error]
         msg:
           type: string
         error:
           type: string
+          nullable: true
         percent:
           type: number
+          nullable: true
         speed:
           type: string
+          nullable: true
         eta:
           type: string
+          nullable: true
         size:
           type: number
+          nullable: true
         filename:
           type: string
+          nullable: true
         timestamp:
           type: integer
         download_type:
           type: string
         codec:
           type: string
+        custom_name_prefix:
+          type: string
+        playlist_item_limit:
+          type: integer
+        split_by_chapters:
+          type: boolean
+        chapter_template:
+          type: string
+        subtitle_language:
+          type: string
+        subtitle_mode:
+          type: string
+        chapter_files:
+          type: array
+          items:
+            type: string
+        subtitle_files:
+          type: array
+          items:
+            type: string
+        ytdl_options_presets:
+          type: array
+          items:
+            type: string
+        ytdl_options_overrides:
+          type: object
+        entry:
+          type: object
+          nullable: true
 
     AddDownloadRequest:
       type: object
