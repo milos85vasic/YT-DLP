@@ -77,6 +77,7 @@ setup_test_env() {
     mkdir -p "$TEST_RESULTS_DIR"
     mkdir -p "$TEST_LOGS_DIR"
     mkdir -p "$TEST_CONFIG_DIR"
+    mkdir -p /tmp/test-downloads
     
     # Create test .env files
     cat > "$TEST_CONFIG_DIR/.env.no-vpn" << 'EOF'
@@ -119,7 +120,13 @@ cleanup_test_env() {
     rm -rf "$TEST_RESULTS_DIR"
     rm -rf "$TEST_LOGS_DIR"
     rm -rf "$TEST_CONFIG_DIR"
-    rm -rf /tmp/test-downloads
+    
+    # Remove download directory (may contain files owned by container mapped UID)
+    if command -v podman &> /dev/null; then
+        podman unshare rm -rf /tmp/test-downloads 2>/dev/null || rm -rf /tmp/test-downloads 2>/dev/null || true
+    else
+        rm -rf /tmp/test-downloads 2>/dev/null || true
+    fi
     rm -rf /tmp/test-vpn
     
     # Remove test containers if they exist
@@ -145,8 +152,15 @@ run_test() {
     
     # Run the test function
     if $test_func > "$TEST_LOGS_DIR/${test_name}.log" 2>&1; then
-        echo -e "${GREEN}PASS${NC}"
-        TESTS_PASSED=$((TESTS_PASSED + 1))
+        if grep -qE "(platform restriction|geo-restriction|upstream issue|test data stale|requires authentication)" "$TEST_LOGS_DIR/${test_name}.log" 2>/dev/null; then
+            local skip_reason
+            skip_reason=$(grep -oP '(?<=— ).*$' "$TEST_LOGS_DIR/${test_name}.log" 2>/dev/null | head -1 || echo "known issue")
+            echo -e "${YELLOW}SKIP${NC} ($skip_reason)"
+            TESTS_SKIPPED=$((TESTS_SKIPPED + 1))
+        else
+            echo -e "${GREEN}PASS${NC}"
+            TESTS_PASSED=$((TESTS_PASSED + 1))
+        fi
         return 0
     else
         echo -e "${RED}FAIL${NC}"

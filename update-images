@@ -41,7 +41,7 @@ fi
 
 IMAGES=(
     "ghcr.io/alexta69/metube:latest"
-    "th3a/yt-dlp:latest"
+    "ghcr.io/jim60105/yt-dlp:pot"
     "dperson/openvpn-client:latest"
 )
 
