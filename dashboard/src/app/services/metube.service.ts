@@ -144,8 +144,18 @@ export class MetubeService {
     );
   }
 
-  getCookieStatus(): Observable<{ status: string; has_cookies: boolean }> {
-    return this.http.get<{ status: string; has_cookies: boolean }>(`${this.base}/cookie-status`);
+  getCookieStatus(): Observable<{ status: string; has_cookies: boolean; metube_reachable?: boolean; cookie_age_minutes?: number }> {
+    return this.http.get<{ status: string; has_cookies: boolean; metube_reachable?: boolean; cookie_age_minutes?: number }>(`${this.base}/cookie-status`);
+  }
+
+  uploadCookies(file: File): Observable<{ success: boolean; error?: string }> {
+    const formData = new FormData();
+    formData.append('cookies', file);
+    return this.http.post<{ success: boolean; error?: string }>(`${this.base}/upload-cookies`, formData);
+  }
+
+  deleteCookies(): Observable<{ success: boolean; msg?: string; error?: string }> {
+    return this.http.post<{ success: boolean; msg?: string; error?: string }>(`${this.base}/delete-cookies`, {});
   }
 
   getVersion(): Observable<{ version: string; 'yt-dlp': string }> {

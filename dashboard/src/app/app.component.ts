@@ -28,6 +28,10 @@ import { ErrorBoundaryComponent } from './components/error-boundary/error-bounda
             📜 History
             <span class="badge error" *ngIf="errorCount > 0">{{ errorCount }}</span>
           </a>
+          <a routerLink="/cookies" routerLinkActive="active">
+            🍪 Cookies
+            <span class="badge cookie-stale" *ngIf="cookieStale">!</span>
+          </a>
         </nav>
         <div class="connection-status" [class.offline]="!apiOnline">
           <span *ngIf="apiOnline" class="dot online"></span>
@@ -123,6 +127,10 @@ import { ErrorBoundaryComponent } from './components/error-boundary/error-bounda
       background: rgba(255,0,80,0.2);
       color: #ff5588;
     }
+    .badge.cookie-stale {
+      background: rgba(255,200,0,0.2);
+      color: #ffcc66;
+    }
     .connection-status {
       display: flex;
       align-items: center;
@@ -163,8 +171,10 @@ export class AppComponent implements OnInit, OnDestroy {
   title = 'YT-DLP Dashboard';
   queueCount = 0;
   errorCount = 0;
+  cookieStale = false;
   apiOnline = true;
   private sub?: Subscription;
+  private cookieSub?: Subscription;
 
   constructor(private metube: MetubeService) {}
 
@@ -182,9 +192,18 @@ export class AppComponent implements OnInit, OnDestroy {
         console.error('Nav poll error', err);
       },
     });
+    this.cookieSub = this.metube.getCookieStatus().subscribe({
+      next: (data) => {
+        this.cookieStale = !data.has_cookies || (data.cookie_age_minutes || 0) > 60;
+      },
+      error: () => {
+        this.cookieStale = true;
+      },
+    });
   }
 
   ngOnDestroy(): void {
     this.sub?.unsubscribe();
+    this.cookieSub?.unsubscribe();
   }
 }

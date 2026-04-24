@@ -607,6 +607,19 @@ def upload_cookies():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@app.route("/api/delete-cookies", methods=["POST"])
+def delete_cookies():
+    """Delete the current cookie file."""
+    try:
+        cookie_path = "/config/cookies.txt"
+        if os.path.exists(cookie_path):
+            os.remove(cookie_path)
+            return jsonify({"success": True, "msg": "Cookies deleted"})
+        return jsonify({"success": True, "msg": "No cookies to delete"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @app.route("/api/cookie-status")
 def cookie_status():
     """Return cookie status including freshness (age in minutes)."""

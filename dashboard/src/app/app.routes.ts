@@ -23,6 +23,13 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'cookies',
+    loadComponent: () =>
+      import('./components/cookies/cookies.component').then(
+        (m) => m.CookiesComponent
+      ),
+  },
+  {
     path: '**',
     loadComponent: () =>
       import('./components/not-found/not-found.component').then(
