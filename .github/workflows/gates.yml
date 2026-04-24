@@ -195,6 +195,10 @@ jobs:
         run: ./scripts/smoke-test.sh
         timeout-minutes: 5
 
+      - name: Run chaos tests
+        run: ./tests/test-chaos.sh
+        timeout-minutes: 3
+
       - name: Upload smoke logs
         if: always()
         uses: actions/upload-artifact@v4

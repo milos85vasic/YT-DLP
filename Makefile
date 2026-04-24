@@ -50,6 +50,9 @@ test:
 validate:
 	./scripts/validate-contract.sh
 
+chaos:
+	./tests/test-chaos.sh
+
 ci:
 	@echo "=== CI Validation ==="
 	@echo "1. Shell syntax..."
