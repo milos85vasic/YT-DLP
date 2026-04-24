@@ -78,11 +78,18 @@ jobs:
 
       - name: Validate compose config
         run: |
-          docker compose config > /dev/null || docker-compose config > /dev/null
+          if docker compose config > /dev/null 2>&1; then
+            echo "Docker Compose config is valid"
+          elif docker-compose config > /dev/null 2>&1; then
+            echo "Docker Compose config is valid (docker-compose)"
+          else
+            echo "ERROR: Docker Compose config validation failed"
+            exit 1
+          fi
 
       - name: Pull images
         run: |
-          for image in ghcr.io/alexta69/metube:latest th3a/yt-dlp:latest; do
+          for image in ghcr.io/alexta69/metube:latest ghcr.io/jim60105/yt-dlp:pot; do
             echo "Pulling: $image"
             docker pull "$image" || echo "WARNING: Failed to pull $image, will use cached if available"
           done
@@ -90,7 +97,14 @@ jobs:
 
       - name: Start containers
         run: |
-          docker compose --profile no-vpn up -d || docker-compose --profile no-vpn up -d
+          if docker compose --profile no-vpn up -d; then
+            echo "Containers started"
+          elif docker-compose --profile no-vpn up -d 2>/dev/null; then
+            echo "Containers started (docker-compose)"
+          else
+            echo "ERROR: Failed to start containers"
+            exit 1
+          fi
         timeout-minutes: 5
 
       - name: Wait for services to be ready

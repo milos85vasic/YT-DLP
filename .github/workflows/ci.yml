@@ -67,7 +67,14 @@ jobs:
       - name: Validate Docker Compose configuration
         run: |
           docker compose version || docker-compose version || true
-          docker compose config > /dev/null || docker-compose config > /dev/null
+          if docker compose config > /dev/null 2>&1; then
+            echo "Docker Compose config is valid"
+          elif docker-compose config > /dev/null 2>&1; then
+            echo "Docker Compose config is valid (docker-compose)"
+          else
+            echo "ERROR: Docker Compose config validation failed"
+            exit 1
+          fi
 
   build-dashboard:
     name: Build Angular Dashboard
