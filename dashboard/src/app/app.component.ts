@@ -3,11 +3,12 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { MetubeService } from './services/metube.service';
+import { ErrorBoundaryComponent } from './components/error-boundary/error-boundary.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [CommonModule, RouterLink, RouterLinkActive, RouterOutlet, ErrorBoundaryComponent],
   template: `
     <div class="app">
       <header class="header">
@@ -31,7 +32,9 @@ import { MetubeService } from './services/metube.service';
       </header>
 
       <main class="main">
-        <router-outlet></router-outlet>
+        <app-error-boundary>
+          <router-outlet></router-outlet>
+        </app-error-boundary>
       </main>
 
       <footer class="footer">
