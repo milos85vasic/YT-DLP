@@ -110,6 +110,8 @@ echo ""
 log_info "=== Gate 4: Landing Page API ==="
 json_has_field "$LANDING_BASE/api/cookie-status" "has_cookies"       || true
 json_has_field "$LANDING_BASE/api/cookie-status" "metube_reachable"  || true
+json_has_field "$LANDING_BASE/health"            "status"            || true
+json_has_field "$LANDING_BASE/health"            "metube_reachable"  || true
 
 # ── End-to-End User Journey ──────────────────────────────────────────
 echo ""

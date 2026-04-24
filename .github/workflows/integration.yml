@@ -168,6 +168,23 @@ jobs:
         timeout-minutes: 10
         continue-on-error: true
 
+      - name: Run E2E smoke tests
+        run: |
+          export CONTAINER_RUNTIME=docker
+          ./scripts/smoke-test.sh
+        timeout-minutes: 5
+
+      - name: Run real HTTP integration tests
+        run: |
+          export CONTAINER_RUNTIME=docker
+          ./tests/test-integration-realhttp.sh
+        timeout-minutes: 5
+
+      - name: Run test quality audit
+        run: |
+          ./scripts/test-audit.sh
+        timeout-minutes: 2
+
       - name: Upload test logs
         if: always()
         uses: actions/upload-artifact@v4

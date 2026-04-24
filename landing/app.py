@@ -641,6 +641,24 @@ def cookie_status():
     })
 
 
+@app.route("/health")
+def health():
+    """Health check endpoint for monitoring and smoke tests."""
+    metube_ok = False
+    try:
+        resp = requests.get(f"{METUBE_URL}/history", timeout=3)
+        metube_ok = resp.status_code == 200
+    except Exception:
+        pass
+
+    return jsonify({
+        "status": "ok",
+        "service": "landing-page",
+        "metube_reachable": metube_ok,
+        "timestamp": time.time(),
+    })
+
+
 @app.route("/favicon.ico")
 def favicon():
     return "", 204
