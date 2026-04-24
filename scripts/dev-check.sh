@@ -64,10 +64,15 @@ EOF
     ENV_CREATED=1
 fi
 
-if docker compose config > /dev/null 2>&1 || docker-compose config > /dev/null 2>&1; then
-    pass "Docker Compose config valid"
+# Create required directories for compose validation
+mkdir -p /tmp/test-downloads
+mkdir -p /tmp/test-vpn
+touch /tmp/test-vpn/config.ovpn
+
+if docker compose config > /dev/null 2>&1 || docker-compose config > /dev/null 2>&1 || podman-compose config > /dev/null 2>&1; then
+    pass "Compose config valid"
 else
-    fail "Docker Compose config invalid"
+    fail "Compose config invalid"
 fi
 
 if [ "${ENV_CREATED:-0}" = "1" ] && [ -f .env ]; then

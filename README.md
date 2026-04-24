@@ -468,29 +468,64 @@ To use together:
 # (Start JDownloader separately in its directory)
 ```
 
-## Testing
+## Testing & Verification
 
-This project includes a comprehensive automated test suite with **81 tests** covering all scenarios:
+This project uses a **4-Gate verification system** to prevent the universal "green tests, broken product" problem.
+
+### Quick Validation
+
+```bash
+# One command — run everything before pushing
+make dev-check
+
+# Or individual gates:
+make smoke         # E2E smoke tests against real services
+make audit         # Test suite quality audit (score: 70/70)
+make test          # Full test suite (121 tests)
+```
+
+### The 4 Gates
+
+No task is complete until all gates pass:
+
+| Gate | What | Command |
+|------|------|---------|
+| **1. Contract** | API matches OpenAPI spec | `contracts/metube-api.openapi.yaml` |
+| **2. Integration** | Real HTTP calls, no mocks | `./tests/test-integration-realhttp.sh` |
+| **3. Smoke** | E2E against running containers | `./scripts/smoke-test.sh` |
+| **4. Manual** | Human verifies in dashboard at `:9090` | — |
+
+### Test Suites
 
 ```bash
 # Run all tests
 ./tests/run-comprehensive-tests.sh
 
-# Run specific test categories
-./tests/run-tests.sh -p unit          # Unit tests
+# Run specific categories
+./tests/run-tests.sh -p unit          # Unit tests (pure logic only)
 ./tests/run-tests.sh -p integration   # Integration tests
 ./tests/run-tests.sh -p scenario      # Scenario tests
 ./tests/run-tests.sh -p error         # Error tests
+
+# Real HTTP integration tests (no mocks — hits actual services)
+./tests/test-integration-realhttp.sh
+
+# E2E smoke tests (requires running containers)
+./scripts/smoke-test.sh
+
+# Test quality audit (0-70 score)
+./scripts/test-audit.sh
 ```
 
-**Test Results:**
-- **77 tests passing** (100% pass rate)
-- 4 tests skipped (Docker not installed on test system)
-- All Podman tests passing
-- All VPN scenarios tested
-- All error conditions validated
+**Current Results:**
+- **121 tests passing** (0 failures)
+- **22/22 smoke tests passing**
+- **22/22 real HTTP integration tests passing**
+- **Test audit score: 70/70**
+- 11 tests skipped (known platform restrictions)
 
 See [TEST_RESULTS.md](TEST_RESULTS.md) for detailed results.
+See [docs/VERIFICATION.md](docs/VERIFICATION.md) for the full verification philosophy.
 
 ## Troubleshooting
 
