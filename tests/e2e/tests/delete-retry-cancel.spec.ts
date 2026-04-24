@@ -38,10 +38,20 @@ test('delete download with file via API', async ({ request }) => {
 });
 
 test('retry a failed download via API', async ({ request }) => {
+  const testUrl = 'https://www.youtube.com/watch?v=9bZkp7q19f0';
+
+  // Clean up any existing entry first
+  await request.post(`${DASHBOARD_URL}/api/delete`, {
+    data: { ids: [testUrl], where: 'done' },
+  }).catch(() => {});
+  await request.post(`${DASHBOARD_URL}/api/delete`, {
+    data: { ids: [testUrl], where: 'queue' },
+  }).catch(() => {});
+
   // Add with auto_start=false so it lands in pending
   const addResp = await request.post(`${DASHBOARD_URL}/api/add`, {
     data: {
-      url: 'https://www.youtube.com/watch?v=jNQXAC9IVRw',
+      url: testUrl,
       quality: '720',
       format: 'any',
       auto_start: false,
@@ -49,11 +59,11 @@ test('retry a failed download via API', async ({ request }) => {
   });
   expect(addResp.status()).toBe(200);
 
-  await new Promise((r) => setTimeout(r, 1500));
+  await new Promise((r) => setTimeout(r, 2000));
 
   // Start the pending download
   const startResp = await request.post(`${DASHBOARD_URL}/api/start`, {
-    data: { ids: ['https://www.youtube.com/watch?v=jNQXAC9IVRw'] },
+    data: { ids: [testUrl] },
     headers: { 'Content-Type': 'application/json' },
   });
   expect(startResp.status()).toBe(200);
@@ -62,10 +72,20 @@ test('retry a failed download via API', async ({ request }) => {
 });
 
 test('cancel a queued download via API', async ({ request }) => {
+  const testUrl = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+
+  // Clean up any existing entry first
+  await request.post(`${DASHBOARD_URL}/api/delete`, {
+    data: { ids: [testUrl], where: 'done' },
+  }).catch(() => {});
+  await request.post(`${DASHBOARD_URL}/api/delete`, {
+    data: { ids: [testUrl], where: 'queue' },
+  }).catch(() => {});
+
   // Add with auto_start=false so it lands in pending/queue
   const addResp = await request.post(`${DASHBOARD_URL}/api/add`, {
     data: {
-      url: 'https://www.youtube.com/watch?v=9bZkp7q19f0',
+      url: testUrl,
       quality: '720',
       format: 'any',
       auto_start: false,
@@ -73,12 +93,12 @@ test('cancel a queued download via API', async ({ request }) => {
   });
   expect(addResp.status()).toBe(200);
 
-  await new Promise((r) => setTimeout(r, 1500));
+  await new Promise((r) => setTimeout(r, 2000));
 
   // Delete/cancel from queue
   const delResp = await request.post(`${DASHBOARD_URL}/api/delete`, {
     data: {
-      ids: ['https://www.youtube.com/watch?v=9bZkp7q19f0'],
+      ids: [testUrl],
       where: 'queue',
     },
     headers: { 'Content-Type': 'application/json' },

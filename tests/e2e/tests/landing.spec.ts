@@ -5,12 +5,12 @@ const LANDING_URL = 'http://localhost:8086';
 test.describe('Landing Page', () => {
   test('page loads with correct title', async ({ page }) => {
     await page.goto(LANDING_URL);
-    await expect(page).toHaveTitle(/MeTube/);
+    await expect(page).toHaveTitle(/Боба|Boba/);
   });
 
   test('displays main heading and subtitle', async ({ page }) => {
     await page.goto(LANDING_URL);
-    await expect(page.locator('h1')).toHaveText('MeTube');
+    await expect(page.locator('h1')).toHaveText('Боба');
     await expect(page.locator('.subtitle')).toContainText('YouTube Video Downloader');
   });
 
@@ -33,7 +33,7 @@ test.describe('Landing Page', () => {
 
   test('has link to MeTube dashboard', async ({ page }) => {
     await page.goto(LANDING_URL);
-    const link = page.locator('#metubeLink');
+    const link = page.locator('#dashLink');
     await expect(link).toBeVisible();
     // Href is dynamically set to dashboard URL
     const href = await link.getAttribute('href');

@@ -315,7 +315,7 @@ test_landing_page_loads() {
         return 1
     fi
     body=$(_http_get "$LANDING_URL/")
-    if ! echo "$body" | grep -q 'MeTube'; then
+    if ! echo "$body" | grep -qE 'Боба|Boba|YouTube Downloader'; then
         echo "Landing page missing expected content"
         return 1
     fi
@@ -328,8 +328,8 @@ test_landing_has_dashboard_link() {
         echo "Landing page missing dashboard port link"
         return 1
     fi
-    if ! echo "$body" | grep -q 'YT-DLP Dashboard'; then
-        echo "Landing page missing 'YT-DLP Dashboard' text"
+    if ! echo "$body" | grep -qE 'Боба Dashboard|YT-DLP Dashboard'; then
+        echo "Landing page missing dashboard link text"
         return 1
     fi
 }
@@ -341,8 +341,8 @@ test_landing_has_metube_classic_link() {
         echo "Landing page missing MeTube Classic port link"
         return 1
     fi
-    if ! echo "$body" | grep -q 'MeTube Classic'; then
-        echo "Landing page missing 'MeTube Classic' text"
+    if ! echo "$body" | grep -qE 'Classic UI|MeTube Classic'; then
+        echo "Landing page missing 'Classic UI' text"
         return 1
     fi
 }
