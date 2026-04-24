@@ -394,14 +394,20 @@ export class HistoryComponent implements OnInit, OnDestroy {
       return;
     }
     this.metube.clearHistory().subscribe({
-      next: () => this.showToast('History cleared'),
+      next: () => {
+        this.history = [];
+        this.showToast('History cleared');
+      },
       error: (err) => this.showToast('Failed to clear history: ' + (err.error?.msg || err.message), true),
     });
   }
 
   cleanup(id: string): void {
     this.metube.deleteDownloads([id], 'done').subscribe({
-      next: () => this.showToast('Removed from history'),
+      next: () => {
+        this.history = this.history.filter(item => item.id !== id);
+        this.showToast('Removed from history');
+      },
       error: (err) => this.showToast('Failed to remove: ' + (err.error?.msg || err.message), true),
     });
   }
@@ -428,9 +434,11 @@ export class HistoryComponent implements OnInit, OnDestroy {
     this.dialogLoading = true;
     this.metube.deleteDownloadWithFile(this.dialogItem, true).subscribe({
       next: (res) => {
+        const deletedId = this.dialogItem!.id;
         this.dialogItem = null;
         this.dialogLoading = false;
         if (res.success) {
+          this.history = this.history.filter(item => item.id !== deletedId);
           const fileCount = res.files_deleted?.length || 0;
           this.showToast(fileCount > 0 ? `Deleted (${fileCount} file${fileCount > 1 ? 's' : ''})` : 'Removed from history');
         } else {
