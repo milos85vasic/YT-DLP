@@ -117,6 +117,12 @@ EOF
 # Cleanup test environment
 cleanup_test_env() {
     log_info "Cleaning up test environment..."
+    
+    # Restore original .env if it was backed up
+    if [ -f .env.backup ]; then
+        mv .env.backup .env
+    fi
+    
     rm -rf "$TEST_RESULTS_DIR"
     rm -rf "$TEST_LOGS_DIR"
     rm -rf "$TEST_CONFIG_DIR"
@@ -498,6 +504,11 @@ main() {
     echo "  Verbose: $VERBOSE"
     echo "  Dry Run: $DRY_RUN"
     echo ""
+    
+    # Backup existing .env so tests can restore it later
+    if [ -f .env ] && [ ! -f .env.backup ]; then
+        cp .env .env.backup
+    fi
     
     # Setup test environment
     if [ "$DRY_RUN" = false ]; then

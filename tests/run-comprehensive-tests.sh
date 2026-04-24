@@ -33,6 +33,7 @@ mkdir -p tests/logs
 mkdir -p tests/results
 
 # Create test .env if it doesn't exist
+ENV_CREATED_BY_TEST=false
 if [ ! -f .env ]; then
     echo -e "${YELLOW}Creating test .env file...${NC}"
     cat > .env << 'EOF'
@@ -42,6 +43,7 @@ METUBE_PORT=18086
 YTDLP_VPN_PORT=13130
 TZ=UTC
 EOF
+    ENV_CREATED_BY_TEST=true
 fi
 
 # Ensure test config directory exists
@@ -128,8 +130,8 @@ echo "  Results: tests/results/"
 echo ""
 echo -e "${BLUE}Step 3: Cleaning up...${NC}"
 
-# Remove test .env if we created it
-if [ -f .env ]; then
+# Remove test .env only if we created it
+if [ "$ENV_CREATED_BY_TEST" = true ] && [ -f .env ]; then
     rm -f .env
     echo -e "${GREEN}✓${NC} Removed test .env"
 fi
@@ -139,7 +141,11 @@ rm -f vpn-auth.txt 2>/dev/null || true
 
 # Clean up test directories (optional - keep for debugging if tests failed)
 if [ $TEST_EXIT_CODE -eq 0 ]; then
-    rm -rf /tmp/test-downloads
+    if command -v podman &> /dev/null; then
+        podman unshare rm -rf /tmp/test-downloads 2>/dev/null || rm -rf /tmp/test-downloads 2>/dev/null || true
+    else
+        rm -rf /tmp/test-downloads 2>/dev/null || true
+    fi
     rm -rf /tmp/test-vpn
     echo -e "${GREEN}✓${NC} Cleaned up temporary directories"
 else

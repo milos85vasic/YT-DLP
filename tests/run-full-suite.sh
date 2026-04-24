@@ -61,6 +61,9 @@ TZ=UTC
 EOF
 fi
 
+# Ensure download directory exists so ./init doesn't prompt interactively
+mkdir -p /tmp/test-downloads
+
 # Initialize environment
 echo -e "${BLUE}Step 2: Initializing environment...${NC}"
 ./init > /dev/null 2>&1 || {
@@ -75,8 +78,10 @@ echo -e "${BLUE}Step 2: Initializing environment...${NC}"
 echo -e "${BLUE}Step 3: Starting containers for testing...${NC}"
 
 # Check if containers are already running
+CONTAINERS_WERE_RUNNING=false
 if ./status 2>/dev/null | grep -q "running"; then
     echo -e "${YELLOW}Containers already running, skipping start${NC}"
+    CONTAINERS_WERE_RUNNING=true
 else
     ./start > /dev/null 2>&1 &
     START_PID=$!
@@ -120,17 +125,21 @@ fi
 # =============================================================================
 
 echo ""
-echo -e "${BLUE}Step 5: Shutting down containers...${NC}"
-./stop > /dev/null 2>&1 || true
+if [ "$CONTAINERS_WERE_RUNNING" = true ]; then
+    echo -e "${BLUE}Step 5: Containers were already running, leaving them up...${NC}"
+else
+    echo -e "${BLUE}Step 5: Shutting down containers...${NC}"
+    ./stop > /dev/null 2>&1 || true
 
-# Verify containers are stopped
-for i in {1..10}; do
-    if ! ./status 2>/dev/null | grep -q "running"; then
-        echo -e "${GREEN}✓ All containers stopped${NC}"
-        break
-    fi
-    sleep 1
-done
+    # Verify containers are stopped
+    for i in {1..10}; do
+        if ! ./status 2>/dev/null | grep -q "running"; then
+            echo -e "${GREEN}✓ All containers stopped${NC}"
+            break
+        fi
+        sleep 1
+    done
+fi
 
 echo ""
 echo -e "${BLUE}============================================${NC}"
