@@ -338,14 +338,15 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     CYAN='\033[0;36m'
     NC='\033[0m'
 
-    CONTAINER_RUNTIME=""
-    if command -v podman &> /dev/null; then
-        CONTAINER_RUNTIME="podman"
-    elif command -v docker &> /dev/null; then
-        CONTAINER_RUNTIME="docker"
-    else
-        echo -e "${RED}ERROR: No container runtime found!${NC}"
-        exit 1
+    if [ -z "$CONTAINER_RUNTIME" ]; then
+        if command -v podman &> /dev/null; then
+            CONTAINER_RUNTIME="podman"
+        elif command -v docker &> /dev/null; then
+            CONTAINER_RUNTIME="docker"
+        else
+            echo -e "${RED}ERROR: No container runtime found!${NC}"
+            exit 1
+        fi
     fi
 
     CONTAINER_NAME="yt-dlp-cli"

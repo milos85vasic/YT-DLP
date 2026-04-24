@@ -276,7 +276,7 @@ test_proxy_works_after_container_restart() {
     _detect_runtime
     # Restart only the dashboard container (not metube-direct)
     $CONTAINER_RUNTIME restart "$DASHBOARD_CONTAINER" >/dev/null 2>&1
-    sleep 3
+    sleep 8
 
     local status
     status=$(_http_status "$DASHBOARD_URL/api/history")
@@ -552,7 +552,7 @@ test_dashboard_proxy_delete_download() {
 test_metube_ytdlp_is_nightly() {
     _detect_runtime
     local version
-    version=$($CONTAINER_RUNTIME exec "$METUBE_CONTAINER" python3 -c "import yt_dlp; print(yt_dlp.version.__version__)" 2>/dev/null || echo "unknown")
+    version=$($CONTAINER_RUNTIME exec "$METUBE_CONTAINER" yt-dlp --version 2>/dev/null || echo "unknown")
     if ! echo "$version" | grep -qE "2026\.[0-9]+\.[0-9]+"; then
         echo "MeTube yt-dlp version '$version' does not look like a valid 2026 version"
         return 1
@@ -652,14 +652,15 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     CYAN='\033[0;36m'
     NC='\033[0m'
 
-    CONTAINER_RUNTIME=""
-    if command -v podman &> /dev/null; then
-        CONTAINER_RUNTIME="podman"
-    elif command -v docker &> /dev/null; then
-        CONTAINER_RUNTIME="docker"
-    else
-        echo -e "${RED}ERROR: No container runtime found!${NC}"
-        exit 1
+    if [ -z "$CONTAINER_RUNTIME" ]; then
+        if command -v podman &> /dev/null; then
+            CONTAINER_RUNTIME="podman"
+        elif command -v docker &> /dev/null; then
+            CONTAINER_RUNTIME="docker"
+        else
+            echo -e "${RED}ERROR: No container runtime found!${NC}"
+            exit 1
+        fi
     fi
 
     PASSED=0
