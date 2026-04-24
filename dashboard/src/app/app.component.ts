@@ -57,8 +57,8 @@ import { ErrorBoundaryComponent } from './components/error-boundary/error-bounda
       display: flex;
       flex-direction: column;
       min-height: 100vh;
-      background: #0d0d0d;
-      color: #eee;
+      background: #2b2b2b;
+      color: #a9b7c6;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
     .header {
@@ -67,8 +67,8 @@ import { ErrorBoundaryComponent } from './components/error-boundary/error-bounda
       justify-content: space-between;
       padding: 0 24px;
       height: 56px;
-      background: rgba(255,255,255,0.03);
-      border-bottom: 1px solid rgba(255,255,255,0.06);
+      background: #3c3f41;
+      border-bottom: 1px solid #555555;
       position: sticky;
       top: 0;
       z-index: 100;
@@ -82,9 +82,7 @@ import { ErrorBoundaryComponent } from './components/error-boundary/error-bounda
     .logo {
       font-size: 18px;
       font-weight: 800;
-      background: linear-gradient(90deg, #ff0050, #ffcc00);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      color: #a9b7c6;
     }
     .tag {
       font-size: 11px;
@@ -103,12 +101,12 @@ import { ErrorBoundaryComponent } from './components/error-boundary/error-bounda
       border-radius: 10px;
       font-size: 13px;
       font-weight: 500;
-      color: #999;
+      color: #808080;
       text-decoration: none;
       transition: all 0.2s;
     }
-    .nav a:hover { color: #fff; background: rgba(255,255,255,0.05); }
-    .nav a.active { color: #fff; background: rgba(255,0,80,0.12); }
+    .nav a:hover { color: #a9b7c6; background: rgba(157,0,30,0.08); }
+    .nav a.active { color: #a9b7c6; background: rgba(157,0,30,0.15); }
     .badge {
       display: inline-flex;
       align-items: center;
@@ -117,19 +115,19 @@ import { ErrorBoundaryComponent } from './components/error-boundary/error-bounda
       height: 18px;
       padding: 0 5px;
       margin-left: 6px;
-      background: rgba(0,150,255,0.2);
-      color: #66b3ff;
+      background: rgba(104,151,187,0.15);
+      color: #6897bb;
       border-radius: 9px;
       font-size: 10px;
       font-weight: 700;
     }
     .badge.error {
-      background: rgba(255,0,80,0.2);
-      color: #ff5588;
+      background: rgba(204,120,50,0.15);
+      color: #cc7832;
     }
     .badge.cookie-stale {
-      background: rgba(255,200,0,0.2);
-      color: #ffcc66;
+      background: rgba(217,164,65,0.15);
+      color: #d9a441;
     }
     .connection-status {
       display: flex;
@@ -145,25 +143,25 @@ import { ErrorBoundaryComponent } from './components/error-boundary/error-bounda
       transition: all 0.3s;
     }
     .connection-status.offline {
-      color: #ff5588;
-      background: rgba(255,0,80,0.08);
-      border-color: rgba(255,0,80,0.15);
+      color: #cc7832;
+      background: rgba(204,120,50,0.08);
+      border-color: rgba(204,120,50,0.15);
     }
     .dot {
       width: 7px;
       height: 7px;
       border-radius: 50%;
     }
-    .dot.online { background: #00ff88; box-shadow: 0 0 6px rgba(0,255,136,0.5); }
-    .dot.offline { background: #ff5588; box-shadow: 0 0 6px rgba(255,0,80,0.5); }
+    .dot.online { background: #6a8759; box-shadow: 0 0 6px rgba(106,135,89,0.5); }
+    .dot.offline { background: #cc7832; box-shadow: 0 0 6px rgba(204,120,50,0.5); }
     .main { flex: 1; }
     .footer {
       display: flex;
       justify-content: space-between;
       padding: 16px 24px;
       font-size: 11px;
-      color: #444;
-      border-top: 1px solid rgba(255,255,255,0.04);
+      color: #555555;
+      border-top: 1px solid #555555;
     }
   `],
 })

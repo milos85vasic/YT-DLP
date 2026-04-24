@@ -7,7 +7,7 @@ Flow: Open YouTube → Sign in → Export cookies → Auto-redirect to Dashboard
 import os
 import uuid
 import time
-from flask import Flask, render_template_string, request, jsonify, make_response
+from flask import Flask, render_template_string, request, jsonify, make_response, send_from_directory
 import requests
 
 app = Flask(__name__)
@@ -33,31 +33,32 @@ INDEX_TEMPLATE = """
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background: #0d0d0d;
-            color: #eee;
+            background: #2b2b2b;
+            color: #a9b7c6;
             padding: 20px;
         }
         .container { text-align: center; max-width: 550px; width: 100%; }
-        .logo-mark {
-            font-size: 64px;
-            margin-bottom: 8px;
+        .logo-img {
+            width: 96px;
+            height: 96px;
+            margin-bottom: 12px;
+            border-radius: 20px;
+            object-fit: contain;
         }
         h1 {
             font-size: 2.8rem;
             font-weight: 800;
             margin-bottom: 6px;
-            background: linear-gradient(90deg, #ff0050, #ffcc00);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: #a9b7c6;
             letter-spacing: -1px;
         }
-        .subtitle { color: #888; margin-bottom: 32px; font-size: 1.05rem; }
+        .subtitle { color: #808080; margin-bottom: 32px; font-size: 1.05rem; }
 
         .auth-card {
-            background: rgba(255,255,255,0.04);
-            border-radius: 16px;
+            background: #3c3f41;
+            border-radius: 8px;
             padding: 36px 32px;
-            border: 1px solid rgba(255,255,255,0.08);
+            border: 1px solid #555555;
             text-align: left;
         }
 
@@ -71,50 +72,51 @@ INDEX_TEMPLATE = """
             width: 10px;
             height: 10px;
             border-radius: 50%;
-            background: rgba(255,255,255,0.1);
+            background: #4e5254;
             transition: all 0.4s ease;
         }
-        .step.active { background: #ff0050; transform: scale(1.3); box-shadow: 0 0 12px rgba(255,0,80,0.4); }
-        .step.done { background: #00ff88; }
+        .step.active { background: #9d001e; transform: scale(1.3); box-shadow: 0 0 12px rgba(157,0,30,0.4); }
+        .step.done { background: #6a8759; }
         .step-connector {
             width: 36px;
             height: 2px;
-            background: rgba(255,255,255,0.1);
+            background: #4e5254;
             align-self: center;
         }
-        .step-connector.active { background: linear-gradient(90deg, #00ff88, #ff0050); }
+        .step-connector.active { background: linear-gradient(90deg, #6a8759, #9d001e); }
 
         .action-btn {
             display: inline-flex;
             align-items: center;
             gap: 10px;
-            background: linear-gradient(90deg, #ff0050, #ff4d79);
-            color: #fff;
+            background: #9d001e;
+            color: #a9b7c6;
             padding: 14px 32px;
-            border-radius: 12px;
+            border-radius: 6px;
             font-size: 1rem;
             font-weight: 600;
             text-decoration: none;
             cursor: pointer;
             border: none;
             transition: all 0.2s ease;
-            box-shadow: 0 4px 20px rgba(255,0,80,0.25);
+            box-shadow: 0 4px 20px rgba(157,0,30,0.25);
         }
         .action-btn:hover {
+            background: #c4002a;
             transform: translateY(-2px);
-            box-shadow: 0 6px 28px rgba(255,0,80,0.4);
+            box-shadow: 0 6px 28px rgba(157,0,30,0.4);
         }
         .action-btn svg { width: 22px; height: 22px; }
 
         .guide {
             margin-top: 24px;
             padding: 20px;
-            background: rgba(0,0,0,0.25);
-            border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.05);
+            background: #2b2b2b;
+            border-radius: 6px;
+            border: 1px solid #555555;
         }
         .guide h3 {
-            color: #fff;
+            color: #a9b7c6;
             margin-bottom: 12px;
             font-size: 0.95rem;
             display: flex;
@@ -125,41 +127,39 @@ INDEX_TEMPLATE = """
         .guide ol {
             margin: 0;
             padding-left: 22px;
-            color: #999;
+            color: #808080;
             font-size: 0.9rem;
             line-height: 1.7;
         }
         .guide li { margin-bottom: 6px; }
-        .guide strong { color: #eee; font-weight: 500; }
+        .guide strong { color: #a9b7c6; font-weight: 500; }
         .guide .highlight {
-            background: linear-gradient(90deg, #ff0050, #ffcc00);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: #d9a441;
             font-weight: 600;
         }
 
         .upload-zone {
-            border: 2px dashed rgba(255,255,255,0.12);
-            border-radius: 14px;
+            border: 2px dashed #555555;
+            border-radius: 6px;
             padding: 36px 28px;
             margin-top: 20px;
             text-align: center;
             transition: all 0.3s ease;
             cursor: pointer;
-            background: rgba(255,255,255,0.02);
+            background: #2b2b2b;
         }
         .upload-zone:hover, .upload-zone.dragover {
-            border-color: #00ff88;
-            background: rgba(0,255,136,0.04);
+            border-color: #6a8759;
+            background: rgba(106,135,89,0.06);
         }
-        .upload-zone p { color: #888; font-size: 0.9rem; }
+        .upload-zone p { color: #808080; font-size: 0.9rem; }
         .upload-zone .big { font-size: 2.2rem; margin-bottom: 8px; }
 
         .loading-overlay {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.92);
+            background: rgba(43,43,43,0.95);
             z-index: 1000;
             flex-direction: column;
             align-items: center;
@@ -169,13 +169,13 @@ INDEX_TEMPLATE = """
         .spinner {
             width: 48px;
             height: 48px;
-            border: 3px solid rgba(255,255,255,0.08);
-            border-top-color: #ff0050;
+            border: 3px solid #4e5254;
+            border-top-color: #9d001e;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .loading-text { margin-top: 16px; font-size: 1rem; color: #ccc; }
+        .loading-text { margin-top: 16px; font-size: 1rem; color: #a9b7c6; }
 
         .features {
             display: flex;
@@ -185,17 +185,17 @@ INDEX_TEMPLATE = """
             flex-wrap: wrap;
         }
         .feature {
-            background: rgba(255,255,255,0.04);
+            background: #3c3f41;
             padding: 10px 18px;
-            border-radius: 10px;
+            border-radius: 6px;
             font-size: 0.82rem;
-            color: #888;
-            border: 1px solid rgba(255,255,255,0.06);
+            color: #808080;
+            border: 1px solid #555555;
         }
-        .feature span { color: #ccc; }
+        .feature span { color: #a9b7c6; }
         .footer {
             margin-top: 24px;
-            color: #444;
+            color: #555555;
             font-size: 0.78rem;
         }
 
@@ -209,46 +209,46 @@ INDEX_TEMPLATE = """
         .success-view h2 {
             font-size: 1.5rem;
             font-weight: 700;
-            color: #fff;
+            color: #a9b7c6;
             margin-bottom: 8px;
         }
         .success-view p {
-            color: #888;
+            color: #808080;
             margin-bottom: 16px;
             font-size: 0.95rem;
         }
         .dash-link {
             display: inline-block;
             padding: 10px 24px;
-            background: rgba(255,0,80,0.12);
-            color: #ff5588;
-            border: 1px solid rgba(255,0,80,0.2);
-            border-radius: 10px;
+            background: rgba(157,0,30,0.12);
+            color: #cc7832;
+            border: 1px solid rgba(157,0,30,0.2);
+            border-radius: 6px;
             text-decoration: none;
             font-weight: 600;
             font-size: 0.9rem;
             transition: all 0.2s;
         }
         .dash-link:hover {
-            background: rgba(255,0,80,0.2);
+            background: rgba(157,0,30,0.2);
         }
 
         .cookie-banner {
             margin-top: 16px;
             padding: 12px 16px;
-            border-radius: 10px;
+            border-radius: 6px;
             font-size: 0.85rem;
             text-align: left;
         }
         .cookie-banner.stale {
-            background: rgba(255,200,0,0.06);
-            border: 1px solid rgba(255,200,0,0.15);
-            color: #ffcc66;
+            background: rgba(217,164,65,0.08);
+            border: 1px solid rgba(217,164,65,0.2);
+            color: #d9a441;
         }
         .cookie-banner.fresh {
-            background: rgba(0,255,136,0.06);
-            border: 1px solid rgba(0,255,136,0.12);
-            color: #00ff88;
+            background: rgba(106,135,89,0.08);
+            border: 1px solid rgba(106,135,89,0.2);
+            color: #6a8759;
         }
         .cookie-banner strong { display: block; margin-bottom: 4px; font-weight: 600; }
         .cookie-banner a { color: inherit; text-decoration: underline; }
@@ -256,7 +256,7 @@ INDEX_TEMPLATE = """
         .services { margin-top: 24px; text-align: left; }
         .services h3 {
             font-size: 0.9rem;
-            color: #888;
+            color: #808080;
             margin-bottom: 12px;
             text-align: center;
             font-weight: 500;
@@ -271,50 +271,50 @@ INDEX_TEMPLATE = """
             align-items: center;
             gap: 10px;
             padding: 12px 16px;
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 12px;
+            background: #3c3f41;
+            border: 1px solid #555555;
+            border-radius: 6px;
             text-decoration: none;
-            color: #aaa;
+            color: #808080;
             transition: all 0.2s ease;
             cursor: pointer;
         }
         .service-card:hover {
-            background: rgba(255,255,255,0.07);
-            border-color: rgba(255,255,255,0.12);
+            background: #4e5254;
+            border-color: #555555;
             transform: translateY(-1px);
         }
         .service-card.primary {
-            border-color: rgba(255,0,80,0.2);
-            background: rgba(255,0,80,0.05);
+            border-color: rgba(157,0,30,0.3);
+            background: rgba(157,0,30,0.06);
         }
         .service-card.primary:hover {
-            border-color: rgba(255,0,80,0.3);
-            background: rgba(255,0,80,0.08);
+            border-color: rgba(157,0,30,0.4);
+            background: rgba(157,0,30,0.1);
         }
         .service-card .s-icon { font-size: 18px; }
         .service-card .s-name {
             font-weight: 600;
-            color: #eee;
+            color: #a9b7c6;
             font-size: 0.9rem;
         }
         .service-card .s-port {
             font-size: 0.75rem;
-            color: #666;
+            color: #555555;
             font-family: monospace;
             margin-left: auto;
         }
         .service-card .s-desc {
             width: 100%;
             font-size: 0.78rem;
-            color: #888;
+            color: #808080;
             margin-top: 2px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="logo-mark">🫘</div>
+        <img src="/logo.png" alt="Боба" class="logo-img">
         <h1>Боба</h1>
         <p class="subtitle">YouTube Video Downloader</p>
 
@@ -351,9 +351,9 @@ INDEX_TEMPLATE = """
 
             <!-- Step 2: Export Cookies -->
             <div class="step-content" id="content2">
-                <p style="color: #888; margin-bottom: 16px; font-size: 0.95rem;">
+                <p style="color: #808080; margin-bottom: 16px; font-size: 0.95rem;">
                     Great! Now you need to export your YouTube cookies.<br>
-                    <strong style="color: #eee;">This is required</strong> to download videos.
+                    <strong style="color: #a9b7c6;">This is required</strong> to download videos.
                 </p>
 
                 <div class="guide">
@@ -731,6 +731,11 @@ def health():
         "metube_reachable": metube_ok,
         "timestamp": time.time(),
     })
+
+
+@app.route("/logo.png")
+def logo():
+    return send_from_directory(os.path.dirname(os.path.abspath(__file__)), "logo.png", mimetype="image/png")
 
 
 @app.route("/favicon.ico")

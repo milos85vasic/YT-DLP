@@ -110,16 +110,16 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
     .safety-banner {
       margin-bottom: 20px;
       padding: 16px 20px;
-      background: rgba(0,255,136,0.06);
-      border: 1px solid rgba(0,255,136,0.15);
+      background: rgba(106,135,89,0.06);
+      border: 1px solid rgba(106,135,89,0.15);
       border-radius: 14px;
-      color: #ccc;
+      color: #808080;
       font-size: 13px;
       line-height: 1.6;
     }
     .safety-banner strong {
       display: block;
-      color: #00ff88;
+      color: #6a8759;
       font-size: 15px;
       margin-bottom: 6px;
     }
@@ -127,8 +127,8 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
     .safety-banner .warning-small {
       margin-top: 8px;
       padding-top: 8px;
-      border-top: 1px solid rgba(255,200,0,0.15);
-      color: #ffcc66;
+      border-top: 1px solid rgba(217,164,65,0.15);
+      color: #d9a441;
       font-size: 12px;
     }
     .header-row {
@@ -139,35 +139,35 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
       gap: 12px;
       flex-wrap: wrap;
     }
-    h2 { margin: 0; font-size: 20px; color: #fff; }
+    h2 { margin: 0; font-size: 20px; color: #a9b7c6; }
     .btn-clear-all {
       padding: 8px 16px;
       border-radius: 10px;
-      border: 1px solid rgba(255,200,0,0.3);
-      background: rgba(255,200,0,0.08);
-      color: #ffcc66;
+      border: 1px solid rgba(217,164,65,0.3);
+      background: rgba(217,164,65,0.08);
+      color: #d9a441;
       cursor: pointer;
       font-size: 13px;
       font-weight: 600;
       transition: all 0.2s;
     }
-    .btn-clear-all:hover { background: rgba(255,200,0,0.15); }
+    .btn-clear-all:hover { background: rgba(217,164,65,0.15); }
     .empty {
       text-align: center;
       padding: 60px 20px;
-      color: #666;
+      color: #808080;
     }
     .empty-icon { font-size: 48px; margin-bottom: 12px; }
     .loading {
       text-align: center;
       padding: 60px 20px;
-      color: #666;
+      color: #808080;
     }
     .loading .spinner {
       width: 40px;
       height: 40px;
-      border: 3px solid rgba(255,255,255,0.1);
-      border-top-color: #00ff88;
+      border: 3px solid #4e5254;
+      border-top-color: #9d001e;
       border-radius: 50%;
       animation: spin 1s linear infinite;
       margin: 0 auto 16px;
@@ -176,42 +176,42 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
     .error-state {
       text-align: center;
       padding: 60px 20px;
-      color: #ff5588;
+      color: #cc7832;
     }
     .error-icon { font-size: 48px; margin-bottom: 12px; }
     .btn-retry {
       margin-top: 16px;
       padding: 10px 20px;
       border-radius: 10px;
-      border: 1px solid rgba(255,85,136,0.3);
-      background: rgba(255,85,136,0.08);
-      color: #ff5588;
+      border: 1px solid rgba(204,120,50,0.3);
+      background: rgba(204,120,50,0.08);
+      color: #cc7832;
       cursor: pointer;
       font-size: 14px;
       font-weight: 600;
       transition: all 0.2s;
     }
-    .btn-retry:hover { background: rgba(255,85,136,0.15); }
+    .btn-retry:hover { background: rgba(204,120,50,0.15); }
     .list { display: flex; flex-direction: column; gap: 12px; }
     .item {
       display: flex;
       align-items: flex-start;
       gap: 14px;
       padding: 14px 18px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.06);
+      background: rgba(169,183,198,0.04);
+      border: 1px solid rgba(169,183,198,0.06);
       border-radius: 14px;
       transition: background 0.2s;
     }
-    .item:hover { background: rgba(255,255,255,0.06); }
-    .item.error { border-color: rgba(255,0,80,0.3); background: rgba(255,0,80,0.03); }
-    .item.finished { border-color: rgba(0,255,136,0.15); }
+    .item:hover { background: rgba(169,183,198,0.06); }
+    .item.error { border-color: rgba(157,0,30,0.3); background: rgba(157,0,30,0.03); }
+    .item.finished { border-color: rgba(106,135,89,0.15); }
     .thumb { font-size: 20px; margin-top: 2px; }
     .info { flex: 1; min-width: 0; }
     .title {
       font-size: 14px;
       font-weight: 600;
-      color: #fff;
+      color: #a9b7c6;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -219,7 +219,7 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
     .meta {
       margin-top: 4px;
       font-size: 12px;
-      color: #888;
+      color: #808080;
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
@@ -232,12 +232,12 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
       font-weight: 600;
       text-transform: uppercase;
     }
-    .status.finished { background: rgba(0,255,136,0.12); color: #00ff88; }
-    .status.error { background: rgba(255,0,80,0.12); color: #ff5588; }
+    .status.finished { background: rgba(106,135,89,0.12); color: #6a8759; }
+    .status.error { background: rgba(157,0,30,0.12); color: #cc7832; }
     .filename {
       margin-top: 6px;
       font-size: 11px;
-      color: #666;
+      color: #808080;
       font-family: monospace;
       white-space: nowrap;
       overflow: hidden;
@@ -246,7 +246,7 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
     .url {
       margin-top: 4px;
       font-size: 11px;
-      color: #555;
+      color: #808080;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -254,11 +254,11 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
     .msg {
       margin-top: 8px;
       padding: 8px 12px;
-      background: rgba(255,0,80,0.08);
-      border: 1px solid rgba(255,0,80,0.15);
+      background: rgba(157,0,30,0.08);
+      border: 1px solid rgba(157,0,30,0.15);
       border-radius: 8px;
       font-size: 12px;
-      color: #ff5588;
+      color: #cc7832;
       font-family: monospace;
       white-space: pre-wrap;
       word-break: break-word;
@@ -281,20 +281,20 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
       justify-content: center;
     }
     .btn-cleanup {
-      background: rgba(255,200,0,0.08);
-      color: #ffcc66;
+      background: rgba(217,164,65,0.08);
+      color: #d9a441;
     }
-    .btn-cleanup:hover { background: rgba(255,200,0,0.2); }
+    .btn-cleanup:hover { background: rgba(217,164,65,0.2); }
     .btn-refresh {
-      background: rgba(0,150,255,0.08);
-      color: #66b3ff;
+      background: rgba(104,151,187,0.08);
+      color: #6897bb;
     }
-    .btn-refresh:hover { background: rgba(0,150,255,0.2); }
+    .btn-refresh:hover { background: rgba(104,151,187,0.2); }
     .btn-delete {
-      background: rgba(255,0,80,0.08);
-      color: #ff5588;
+      background: rgba(157,0,30,0.08);
+      color: #cc7832;
     }
-    .btn-delete:hover { background: rgba(255,0,80,0.2); }
+    .btn-delete:hover { background: rgba(157,0,30,0.2); }
 
     /* Dialog */
     .dialog-overlay {
@@ -308,34 +308,34 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
       padding: 20px;
     }
     .dialog {
-      background: #1a1a2e;
-      border: 1px solid rgba(255,255,255,0.1);
+      background: #2b2b2b;
+      border: 1px solid rgba(169,183,198,0.1);
       border-radius: 16px;
       padding: 28px;
       max-width: 420px;
       width: 100%;
     }
-    .dialog h3 { margin: 0 0 12px; font-size: 18px; color: #fff; }
-    .dialog p { margin: 0 0 16px; font-size: 14px; color: #aaa; }
+    .dialog h3 { margin: 0 0 12px; font-size: 18px; color: #a9b7c6; }
+    .dialog p { margin: 0 0 16px; font-size: 14px; color: #808080; }
     .dialog-item {
-      background: rgba(255,255,255,0.04);
+      background: rgba(169,183,198,0.04);
       border-radius: 10px;
       padding: 12px 14px;
       margin-bottom: 16px;
     }
     .dialog-item strong {
       display: block;
-      color: #fff;
+      color: #a9b7c6;
       font-size: 14px;
       margin-bottom: 4px;
     }
     .dialog-item span {
       font-size: 12px;
-      color: #666;
+      color: #808080;
       font-family: monospace;
     }
     .dialog-warning {
-      color: #ff5588 !important;
+      color: #cc7832 !important;
       font-size: 13px !important;
     }
     .dialog-actions {
@@ -346,19 +346,19 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
     .btn-cancel {
       padding: 10px 18px;
       border-radius: 10px;
-      border: 1px solid rgba(255,255,255,0.15);
+      border: 1px solid rgba(169,183,198,0.15);
       background: transparent;
-      color: #aaa;
+      color: #808080;
       cursor: pointer;
       font-size: 14px;
     }
-    .btn-cancel:hover { background: rgba(255,255,255,0.05); }
+    .btn-cancel:hover { background: rgba(169,183,198,0.05); }
     .btn-confirm {
       padding: 10px 18px;
       border-radius: 10px;
       border: none;
-      background: linear-gradient(90deg, #ff0050, #ff3366);
-      color: #fff;
+      background: linear-gradient(90deg, #9d001e, #c4002a);
+      color: #a9b7c6;
       cursor: pointer;
       font-size: 14px;
       font-weight: 600;
@@ -373,18 +373,18 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
       left: 50%;
       transform: translateX(-50%);
       padding: 12px 24px;
-      background: rgba(0,255,136,0.12);
-      border: 1px solid rgba(0,255,136,0.2);
+      background: rgba(106,135,89,0.12);
+      border: 1px solid rgba(106,135,89,0.2);
       border-radius: 12px;
-      color: #00ff88;
+      color: #6a8759;
       font-size: 14px;
       z-index: 1001;
       animation: toastIn 0.3s ease;
     }
     .toast.error {
-      background: rgba(255,0,80,0.12);
-      border-color: rgba(255,0,80,0.2);
-      color: #ff5588;
+      background: rgba(157,0,30,0.12);
+      border-color: rgba(157,0,30,0.2);
+      color: #cc7832;
     }
     @keyframes toastIn {
       from { opacity: 0; transform: translate(-50%, 20px); }

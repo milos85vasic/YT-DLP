@@ -39,11 +39,11 @@ export class GlobalErrorHandler implements ErrorHandler {
       padding: 80px 24px;
       max-width: 500px;
       margin: 0 auto;
-      color: #ff5588;
+      color: #cc7832;
     }
     .error-icon { font-size: 64px; margin-bottom: 16px; }
-    h2 { margin: 0 0 12px; font-size: 22px; color: #fff; }
-    p { margin: 0 0 24px; font-size: 14px; color: #aaa; line-height: 1.6; }
+    h2 { margin: 0 0 12px; font-size: 22px; color: #a9b7c6; }
+    p { margin: 0 0 24px; font-size: 14px; color: #808080; line-height: 1.6; }
     .actions {
       display: flex;
       gap: 12px;
@@ -60,17 +60,17 @@ export class GlobalErrorHandler implements ErrorHandler {
       border: none;
     }
     .btn-retry {
-      background: rgba(255,85,136,0.12);
-      border: 1px solid rgba(255,85,136,0.3);
-      color: #ff5588;
+      background: rgba(204,120,50,0.12);
+      border: 1px solid rgba(204,120,50,0.3);
+      color: #cc7832;
     }
-    .btn-retry:hover { background: rgba(255,85,136,0.2); }
+    .btn-retry:hover { background: rgba(204,120,50,0.2); }
     .btn-home {
-      background: rgba(0,150,255,0.12);
-      border: 1px solid rgba(0,150,255,0.3);
-      color: #66b3ff;
+      background: rgba(104,151,187,0.12);
+      border: 1px solid rgba(104,151,187,0.3);
+      color: #6897bb;
     }
-    .btn-home:hover { background: rgba(0,150,255,0.2); }
+    .btn-home:hover { background: rgba(104,151,187,0.2); }
     .content { display: contents; }
   `],
 })

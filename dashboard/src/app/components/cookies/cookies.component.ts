@@ -115,11 +115,11 @@ import { MetubeService } from '../../services/metube.service';
       font-size: 1.5rem;
       font-weight: 700;
       margin-bottom: 20px;
-      color: #fff;
+      color: #a9b7c6;
     }
     .card {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
+      background: #3c3f41;
+      border: 1px solid #555555;
       border-radius: 16px;
       padding: 24px;
       margin-bottom: 16px;
@@ -128,16 +128,16 @@ import { MetubeService } from '../../services/metube.service';
       font-size: 1.1rem;
       font-weight: 600;
       margin-bottom: 16px;
-      color: #fff;
+      color: #a9b7c6;
     }
     .subtitle {
-      color: #888;
+      color: #808080;
       font-size: 0.9rem;
       margin-bottom: 16px;
       line-height: 1.5;
     }
     .subtitle a {
-      color: #ff5588;
+      color: #cc7832;
       text-decoration: none;
     }
     .subtitle a:hover {
@@ -148,13 +148,13 @@ import { MetubeService } from '../../services/metube.service';
       align-items: center;
       gap: 12px;
       padding: 8px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.04);
+      border-bottom: 1px solid rgba(169,183,198,0.04);
     }
     .status-row:last-child {
       border-bottom: none;
     }
     .status-label {
-      color: #888;
+      color: #808080;
       font-size: 0.9rem;
       min-width: 70px;
     }
@@ -165,45 +165,45 @@ import { MetubeService } from '../../services/metube.service';
       border-radius: 8px;
       font-size: 0.85rem;
       font-weight: 600;
-      background: rgba(255,255,255,0.06);
-      color: #aaa;
+      background: #4e5254;
+      color: #808080;
     }
     .status-badge.fresh {
-      background: rgba(0,255,136,0.1);
-      color: #00ff88;
+      background: rgba(106,135,89,0.12);
+      color: #6a8759;
     }
     .status-badge.stale {
-      background: rgba(255,200,0,0.1);
-      color: #ffcc66;
+      background: rgba(217,164,65,0.12);
+      color: #d9a441;
     }
     .status-badge.missing {
-      background: rgba(255,0,80,0.1);
-      color: #ff5588;
+      background: rgba(157,0,30,0.12);
+      color: #cc7832;
     }
     .status-value {
       font-size: 0.9rem;
-      color: #ccc;
+      color: #a9b7c6;
     }
     .status-value.stale-text {
-      color: #ffcc66;
+      color: #d9a441;
     }
     .status-value.online {
-      color: #00ff88;
+      color: #6a8759;
     }
     .status-value.offline {
-      color: #ff5588;
+      color: #cc7832;
     }
     .hint {
       margin-top: 12px;
       font-size: 0.85rem;
-      color: #888;
+      color: #808080;
       line-height: 1.5;
     }
     .stale-hint {
-      color: #ffcc66;
+      color: #d9a441;
     }
     .upload-zone {
-      border: 2px dashed rgba(255,255,255,0.15);
+      border: 2px dashed rgba(169,183,198,0.15);
       border-radius: 16px;
       padding: 40px 30px;
       text-align: center;
@@ -211,15 +211,15 @@ import { MetubeService } from '../../services/metube.service';
       transition: all 0.3s ease;
     }
     .upload-zone:hover, .upload-zone.dragover {
-      border-color: #00ff88;
-      background: rgba(0,255,136,0.04);
+      border-color: #6a8759;
+      background: rgba(106,135,89,0.04);
     }
     .upload-zone .big {
       font-size: 2.5rem;
       margin-bottom: 10px;
     }
     .upload-zone p {
-      color: #888;
+      color: #808080;
       font-size: 0.95rem;
     }
     .upload-result {
@@ -229,18 +229,18 @@ import { MetubeService } from '../../services/metube.service';
       font-size: 0.9rem;
     }
     .upload-result.success {
-      background: rgba(0,255,136,0.08);
-      color: #00ff88;
+      background: rgba(106,135,89,0.08);
+      color: #6a8759;
     }
     .upload-result.error {
-      background: rgba(255,0,80,0.08);
-      color: #ff5588;
+      background: rgba(204,120,50,0.08);
+      color: #cc7832;
     }
     .btn-delete {
       padding: 10px 20px;
-      background: rgba(255,0,80,0.12);
-      color: #ff5588;
-      border: 1px solid rgba(255,0,80,0.2);
+      background: rgba(157,0,30,0.12);
+      color: #cc7832;
+      border: 1px solid rgba(157,0,30,0.2);
       border-radius: 10px;
       font-size: 0.9rem;
       font-weight: 600;
@@ -248,7 +248,7 @@ import { MetubeService } from '../../services/metube.service';
       transition: all 0.2s;
     }
     .btn-delete:hover:not(:disabled) {
-      background: rgba(255,0,80,0.2);
+      background: rgba(157,0,30,0.2);
     }
     .btn-delete:disabled {
       opacity: 0.5;
@@ -256,9 +256,9 @@ import { MetubeService } from '../../services/metube.service';
     }
     .btn-retry {
       padding: 8px 16px;
-      background: rgba(0,255,136,0.12);
-      color: #00ff88;
-      border: 1px solid rgba(0,255,136,0.2);
+      background: rgba(106,135,89,0.12);
+      color: #6a8759;
+      border: 1px solid rgba(106,135,89,0.2);
       border-radius: 8px;
       font-size: 0.85rem;
       font-weight: 600;
@@ -271,14 +271,14 @@ import { MetubeService } from '../../services/metube.service';
       align-items: center;
       justify-content: center;
       padding: 60px 20px;
-      color: #888;
+      color: #808080;
       gap: 16px;
     }
     .spinner {
       width: 40px;
       height: 40px;
-      border: 3px solid rgba(255,255,255,0.1);
-      border-top-color: #ff0050;
+      border: 3px solid #4e5254;
+      border-top-color: #9d001e;
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
@@ -286,8 +286,8 @@ import { MetubeService } from '../../services/metube.service';
       display: inline-block;
       width: 16px;
       height: 16px;
-      border: 2px solid rgba(255,255,255,0.1);
-      border-top-color: #ff0050;
+      border: 2px solid #4e5254;
+      border-top-color: #9d001e;
       border-radius: 50%;
       animation: spin 1s linear infinite;
       margin-right: 8px;
@@ -297,7 +297,7 @@ import { MetubeService } from '../../services/metube.service';
     .error-state {
       padding: 40px 20px;
       text-align: center;
-      color: #ff5588;
+      color: #cc7832;
     }
     .toast {
       position: fixed;
@@ -305,8 +305,8 @@ import { MetubeService } from '../../services/metube.service';
       left: 50%;
       transform: translateX(-50%);
       padding: 12px 24px;
-      background: rgba(0,255,136,0.9);
-      color: #000;
+      background: rgba(106,135,89,0.9);
+      color: #2b2b2b;
       border-radius: 10px;
       font-size: 0.9rem;
       font-weight: 600;
@@ -314,8 +314,8 @@ import { MetubeService } from '../../services/metube.service';
       animation: toastIn 0.3s ease;
     }
     .toast.error {
-      background: rgba(255,0,80,0.9);
-      color: #fff;
+      background: rgba(204,120,50,0.9);
+      color: #a9b7c6;
     }
     @keyframes toastIn {
       from { opacity: 0; transform: translateX(-50%) translateY(20px); }

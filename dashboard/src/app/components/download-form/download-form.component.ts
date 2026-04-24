@@ -136,19 +136,19 @@ type TrackState = 'idle' | 'adding' | 'queued' | 'downloading' | 'finished' | 'e
   styles: [`
     .page { padding: 24px; max-width: 720px; margin: 0 auto; }
     .card {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(169,183,198,0.04);
+      border: 1px solid rgba(169,183,198,0.08);
       border-radius: 16px;
       padding: 28px;
       margin-bottom: 20px;
     }
-    h2 { margin: 0 0 20px; font-size: 20px; color: #fff; }
-    h3 { margin: 0 0 16px; font-size: 16px; color: #ddd; }
+    h2 { margin: 0 0 20px; font-size: 20px; color: #a9b7c6; }
+    h3 { margin: 0 0 16px; font-size: 16px; color: #808080; }
     .input-group { margin-bottom: 16px; }
     .input-group label {
       display: block;
       font-size: 12px;
-      color: #888;
+      color: #808080;
       margin-bottom: 6px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -157,25 +157,25 @@ type TrackState = 'idle' | 'adding' | 'queued' | 'downloading' | 'finished' | 'e
       width: 100%;
       padding: 10px 14px;
       background: rgba(0,0,0,0.25);
-      border: 1px solid rgba(255,255,255,0.1);
+      border: 1px solid rgba(169,183,198,0.1);
       border-radius: 10px;
-      color: #fff;
+      color: #a9b7c6;
       font-size: 14px;
       outline: none;
       transition: border-color 0.2s;
     }
     .input-group input:focus, .input-group select:focus {
-      border-color: #ff0050;
+      border-color: #9d001e;
     }
-    .input-group input::placeholder { color: #555; }
+    .input-group input::placeholder { color: #808080; }
     .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .btn-primary {
       width: 100%;
       padding: 12px;
-      background: linear-gradient(90deg, #ff0050, #ff3366);
+      background: linear-gradient(90deg, #9d001e, #c4002a);
       border: none;
       border-radius: 10px;
-      color: #fff;
+      color: #a9b7c6;
       font-size: 15px;
       font-weight: 600;
       cursor: pointer;
@@ -189,17 +189,17 @@ type TrackState = 'idle' | 'adding' | 'queued' | 'downloading' | 'finished' | 'e
     .tracker {
       margin-top: 16px;
       padding: 14px 16px;
-      background: rgba(0,150,255,0.06);
-      border: 1px solid rgba(0,150,255,0.15);
+      background: rgba(104,151,187,0.06);
+      border: 1px solid rgba(104,151,187,0.15);
       border-radius: 12px;
     }
     .tracker.error {
-      background: rgba(255,0,80,0.06);
-      border-color: rgba(255,0,80,0.2);
+      background: rgba(157,0,30,0.06);
+      border-color: rgba(157,0,30,0.2);
     }
     .tracker.success {
-      background: rgba(0,255,136,0.06);
-      border-color: rgba(0,255,136,0.2);
+      background: rgba(106,135,89,0.06);
+      border-color: rgba(106,135,89,0.2);
     }
     .tracker-header {
       display: flex;
@@ -210,12 +210,12 @@ type TrackState = 'idle' | 'adding' | 'queued' | 'downloading' | 'finished' | 'e
     .tracker-title {
       font-size: 14px;
       font-weight: 600;
-      color: #fff;
+      color: #a9b7c6;
     }
     .tracker-subtitle {
       margin-top: 6px;
       font-size: 13px;
-      color: #ccc;
+      color: #808080;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -223,10 +223,10 @@ type TrackState = 'idle' | 'adding' | 'queued' | 'downloading' | 'finished' | 'e
     .tracker-msg {
       margin-top: 8px;
       padding: 8px 12px;
-      background: rgba(255,0,80,0.08);
+      background: rgba(157,0,30,0.08);
       border-radius: 8px;
       font-size: 12px;
-      color: #ff5588;
+      color: #cc7832;
       font-family: monospace;
       white-space: pre-wrap;
       word-break: break-word;
@@ -238,14 +238,14 @@ type TrackState = 'idle' | 'adding' | 'queued' | 'downloading' | 'finished' | 'e
       font-size: 13px;
     }
     .tracker-hint.bot {
-      background: rgba(255,200,0,0.08);
-      border: 1px solid rgba(255,200,0,0.2);
-      color: #ffcc66;
+      background: rgba(217,164,65,0.08);
+      border: 1px solid rgba(217,164,65,0.2);
+      color: #d9a441;
     }
     .tracker-hint.stale {
-      background: rgba(255,150,0,0.08);
-      border: 1px solid rgba(255,150,0,0.2);
-      color: #ffaa55;
+      background: rgba(217,164,65,0.08);
+      border: 1px solid rgba(217,164,65,0.2);
+      color: #d9a441;
     }
     .tracker-hint strong {
       display: block;
@@ -258,13 +258,13 @@ type TrackState = 'idle' | 'adding' | 'queued' | 'downloading' | 'finished' | 'e
       line-height: 1.7;
     }
     .tracker-hint a {
-      color: #66b3ff;
+      color: #6897bb;
       text-decoration: underline;
     }
     .hint-small {
       margin-top: 8px;
       font-size: 11px;
-      color: #888;
+      color: #808080;
     }
     .tracker-actions {
       margin-top: 10px;
@@ -277,22 +277,22 @@ type TrackState = 'idle' | 'adding' | 'queued' | 'downloading' | 'finished' | 'e
       padding: 6px 14px;
       border-radius: 8px;
       border: none;
-      background: rgba(0,255,136,0.12);
-      color: #00ff88;
+      background: rgba(106,135,89,0.12);
+      color: #6a8759;
       cursor: pointer;
       font-size: 13px;
       font-weight: 600;
     }
-    .btn-retry:hover { background: rgba(0,255,136,0.25); }
+    .btn-retry:hover { background: rgba(106,135,89,0.25); }
     .link-history {
-      color: #66b3ff;
+      color: #6897bb;
       text-decoration: none;
       font-size: 13px;
     }
     .link-history:hover { text-decoration: underline; }
     .tracker-filename {
       font-size: 11px;
-      color: #666;
+      color: #808080;
       font-family: monospace;
     }
     .platform-grid {
@@ -309,10 +309,10 @@ type TrackState = 'idle' | 'adding' | 'queued' | 'downloading' | 'finished' | 'e
       border-radius: 10px;
       font-size: 13px;
     }
-    .platform.ok { border: 1px solid rgba(0,255,136,0.15); }
-    .platform.warn { border: 1px solid rgba(255,200,0,0.15); opacity: 0.7; }
+    .platform.ok { border: 1px solid rgba(106,135,89,0.15); }
+    .platform.warn { border: 1px solid rgba(217,164,65,0.15); opacity: 0.7; }
     .platform .icon { font-size: 16px; }
-    .platform .name { flex: 1; color: #ccc; }
+    .platform .name { flex: 1; color: #808080; }
     .platform .badge { font-size: 11px; }
   `],
 })

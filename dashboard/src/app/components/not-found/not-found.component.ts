@@ -22,24 +22,24 @@ import { RouterLink } from '@angular/router';
       padding: 100px 24px;
       max-width: 500px;
       margin: 0 auto;
-      color: #888;
+      color: #808080;
     }
     .icon { font-size: 64px; margin-bottom: 20px; }
-    h1 { margin: 0 0 12px; font-size: 24px; color: #fff; }
+    h1 { margin: 0 0 12px; font-size: 24px; color: #a9b7c6; }
     p { margin: 0 0 24px; font-size: 15px; line-height: 1.6; }
     .actions { display: flex; justify-content: center; }
     .btn-home {
       padding: 10px 20px;
       border-radius: 10px;
-      background: rgba(0,150,255,0.12);
-      border: 1px solid rgba(0,150,255,0.3);
-      color: #66b3ff;
+      background: rgba(104,151,187,0.12);
+      border: 1px solid rgba(104,151,187,0.3);
+      color: #6897bb;
       text-decoration: none;
       font-size: 14px;
       font-weight: 600;
       transition: all 0.2s;
     }
-    .btn-home:hover { background: rgba(0,150,255,0.2); }
+    .btn-home:hover { background: rgba(104,151,187,0.2); }
   `],
 })
 export class NotFoundComponent {}

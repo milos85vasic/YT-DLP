@@ -26,8 +26,8 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
       justify-content: space-between;
       padding: 0 24px;
       height: 56px;
-      background: linear-gradient(90deg, #1a1a2e 0%, #16213e 100%);
-      border-bottom: 1px solid rgba(255,255,255,0.08);
+      background: linear-gradient(90deg, #2b2b2b 0%, #3c3f41 100%);
+      border-bottom: 1px solid rgba(169,183,198,0.08);
       position: sticky;
       top: 0;
       z-index: 100;
@@ -41,7 +41,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
     .title {
       font-size: 18px;
       font-weight: 600;
-      background: linear-gradient(90deg, #ff0050, #ffcc00);
+      background: linear-gradient(90deg, #9d001e, #d9a441);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
@@ -50,7 +50,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
       gap: 6px;
     }
     .links a {
-      color: #aaa;
+      color: #808080;
       text-decoration: none;
       padding: 6px 16px;
       border-radius: 8px;
@@ -59,12 +59,12 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
       transition: all 0.2s ease;
     }
     .links a:hover {
-      color: #fff;
-      background: rgba(255,255,255,0.06);
+      color: #a9b7c6;
+      background: rgba(169,183,198,0.06);
     }
     .links a.active {
-      color: #fff;
-      background: rgba(255,0,80,0.15);
+      color: #a9b7c6;
+      background: rgba(157,0,30,0.15);
     }
   `],
 })
