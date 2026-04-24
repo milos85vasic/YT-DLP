@@ -156,8 +156,10 @@ fi
 # ── Health Checks ────────────────────────────────────────────────────
 echo ""
 log_info "=== Gate 6: Container Health ==="
+# Detect container runtime (CI may use docker while local uses podman)
+CONTAINER_RUNTIME=${CONTAINER_RUNTIME:-$(command -v podman &>/dev/null && echo podman || echo docker)}
 for container in metube-direct yt-dlp-dashboard metube-landing yt-dlp-cli; do
-    if podman ps --format "{{.Names}}" 2>/dev/null | grep -q "^${container}$"; then
+    if $CONTAINER_RUNTIME ps --format "{{.Names}}" 2>/dev/null | grep -q "^${container}$"; then
         log_pass "Container '$container' is running"
     else
         log_fail "Container '$container' is NOT running"

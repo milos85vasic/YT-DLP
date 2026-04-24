@@ -450,8 +450,8 @@ test_history_delete_single_item() {
 
     sleep 2
 
-    # Delete it from history
-    body=$(_http_post "$DASHBOARD_URL/api/delete" '{"ids":["dQw4w9WgXcQ"],"where":"done"}')
+    # Delete it from history (MeTube /delete expects URLs as keys)
+    body=$(_http_post "$DASHBOARD_URL/api/delete" '{"ids":["https://www.youtube.com/watch?v=dQw4w9WgXcQ"],"where":"done"}')
     if ! echo "$body" | grep -q '"status".*"ok"'; then
         echo "Failed to delete from history: $body"
         return 1
@@ -464,13 +464,13 @@ test_history_clear_all() {
         '{"url":"https://www.youtube.com/watch?v=dQw4w9WgXcQ","quality":"720","format":"any"}' >/dev/null
     sleep 2
 
-    # Clear all history via batch delete
-    local body ids_json
+    # Clear all history via batch delete (MeTube /delete expects URLs as keys)
+    local body urls_json
     body=$(_http_get "$DASHBOARD_URL/api/history")
-    ids_json=$(echo "$body" | python3 -c "import sys,json; d=json.load(sys.stdin); print(json.dumps([x['id'] for x in d.get('done',[])]))" 2>/dev/null || echo "[]")
+    urls_json=$(echo "$body" | python3 -c "import sys,json; d=json.load(sys.stdin); print(json.dumps([x['url'] for x in d.get('done',[])]))" 2>/dev/null || echo "[]")
 
-    if [ "$ids_json" != "[]" ]; then
-        body=$(_http_post "$DASHBOARD_URL/api/delete" "{\"ids\":$ids_json,\"where\":\"done\"}")
+    if [ "$urls_json" != "[]" ]; then
+        body=$(_http_post "$DASHBOARD_URL/api/delete" "{\"ids\":$urls_json,\"where\":\"done\"}")
         if ! echo "$body" | grep -q '"status".*"ok"'; then
             echo "Failed to clear all history: $body"
             return 1
@@ -490,8 +490,8 @@ test_history_retry_download() {
 
     sleep 2
 
-    # Delete from history
-    _http_post "$DASHBOARD_URL/api/delete" '{"ids":["dQw4w9WgXcQ"],"where":"done"}' >/dev/null
+    # Delete from history (MeTube /delete expects URLs as keys)
+    _http_post "$DASHBOARD_URL/api/delete" '{"ids":["https://www.youtube.com/watch?v=dQw4w9WgXcQ"],"where":"done"}' >/dev/null
 
     # Re-add (simulating retry)
     body=$(_http_post "$DASHBOARD_URL/api/add" \
@@ -511,16 +511,16 @@ test_history_retry_download() {
 
 test_landing_delete_download_endpoint() {
     local body status
-    # Test delete-download via landing page directly
+    # Test delete-download via landing page directly (expects url field, not id)
     status=$(_http_status_with_args "$LANDING_URL/api/delete-download" "POST" \
         -H "Content-Type: application/json" \
-        -d '{"id":"test-item","title":"Test","folder":"","delete_file":false}')
+        -d '{"url":"https://www.youtube.com/watch?v=test-item","title":"Test","folder":"","delete_file":false}')
     if [ "$status" != "200" ]; then
         echo "Landing delete-download endpoint returned HTTP $status"
         return 1
     fi
     body=$(_http_post "$LANDING_URL/api/delete-download" \
-        '{"id":"test-item","title":"Test","folder":"","delete_file":false}')
+        '{"url":"https://www.youtube.com/watch?v=test-item","title":"Test","folder":"","delete_file":false}')
     if ! echo "$body" | grep -q '"success".*true'; then
         echo "Landing delete-download returned unexpected response: $body"
         return 1
@@ -529,16 +529,16 @@ test_landing_delete_download_endpoint() {
 
 test_dashboard_proxy_delete_download() {
     local body status
-    # Test delete-download via dashboard nginx proxy
+    # Test delete-download via dashboard nginx proxy (expects url field, not id)
     status=$(_http_status_with_args "$DASHBOARD_URL/api/delete-download" "POST" \
         -H "Content-Type: application/json" \
-        -d '{"id":"test-proxy","title":"Test Proxy","folder":"","delete_file":false}')
+        -d '{"url":"https://www.youtube.com/watch?v=test-proxy","title":"Test Proxy","folder":"","delete_file":false}')
     if [ "$status" != "200" ]; then
         echo "Dashboard proxy delete-download returned HTTP $status"
         return 1
     fi
     body=$(_http_post "$DASHBOARD_URL/api/delete-download" \
-        '{"id":"test-proxy","title":"Test Proxy","folder":"","delete_file":false}')
+        '{"url":"https://www.youtube.com/watch?v=test-proxy","title":"Test Proxy","folder":"","delete_file":false}')
     if ! echo "$body" | grep -q '"success".*true'; then
         echo "Dashboard proxy delete-download returned unexpected response: $body"
         return 1
