@@ -1,0 +1,14 @@
+{
+  "name": "metube-e2e-tests",
+  "version": "1.0.0",
+  "description": "Browser E2E tests for MeTube services",
+  "private": true,
+  "devDependencies": {
+    "@playwright/test": "^1.59.0"
+  },
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "install:browsers": "playwright install chromium"
+  }
+}
