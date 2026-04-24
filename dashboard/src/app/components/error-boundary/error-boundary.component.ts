@@ -72,6 +72,11 @@ export class GlobalErrorHandler implements ErrorHandler {
     }
     .btn-home:hover { background: rgba(104,151,187,0.2); }
     .content { display: contents; }
+    @media (max-width: 640px) {
+      .error-fallback { padding: 60px 20px; }
+      h2 { font-size: 20px; }
+      .error-icon { font-size: 48px; }
+    }
   `],
 })
 export class ErrorBoundaryComponent {

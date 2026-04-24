@@ -295,6 +295,16 @@ type TrackState = 'idle' | 'adding' | 'queued' | 'downloading' | 'finished' | 'e
       color: #808080;
       font-family: monospace;
     }
+    @media (max-width: 640px) {
+      .page { padding: 16px; }
+      .card { padding: 20px; }
+      h2 { font-size: 18px; }
+      .row { grid-template-columns: 1fr; }
+      .input-group input, .input-group select { font-size: 16px; }
+      .platform-grid { grid-template-columns: repeat(2, 1fr); }
+      .tracker-hint { padding: 10px 12px; font-size: 12px; }
+      .tracker-hint strong { font-size: 13px; }
+    }
     .platform-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));

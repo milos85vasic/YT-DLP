@@ -163,6 +163,15 @@ import { ErrorBoundaryComponent } from './components/error-boundary/error-bounda
       color: #555555;
       border-top: 1px solid #555555;
     }
+    @media (max-width: 640px) {
+      .header { flex-wrap: wrap; height: auto; padding: 12px 16px; gap: 8px; }
+      .brand { gap: 6px; }
+      .logo { font-size: 16px; }
+      .nav { flex-wrap: wrap; width: 100%; justify-content: center; gap: 2px; }
+      .nav a { padding: 6px 10px; font-size: 12px; }
+      .connection-status { font-size: 10px; padding: 3px 8px; }
+      .footer { flex-direction: column; text-align: center; gap: 4px; padding: 12px 16px; }
+    }
   `],
 })
 export class AppComponent implements OnInit, OnDestroy {

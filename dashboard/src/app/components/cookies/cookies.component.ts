@@ -265,6 +265,15 @@ import { MetubeService } from '../../services/metube.service';
       cursor: pointer;
       margin-top: 10px;
     }
+    @media (max-width: 640px) {
+      .page { padding: 16px; }
+      .page-title { font-size: 1.25rem; }
+      .card { padding: 20px; }
+      .upload-zone { padding: 30px 20px; }
+      .status-row { flex-wrap: wrap; gap: 6px; }
+      .status-label { min-width: 60px; }
+      .toast { max-width: 90%; text-align: center; }
+    }
     .loading {
       display: flex;
       flex-direction: column;

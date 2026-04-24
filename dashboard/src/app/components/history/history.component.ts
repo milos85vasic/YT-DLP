@@ -296,6 +296,19 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
     }
     .btn-delete:hover { background: rgba(157,0,30,0.2); }
 
+    @media (max-width: 640px) {
+      .page { padding: 16px; }
+      h2 { font-size: 18px; }
+      .item { flex-wrap: wrap; gap: 10px; padding: 12px 14px; }
+      .info { width: 100%; min-width: auto; }
+      .actions { margin-left: auto; gap: 8px; }
+      .btn-action { width: 40px; height: 40px; font-size: 16px; }
+      .safety-banner { padding: 12px 16px; font-size: 12px; }
+      .dialog { padding: 20px; max-width: calc(100% - 32px); border-radius: 12px; }
+      .dialog-actions { flex-wrap: wrap; justify-content: stretch; gap: 8px; }
+      .dialog-actions button { flex: 1; min-width: 120px; }
+    }
+
     /* Dialog */
     .dialog-overlay {
       position: fixed;

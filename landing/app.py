@@ -310,6 +310,23 @@ INDEX_TEMPLATE = """
             color: #808080;
             margin-top: 2px;
         }
+
+        @media (max-width: 480px) {
+            body { padding: 12px; }
+            .logo-img { width: 72px; height: 72px; }
+            h1 { font-size: 2rem; letter-spacing: -0.5px; }
+            .subtitle { font-size: 0.95rem; margin-bottom: 20px; }
+            .auth-card { padding: 20px; border-radius: 6px; }
+            .action-btn { padding: 12px 20px; font-size: 0.95rem; max-width: 100%; flex-wrap: wrap; }
+            .guide { padding: 14px; }
+            .upload-zone { padding: 24px 16px; }
+            .upload-zone .big { font-size: 1.8rem; }
+            .service-card { flex-wrap: wrap; padding: 10px 12px; }
+            .success-view .icon { font-size: 2.2rem; }
+            .success-view h2 { font-size: 1.25rem; }
+            .features { gap: 6px; }
+            .feature { padding: 8px 12px; font-size: 0.75rem; }
+        }
     </style>
 </head>
 <body>

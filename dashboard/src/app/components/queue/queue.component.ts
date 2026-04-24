@@ -214,6 +214,15 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
       transition: background 0.2s;
     }
     .btn-start:hover { background: rgba(104,151,187,0.25); }
+    @media (max-width: 640px) {
+      .page { padding: 16px; }
+      h2 { font-size: 18px; }
+      .item { flex-wrap: wrap; gap: 10px; padding: 12px 14px; }
+      .info { width: 100%; min-width: auto; }
+      .progress-wrap { width: 100%; margin-top: 4px; }
+      .actions { margin-left: auto; gap: 8px; }
+      .btn-delete, .btn-retry, .btn-start { width: 40px; height: 40px; font-size: 16px; }
+    }
     .loading {
       text-align: center;
       padding: 60px 20px;

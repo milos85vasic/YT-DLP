@@ -40,6 +40,11 @@ import { RouterLink } from '@angular/router';
       transition: all 0.2s;
     }
     .btn-home:hover { background: rgba(104,151,187,0.2); }
+    @media (max-width: 640px) {
+      .page { padding: 60px 20px; }
+      h1 { font-size: 20px; }
+      .icon { font-size: 48px; }
+    }
   `],
 })
 export class NotFoundComponent {}
