@@ -11,7 +11,18 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
     <div class="page">
       <h2>⏳ Download Queue</h2>
 
-      <div *ngIf="allItems.length === 0" class="empty">
+      <div *ngIf="loading" class="loading">
+        <div class="spinner"></div>
+        <p>Loading queue…</p>
+      </div>
+
+      <div *ngIf="error" class="error-state">
+        <div class="error-icon">⚠️</div>
+        <p>{{ error }}</p>
+        <button class="btn-retry" (click)="retryLoad()">↻ Retry</button>
+      </div>
+
+      <div *ngIf="!loading && !error && allItems.length === 0" class="empty">
         <div class="empty-icon">📭</div>
         <p>Queue is empty. Add a download from the Download tab.</p>
       </div>
@@ -190,11 +201,44 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
       transition: background 0.2s;
     }
     .btn-retry:hover { background: rgba(0,255,136,0.25); }
+    .loading {
+      text-align: center;
+      padding: 60px 20px;
+      color: #666;
+    }
+    .loading .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(255,255,255,0.1);
+      border-top-color: #00ff88;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #ff5588;
+    }
+    .error-icon { font-size: 48px; margin-bottom: 12px; }
+    .error-state .btn-retry {
+      width: auto;
+      height: auto;
+      padding: 10px 20px;
+      margin-top: 16px;
+      background: rgba(255,85,136,0.08);
+      border: 1px solid rgba(255,85,136,0.3);
+      color: #ff5588;
+    }
+    .error-state .btn-retry:hover { background: rgba(255,85,136,0.15); }
   `],
 })
 export class QueueComponent implements OnInit, OnDestroy {
   queue: DownloadInfo[] = [];
   pending: DownloadInfo[] = [];
+  loading = true;
+  error: string | null = null;
   private sub?: Subscription;
 
   constructor(private metube: MetubeService) {}
@@ -202,10 +246,16 @@ export class QueueComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.sub = this.metube.getHistoryPolling(1000).subscribe({
       next: (data) => {
+        this.loading = false;
+        this.error = null;
         this.queue = data.queue || [];
         this.pending = data.pending || [];
       },
-      error: (err) => console.error('Queue poll error', err),
+      error: (err) => {
+        this.loading = false;
+        this.error = 'Failed to load queue. Is the MeTube service running?';
+        console.error('Queue poll error', err);
+      },
     });
   }
 
@@ -219,6 +269,25 @@ export class QueueComponent implements OnInit, OnDestroy {
 
   delete(id: string, where: 'queue' | 'done'): void {
     this.metube.deleteDownloads([id], where).subscribe();
+  }
+
+  retryLoad(): void {
+    this.loading = true;
+    this.error = null;
+    this.sub?.unsubscribe();
+    this.sub = this.metube.getHistoryPolling(1000).subscribe({
+      next: (data) => {
+        this.loading = false;
+        this.error = null;
+        this.queue = data.queue || [];
+        this.pending = data.pending || [];
+      },
+      error: (err) => {
+        this.loading = false;
+        this.error = 'Failed to load queue. Is the MeTube service running?';
+        console.error('Queue poll error', err);
+      },
+    });
   }
 
   retry(item: DownloadInfo): void {

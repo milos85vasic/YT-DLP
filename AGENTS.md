@@ -639,3 +639,121 @@ Or inline:
 ```bash
 CONTAINER_RUNTIME=docker ./start
 ```
+
+---
+
+## Agent Execution Discipline (MANDATORY)
+
+This section defines how agents MUST work on this project. Following these rules prevents the universal "green tests, broken product" failure mode.
+
+### Definition of Done — The 4 Gates
+
+A task is **NOT complete** when unit tests pass. A task is complete only after passing **all 4 gates**:
+
+```
+Gate 1: Contract Test      → Does the API/schema match contracts/metube-api.openapi.yaml?
+Gate 2: Integration Test   → Do real services talk to each other (no mocks across boundaries)?
+Gate 3: E2E Smoke Test     → Does ./scripts/smoke-test.sh pass against running containers?
+Gate 4: Manual Acceptance  → Human verifies the feature using the actual dashboard at :9090
+```
+
+**Agent Rule:** You must report the output of `./scripts/smoke-test.sh` in your task completion summary. If it fails, the task is not done.
+
+---
+
+### Task Prompt Template (Use for Every Task)
+
+When assigning work to an agent, use this structure:
+
+```markdown
+## Context
+- Service: [which service — dashboard, landing, scripts, etc.]
+- Consumer: [what uses this — Angular dashboard, landing proxy, CLI scripts]
+- Contract: [path to OpenAPI spec or interface definition]
+
+## Constraints
+- DO NOT mock HTTP calls or container runtime behavior in new tests.
+- API responses MUST match contracts/metube-api.openapi.yaml exactly.
+- Dashboard changes MUST be manually verifiable at http://localhost:9090.
+- Bash scripts MUST use set -e and follow the color conventions in this file.
+
+## Verification Steps (MANDATORY — execute in order)
+1. Read the relevant contract/spec file.
+2. Write the code.
+3. Run the E2E smoke test: ./scripts/smoke-test.sh
+4. Run the test audit: ./scripts/test-audit.sh
+5. If smoke or audit fails, fix the CODE — never "fix" the test to match broken behavior.
+6. Only after all gates pass, mark the task done and include smoke-test output.
+```
+
+---
+
+### Testing Rules — No Fantasy Land
+
+| What | Rule |
+|------|------|
+| Unit tests | Allowed ONLY for pure logic (parsing, formatting, algorithms). |
+| Integration tests | MUST use real HTTP calls to real running services. |
+| Container tests | MUST use actual podman/docker commands, not mocks. |
+| DB tests | Use testcontainers or real DB instances. No in-memory SQLite unless the prod uses SQLite. |
+| Mocks | Banned across service boundaries. Mocking the MeTube API in dashboard tests is forbidden. |
+
+**The Smoke Test is the Source of Truth.** If `./scripts/smoke-test.sh` passes but manual testing fails, the smoke test is wrong and must be strengthened.
+
+---
+
+### API-First Development
+
+1. The API contract lives in `contracts/metube-api.openapi.yaml`.
+2. Before changing an endpoint, update the contract first.
+3. Dashboard TypeScript interfaces MUST match the OpenAPI schema fields.
+4. Landing page proxy endpoints MUST preserve the exact request/response shape.
+
+---
+
+### Error Handling Requirements
+
+Every agent-produced feature MUST handle these visible states:
+
+1. **Loading state** — Show a spinner or skeleton while data loads.
+2. **Empty state** — Show a friendly message when no data exists.
+3. **Error state** — Show a visible error message (not just console.log).
+4. **Retry capability** — Allow the user to retry failed operations.
+
+**Agent Check:** After implementing a feature, temporarily break the API (stop the container) and verify the UI shows a clear error. If it silently fails, the feature is not done.
+
+---
+
+### Cache and Build Discipline
+
+1. After changing dashboard code, rebuild the image: `./update-images` or `podman-compose build dashboard`
+2. The nginx config uses `max-age=86400, must-revalidate` for JS assets — not immutable.
+3. Always verify the new build is in the container before declaring done:
+   ```bash
+   podman exec yt-dlp-dashboard grep -o 'your-change' /usr/share/nginx/html/chunk-*.js
+   ```
+
+---
+
+### When Manual Testing Finds a Bug
+
+1. **Stop.** Do not just fix the bug.
+2. Add an integration test or smoke test that would have caught it.
+3. Update this AGENTS.md with the lesson if it reveals a missing constraint.
+4. Fix the bug.
+5. Verify the new test fails before the fix and passes after.
+
+---
+
+## Appendix: Verification Checklist (For Human Reviewers)
+
+Before merging any agent-produced PR:
+
+- [ ] `./scripts/smoke-test.sh` passes locally
+- [ ] `./scripts/test-audit.sh` score is ≥ 60/100
+- [ ] I manually tested the feature in the running dashboard (:9090)
+- [ ] I tested the error case (stopped containers, invalid input)
+- [ ] I refreshed the page and the feature still works
+- [ ] No new mocks were added across service boundaries
+- [ ] The agent's completion message includes smoke-test output
+

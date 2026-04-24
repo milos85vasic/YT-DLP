@@ -34,7 +34,18 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
         </button>
       </div>
 
-      <div *ngIf="history.length === 0" class="empty">
+      <div *ngIf="loading" class="loading">
+        <div class="spinner"></div>
+        <p>Loading history…</p>
+      </div>
+
+      <div *ngIf="error" class="error-state">
+        <div class="error-icon">⚠️</div>
+        <p>{{ error }}</p>
+        <button class="btn-retry" (click)="retry()">↻ Retry</button>
+      </div>
+
+      <div *ngIf="!loading && !error && history.length === 0" class="empty">
         <div class="empty-icon">📭</div>
         <p>No completed downloads yet.</p>
       </div>
@@ -147,6 +158,40 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
       color: #666;
     }
     .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    .loading {
+      text-align: center;
+      padding: 60px 20px;
+      color: #666;
+    }
+    .loading .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(255,255,255,0.1);
+      border-top-color: #00ff88;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #ff5588;
+    }
+    .error-icon { font-size: 48px; margin-bottom: 12px; }
+    .btn-retry {
+      margin-top: 16px;
+      padding: 10px 20px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,85,136,0.3);
+      background: rgba(255,85,136,0.08);
+      color: #ff5588;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .btn-retry:hover { background: rgba(255,85,136,0.15); }
     .list { display: flex; flex-direction: column; gap: 12px; }
     .item {
       display: flex;
@@ -349,6 +394,8 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
 })
 export class HistoryComponent implements OnInit, OnDestroy {
   history: DownloadInfo[] = [];
+  loading = true;
+  error: string | null = null;
   private sub?: Subscription;
 
   dialogItem: DownloadInfo | null = null;
@@ -363,9 +410,15 @@ export class HistoryComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.sub = this.metube.getHistoryPolling(1000).subscribe({
       next: (data) => {
+        this.loading = false;
+        this.error = null;
         this.history = data.done || [];
       },
-      error: (err) => console.error('History poll error', err),
+      error: (err) => {
+        this.loading = false;
+        this.error = 'Failed to load history. Is the MeTube service running?';
+        console.error('History poll error', err);
+      },
     });
   }
 
@@ -381,6 +434,24 @@ export class HistoryComponent implements OnInit, OnDestroy {
     this.toastTimer = setTimeout(() => {
       this.toastMsg = '';
     }, 3000);
+  }
+
+  retry(): void {
+    this.loading = true;
+    this.error = null;
+    this.sub?.unsubscribe();
+    this.sub = this.metube.getHistoryPolling(1000).subscribe({
+      next: (data) => {
+        this.loading = false;
+        this.error = null;
+        this.history = data.done || [];
+      },
+      error: (err) => {
+        this.loading = false;
+        this.error = 'Failed to load history. Is the MeTube service running?';
+        console.error('History poll error', err);
+      },
+    });
   }
 
   clearAll(): void {

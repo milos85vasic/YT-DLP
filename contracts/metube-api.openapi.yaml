@@ -1,0 +1,251 @@
+openapi: 3.0.3
+info:
+  title: MeTube API Proxy Contract
+  description: |
+    Contract for the MeTube backend API as exposed through the dashboard
+    nginx proxy at /api/*. All endpoints return JSON.
+  version: 1.0.0
+  contact:
+    name: YT-DLP Project
+servers:
+  - url: http://localhost:9090/api
+    description: Dashboard proxy (no-VPN)
+  - url: http://localhost:8088/api
+    description: MeTube direct (no-VPN)
+
+paths:
+  /history:
+    get:
+      summary: Get download history
+      description: Returns queue, pending, and completed downloads.
+      responses:
+        '200':
+          description: History response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HistoryResponse'
+
+  /add:
+    post:
+      summary: Add a download
+      description: Queue a new URL for download.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddDownloadRequest'
+      responses:
+        '200':
+          description: Download queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+
+  /delete:
+    post:
+      summary: Delete downloads
+      description: Remove items from queue or done history.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteRequest'
+      responses:
+        '200':
+          description: Items deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+
+  /start:
+    post:
+      summary: Start pending downloads
+      description: Begin processing pending items.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Start acknowledged
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+
+  /version:
+    get:
+      summary: Get version info
+      description: Returns MeTube and yt-dlp versions.
+      responses:
+        '200':
+          description: Version info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionResponse'
+
+  /cookie-status:
+    get:
+      summary: Check cookie status
+      description: Returns whether cookies are available.
+      responses:
+        '200':
+          description: Cookie status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CookieStatusResponse'
+
+  /upload-cookies:
+    post:
+      summary: Upload cookie file
+      description: Upload a Netscape cookies.txt file.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                cookies:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Upload successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+
+components:
+  schemas:
+    HistoryResponse:
+      type: object
+      required: [done, queue, pending]
+      properties:
+        done:
+          type: array
+          items:
+            $ref: '#/components/schemas/DownloadInfo'
+        queue:
+          type: array
+          items:
+            $ref: '#/components/schemas/DownloadInfo'
+        pending:
+          type: array
+          items:
+            $ref: '#/components/schemas/DownloadInfo'
+
+    DownloadInfo:
+      type: object
+      required: [id, title, url, quality, format, folder, status]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        url:
+          type: string
+          format: uri
+        quality:
+          type: string
+        format:
+          type: string
+        folder:
+          type: string
+        status:
+          type: string
+          enum: [pending, downloading, finished, error]
+        msg:
+          type: string
+        error:
+          type: string
+        percent:
+          type: number
+        speed:
+          type: string
+        eta:
+          type: string
+        size:
+          type: number
+        filename:
+          type: string
+        timestamp:
+          type: integer
+        download_type:
+          type: string
+        codec:
+          type: string
+
+    AddDownloadRequest:
+      type: object
+      required: [url]
+      properties:
+        url:
+          type: string
+          format: uri
+        quality:
+          type: string
+          default: best
+        format:
+          type: string
+          default: any
+        folder:
+          type: string
+          default: ''
+        download_type:
+          type: string
+          default: video
+
+    DeleteRequest:
+      type: object
+      required: [ids, where]
+      properties:
+        ids:
+          type: array
+          items:
+            type: string
+        where:
+          type: string
+          enum: [queue, done]
+
+    StatusResponse:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+        msg:
+          type: string
+
+    VersionResponse:
+      type: object
+      required: [version, yt_dlp_version]
+      properties:
+        version:
+          type: string
+        yt_dlp_version:
+          type: string
+
+    CookieStatusResponse:
+      type: object
+      required: [status, has_cookies]
+      properties:
+        status:
+          type: string
+        has_cookies:
+          type: boolean
