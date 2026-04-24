@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, timer } from 'rxjs';
-import { switchMap, shareReplay } from 'rxjs/operators';
+import { Observable, timer, of } from 'rxjs';
+import { switchMap, shareReplay, take, map } from 'rxjs/operators';
 
 export interface AddDownloadRequest {
   url: string;
@@ -153,13 +153,12 @@ export class MetubeService {
    */
   pollForItem(url: string, maxAttempts = 20, intervalMs = 500): Observable<DownloadInfo | null> {
     return timer(0, intervalMs).pipe(
+      take(maxAttempts),
       switchMap(() => this.getHistory()),
-      switchMap((data) => {
+      map((data) => {
         const all = [...(data.pending || []), ...(data.queue || []), ...(data.done || [])];
-        const match = all.find((item) => item.url === url);
-        return [match || null];
+        return all.find((item) => item.url === url) || null;
       })
-      // Note: caller should use take(maxAttempts) or similar
     );
   }
 }

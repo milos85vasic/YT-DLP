@@ -2,8 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { Subscription, timer } from 'rxjs';
-import { switchMap, take } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
 import { MetubeService, DownloadInfo } from '../../services/metube.service';
 
 type TrackState = 'idle' | 'adding' | 'queued' | 'downloading' | 'finished' | 'error' | 'timeout';
@@ -406,40 +405,36 @@ export class DownloadFormComponent implements OnInit, OnDestroy {
   }
 
   private trackDownload(targetUrl: string): void {
-    let attempts = 0;
-    const maxAttempts = 30;
-
-    this.trackSub = timer(0, 500).pipe(
-      switchMap(() => this.metube.getHistory()),
-      take(maxAttempts)
-    ).subscribe({
-      next: (data) => {
-        attempts++;
-        const all = [...(data.pending || []), ...(data.queue || []), ...(data.done || [])];
-        const match = all.find((item) => item.url === targetUrl);
-
-        if (match) {
-          if (match.status === 'error') {
-            this.loading = false;
-            this.tracker = { state: 'error', item: match };
-            this.trackSub?.unsubscribe();
-          } else if (match.status === 'finished') {
-            this.loading = false;
-            this.tracker = { state: 'finished', item: match };
-            this.trackSub?.unsubscribe();
-          } else if (match.status === 'downloading') {
-            this.tracker = { state: 'downloading', item: match };
-          } else {
-            this.tracker = { state: 'queued', item: match };
-          }
-        } else if (attempts >= maxAttempts) {
+    this.trackSub = this.metube.pollForItem(targetUrl, 30, 500).subscribe({
+      next: (match) => {
+        if (!match) {
+          // Still waiting — if this is the last emission, it's a timeout
+          return;
+        }
+        if (match.status === 'error') {
           this.loading = false;
-          this.tracker = { state: 'timeout', item: null };
+          this.tracker = { state: 'error', item: match };
+          this.trackSub?.unsubscribe();
+        } else if (match.status === 'finished') {
+          this.loading = false;
+          this.tracker = { state: 'finished', item: match };
+          this.trackSub?.unsubscribe();
+        } else if (match.status === 'downloading') {
+          this.tracker = { state: 'downloading', item: match };
+        } else {
+          this.tracker = { state: 'queued', item: match };
         }
       },
       error: () => {
         this.loading = false;
         this.tracker = { state: 'timeout', item: null };
+      },
+      complete: () => {
+        // pollForItem completes after maxAttempts if no match found
+        if (this.tracker.state !== 'error' && this.tracker.state !== 'finished') {
+          this.loading = false;
+          this.tracker = { state: 'timeout', item: null };
+        }
       },
     });
   }
