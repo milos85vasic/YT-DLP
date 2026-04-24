@@ -2,6 +2,14 @@
 
 # AGENTS.md - Agentic Coding Guide for YT-DLP Container Project
 
+> **⚠️ SUPREME AUTHORITY NOTICE:** This file is subordinate to two higher documents:
+> - [`Constitution.md`](../Constitution.md) — The non-negotiable laws of this project
+> - [`CLAUDE.MD`](../CLAUDE.MD) — Claude-specific constraints and anti-patterns
+>
+> When documents conflict, the hierarchy is: **User > Constitution.md > CLAUDE.MD > AGENTS.md > README.md**
+>
+> **Every agent MUST read Constitution.md and CLAUDE.MD before reading this file.**
+
 ## Project Overview
 
 This project is a **Docker/Podman-based orchestration system** for running [yt-dlp](https://github.com/yt-dlp/yt-dlp) (a YouTube/video downloader) with optional VPN support. It manages multiple services including:

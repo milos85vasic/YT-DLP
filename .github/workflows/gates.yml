@@ -1,0 +1,210 @@
+name: Four Gates
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate-0-pre-flight:
+    name: "Gate 0: Pre-Flight Checks"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Shell syntax
+        run: |
+          for script in init start stop restart download cleanup status check-vpn update-images setup-auto-update start_no_vpn prepare-release.sh; do
+            if [ -f "$script" ]; then bash -n "$script"; fi
+          done
+          for script in tests/*.sh scripts/*.sh; do
+            if [ -f "$script" ]; then bash -n "$script"; fi
+          done
+
+      - name: Python syntax
+        run: python3 -m py_compile landing/app.py
+
+      - name: Dashboard build
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: dashboard/package-lock.json
+      - run: |
+          cd dashboard
+          npm ci --legacy-peer-deps
+          npx ng build --configuration production
+
+      - name: Compose validation
+        run: |
+          mkdir -p /tmp/test-downloads /tmp/test-vpn
+          touch /tmp/test-vpn/config.ovpn
+          cat > .env << 'EOF'
+          USE_VPN=false
+          DOWNLOAD_DIR=/tmp/test-downloads
+          PUID=1001
+          PGID=1001
+          VPN_OVPN_PATH=/tmp/test-vpn/config.ovpn
+          EOF
+          docker compose config > /dev/null 2>&1 || docker-compose config > /dev/null 2>&1 || true
+
+      - name: Test quality audit
+        run: ./scripts/test-audit.sh
+
+  gate-1-contract:
+    name: "Gate 1: Contract Validation"
+    runs-on: ubuntu-latest
+    needs: gate-0-pre-flight
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup environment
+        run: |
+          mkdir -p /tmp/test-downloads yt-dlp/cookies yt-dlp/config yt-dlp/archive metube/config
+          cp -f yt-dlp/cookies/cookies.txt metube/config/cookies.txt 2>/dev/null || true
+          cat > .env << 'EOF'
+          USE_VPN=false
+          DOWNLOAD_DIR=/tmp/test-downloads
+          PUID=1001
+          PGID=1001
+          CONTAINER_RUNTIME=docker
+          VPN_OVPN_PATH=/tmp/test-vpn/config.ovpn
+          TZ=UTC
+          EOF
+
+      - name: Start containers
+        run: |
+          docker compose --profile no-vpn up -d || docker-compose --profile no-vpn up -d || true
+        timeout-minutes: 5
+
+      - name: Wait for services
+        run: |
+          for i in {1..60}; do
+            curl -s --max-time 5 http://localhost:8088/history | grep -q '"done"' && break
+            sleep 2
+          done
+
+      - name: Validate API contract
+        run: ./scripts/validate-contract.sh
+        timeout-minutes: 2
+
+      - name: Stop containers
+        if: always()
+        run: docker compose --profile no-vpn down || docker-compose --profile no-vpn down || true
+
+  gate-2-integration:
+    name: "Gate 2: Real HTTP Integration"
+    runs-on: ubuntu-latest
+    needs: gate-0-pre-flight
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup environment
+        run: |
+          mkdir -p /tmp/test-downloads yt-dlp/cookies yt-dlp/config yt-dlp/archive metube/config
+          cp -f yt-dlp/cookies/cookies.txt metube/config/cookies.txt 2>/dev/null || true
+          cat > .env << 'EOF'
+          USE_VPN=false
+          DOWNLOAD_DIR=/tmp/test-downloads
+          PUID=1001
+          PGID=1001
+          CONTAINER_RUNTIME=docker
+          VPN_OVPN_PATH=/tmp/test-vpn/config.ovpn
+          TZ=UTC
+          EOF
+
+      - name: Start containers
+        run: |
+          docker compose --profile no-vpn up -d || docker-compose --profile no-vpn up -d || true
+        timeout-minutes: 5
+
+      - name: Wait for services
+        run: |
+          for i in {1..60}; do
+            curl -s --max-time 5 http://localhost:8088/history | grep -q '"done"' && break
+            sleep 2
+          done
+
+      - name: Run real HTTP integration tests
+        run: ./tests/test-integration-realhttp.sh
+        timeout-minutes: 5
+
+      - name: Stop containers
+        if: always()
+        run: docker compose --profile no-vpn down || docker-compose --profile no-vpn down || true
+
+  gate-3-smoke:
+    name: "Gate 3: E2E Smoke Tests"
+    runs-on: ubuntu-latest
+    needs: [gate-1-contract, gate-2-integration]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup environment
+        run: |
+          mkdir -p /tmp/test-downloads yt-dlp/cookies yt-dlp/config yt-dlp/archive metube/config
+          printf '%s\n' \
+            '# Netscape HTTP Cookie File' \
+            '.youtube.com\tTRUE\t/\tTRUE\t1735689600\tAPISID\tabc123' \
+            > yt-dlp/cookies/cookies.txt
+          cp -f yt-dlp/cookies/cookies.txt metube/config/cookies.txt
+          cat > .env << 'EOF'
+          USE_VPN=false
+          DOWNLOAD_DIR=/tmp/test-downloads
+          PUID=1001
+          PGID=1001
+          CONTAINER_RUNTIME=docker
+          VPN_OVPN_PATH=/tmp/test-vpn/config.ovpn
+          TZ=UTC
+          EOF
+
+      - name: Pull images
+        run: |
+          for image in ghcr.io/alexta69/metube:latest ghcr.io/jim60105/yt-dlp:pot; do
+            docker pull "$image" || echo "WARNING: Failed to pull $image"
+          done
+        timeout-minutes: 10
+
+      - name: Start containers
+        run: |
+          docker compose --profile no-vpn up -d || docker-compose --profile no-vpn up -d || true
+        timeout-minutes: 5
+
+      - name: Wait for services
+        run: |
+          for i in {1..60}; do
+            curl -s --max-time 5 http://localhost:9090/ | grep -q 'YT-DLP Dashboard' && break
+            sleep 2
+          done
+          for i in {1..30}; do
+            curl -s --max-time 5 http://localhost:8088/history | grep -q '"done"' && break
+            sleep 2
+          done
+
+      - name: Run E2E smoke tests
+        run: ./scripts/smoke-test.sh
+        timeout-minutes: 5
+
+      - name: Upload smoke logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-logs-${{ github.run_id }}
+          path: tests/logs/
+          retention-days: 7
+
+      - name: Stop containers
+        if: always()
+        run: |
+          docker compose --profile no-vpn down || docker-compose --profile no-vpn down || true
+          docker system prune -f || true

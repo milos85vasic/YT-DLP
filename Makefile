@@ -47,16 +47,21 @@ build:
 test:
 	./tests/run-tests.sh
 
+validate:
+	./scripts/validate-contract.sh
+
 ci:
 	@echo "=== CI Validation ==="
 	@echo "1. Shell syntax..."
 	@bash -n init && bash -n start && bash -n stop && bash -n start_no_vpn
 	@echo "2. Docker Compose..."
-	@docker compose config > /dev/null 2>&1 || docker-compose config > /dev/null 2>&1
+	@docker compose config > /dev/null 2>&1 || docker-compose config > /dev/null 2>&1 || podman-compose config > /dev/null 2>&1
 	@echo "3. Dashboard build..."
 	@cd dashboard && npx ng build --configuration production > /dev/null 2>&1
 	@echo "4. Python syntax..."
 	@python3 -m py_compile landing/app.py
 	@echo "5. Test audit..."
 	@./scripts/test-audit.sh
+	@echo "6. Contract validation..."
+	@./scripts/validate-contract.sh
 	@echo "=== CI Validation PASSED ==="

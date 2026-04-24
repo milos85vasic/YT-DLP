@@ -185,6 +185,11 @@ jobs:
           ./scripts/test-audit.sh
         timeout-minutes: 2
 
+      - name: Validate API contract
+        run: |
+          ./scripts/validate-contract.sh
+        timeout-minutes: 2
+
       - name: Upload test logs
         if: always()
         uses: actions/upload-artifact@v4
