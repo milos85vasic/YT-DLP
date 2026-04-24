@@ -672,19 +672,21 @@ def delete_download():
     """Remove item from MeTube history and optionally delete downloaded files."""
     try:
         data = request.get_json() or {}
-        item_id = data.get("id")
+        # MeTube's /delete endpoint uses the download URL as the queue key,
+        # so we must receive and send the URL (not the video id).
+        item_url = data.get("url")
         title = data.get("title", "")
         folder = data.get("folder", "")
         delete_file = data.get("delete_file", False)
 
-        if not item_id:
-            return jsonify({"success": False, "error": "Missing id"}), 400
+        if not item_url:
+            return jsonify({"success": False, "error": "Missing url"}), 400
 
         # 1. Remove from MeTube history
         try:
             resp = requests.post(
                 f"{METUBE_URL}/delete",
-                json={"ids": [item_id], "where": "done"},
+                json={"ids": [item_url], "where": "done"},
                 timeout=10
             )
             history_deleted = resp.status_code == 200
@@ -705,8 +707,8 @@ def delete_download():
                 safe_title = "".join(c for c in title if c.isalnum() or c in " ._-").strip()
                 for root, _dirs, files in os.walk(target_dir):
                     for fname in files:
-                        # Match by title substring (case-insensitive) or exact id in filename
-                        if safe_title.lower() in fname.lower() or item_id in fname:
+                        # Match by title substring (case-insensitive) or exact url in filename
+                        if safe_title.lower() in fname.lower() or item_url in fname:
                             fpath = os.path.join(root, fname)
                             try:
                                 os.remove(fpath)

@@ -38,7 +38,8 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
               <span *ngIf="item.url" class="url" [title]="item.url">{{ item.url }}</span>
             </div>
           </div>
-          <button class="btn-delete" (click)="delete(item.id, 'queue')" title="Cancel">✕</button>
+          <button class="btn-start" (click)="start(item)" title="Start download">▶️</button>
+          <button class="btn-delete" (click)="delete(item, 'queue')" title="Cancel">✕</button>
         </div>
 
         <!-- Queue items -->
@@ -70,7 +71,7 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
 
           <div class="actions">
             <button *ngIf="item.status === 'error'" class="btn-retry" (click)="retry(item)" title="Retry">↻</button>
-            <button class="btn-delete" (click)="delete(item.id, 'queue')" title="Cancel">✕</button>
+            <button class="btn-delete" (click)="delete(item, 'queue')" title="Cancel">✕</button>
           </div>
         </div>
       </div>
@@ -201,6 +202,18 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
       transition: background 0.2s;
     }
     .btn-retry:hover { background: rgba(0,255,136,0.25); }
+    .btn-start {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: none;
+      background: rgba(0,150,255,0.1);
+      color: #66b3ff;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+    .btn-start:hover { background: rgba(0,150,255,0.25); }
     .loading {
       text-align: center;
       padding: 60px 20px;
@@ -267,8 +280,8 @@ export class QueueComponent implements OnInit, OnDestroy {
     return [...this.pending, ...this.queue];
   }
 
-  delete(id: string, where: 'queue' | 'done'): void {
-    this.metube.deleteDownloads([id], where).subscribe();
+  delete(item: DownloadInfo, where: 'queue' | 'done'): void {
+    this.metube.deleteDownloads([item.url], where).subscribe();
   }
 
   retryLoad(): void {
@@ -290,19 +303,24 @@ export class QueueComponent implements OnInit, OnDestroy {
     });
   }
 
+  start(item: DownloadInfo): void {
+    // Moves a pending item to the active download queue
+    this.metube.startDownloads([item.url]).subscribe({
+      next: () => {},
+      error: (err) => console.error('Start failed', err),
+    });
+  }
+
   retry(item: DownloadInfo): void {
-    // For queue items, startDownloads only works on pending.
-    // For error items in queue, we must delete and re-add.
+    // For queue items in error state, delete and re-add.
+    // For pending items, start them.
     if (item.status === 'error') {
       this.metube.retryDownload(item).subscribe({
         next: () => {},
         error: (err) => console.error('Retry failed', err),
       });
     } else {
-      this.metube.startDownloads([item.id]).subscribe({
-        next: () => {},
-        error: (err) => console.error('Retry failed', err),
-      });
+      this.start(item);
     }
   }
 

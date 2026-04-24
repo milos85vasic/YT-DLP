@@ -73,8 +73,8 @@ export class MetubeService {
     );
   }
 
-  deleteDownloads(ids: string[], where: 'queue' | 'done'): Observable<{ status: string }> {
-    return this.http.post<{ status: string }>(`${this.base}/delete`, { ids, where });
+  deleteDownloads(urls: string[], where: 'queue' | 'done'): Observable<{ status: string }> {
+    return this.http.post<{ status: string }>(`${this.base}/delete`, { ids: urls, where });
   }
 
   /** Clear all history entries (does NOT delete files). */
@@ -82,13 +82,13 @@ export class MetubeService {
     return new Observable((observer) => {
       this.getHistory().subscribe({
         next: (data) => {
-          const ids = (data.done || []).map((item) => item.id);
-          if (ids.length === 0) {
+          const urls = (data.done || []).map((item) => item.url);
+          if (urls.length === 0) {
             observer.next({ status: 'ok' });
             observer.complete();
             return;
           }
-          this.deleteDownloads(ids, 'done').subscribe({
+          this.deleteDownloads(urls, 'done').subscribe({
             next: (res) => {
               observer.next(res);
               observer.complete();
@@ -104,8 +104,8 @@ export class MetubeService {
   /** Retry a failed/completed download by removing from history and re-adding. */
   retryDownload(item: DownloadInfo): Observable<{ status: string; msg?: string }> {
     return new Observable((observer) => {
-      // 1. Remove from history
-      this.deleteDownloads([item.id], 'done').subscribe({
+      // 1. Remove from history (MeTube /delete expects URLs as keys)
+      this.deleteDownloads([item.url], 'done').subscribe({
         next: () => {
           // 2. Re-add with same settings
           const req: AddDownloadRequest = {
@@ -136,7 +136,7 @@ export class MetubeService {
     return this.http.post<{ success: boolean; files_deleted?: string[]; error?: string }>(
       `${this.base}/delete-download`,
       {
-        id: item.id,
+        url: item.url,
         title: item.title,
         folder: item.folder || '',
         delete_file: deleteFile,

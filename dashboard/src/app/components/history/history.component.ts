@@ -72,7 +72,7 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
           </div>
           <div class="actions">
             <!-- Cleanup: remove from history only -->
-            <button class="btn-action btn-cleanup" (click)="cleanup(item.id)" title="Remove from history (keep file)">🧹</button>
+            <button class="btn-action btn-cleanup" (click)="cleanup(item)" title="Remove from history (keep file)">🧹</button>
             <!-- Refresh: re-download -->
             <button class="btn-action btn-refresh" (click)="refresh(item)" title="Re-download">↻</button>
             <!-- Delete: remove from history + delete file -->
@@ -473,10 +473,10 @@ export class HistoryComponent implements OnInit, OnDestroy {
     });
   }
 
-  cleanup(id: string): void {
-    this.metube.deleteDownloads([id], 'done').subscribe({
+  cleanup(item: DownloadInfo): void {
+    this.metube.deleteDownloads([item.url], 'done').subscribe({
       next: () => {
-        this.history = this.history.filter(item => item.id !== id);
+        this.history = this.history.filter(i => i.id !== item.id);
         this.showToast('Removed from history');
       },
       error: (err) => this.showToast('Failed to remove: ' + (err.error?.msg || err.message), true),
