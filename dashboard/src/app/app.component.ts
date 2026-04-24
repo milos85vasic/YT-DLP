@@ -29,6 +29,11 @@ import { ErrorBoundaryComponent } from './components/error-boundary/error-bounda
             <span class="badge error" *ngIf="errorCount > 0">{{ errorCount }}</span>
           </a>
         </nav>
+        <div class="connection-status" [class.offline]="!apiOnline">
+          <span *ngIf="apiOnline" class="dot online"></span>
+          <span *ngIf="!apiOnline" class="dot offline"></span>
+          <span class="label">{{ apiOnline ? 'Online' : 'Offline' }}</span>
+        </div>
       </header>
 
       <main class="main">
@@ -118,6 +123,31 @@ import { ErrorBoundaryComponent } from './components/error-boundary/error-bounda
       background: rgba(255,0,80,0.2);
       color: #ff5588;
     }
+    .connection-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #00ff88;
+      padding: 4px 10px;
+      border-radius: 8px;
+      background: rgba(0,255,136,0.08);
+      border: 1px solid rgba(0,255,136,0.15);
+      transition: all 0.3s;
+    }
+    .connection-status.offline {
+      color: #ff5588;
+      background: rgba(255,0,80,0.08);
+      border-color: rgba(255,0,80,0.15);
+    }
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+    .dot.online { background: #00ff88; box-shadow: 0 0 6px rgba(0,255,136,0.5); }
+    .dot.offline { background: #ff5588; box-shadow: 0 0 6px rgba(255,0,80,0.5); }
     .main { flex: 1; }
     .footer {
       display: flex;
@@ -133,6 +163,7 @@ export class AppComponent implements OnInit, OnDestroy {
   title = 'YT-DLP Dashboard';
   queueCount = 0;
   errorCount = 0;
+  apiOnline = true;
   private sub?: Subscription;
 
   constructor(private metube: MetubeService) {}
@@ -140,10 +171,16 @@ export class AppComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.sub = this.metube.getHistoryPolling(2000).subscribe({
       next: (data) => {
+        this.apiOnline = true;
         this.queueCount = (data.queue?.length || 0) + (data.pending?.length || 0);
         this.errorCount = (data.done || []).filter((i) => i.status === 'error').length;
       },
-      error: (err) => console.error('Nav poll error', err),
+      error: (err) => {
+        this.apiOnline = false;
+        this.queueCount = 0;
+        this.errorCount = 0;
+        console.error('Nav poll error', err);
+      },
     });
   }
 
