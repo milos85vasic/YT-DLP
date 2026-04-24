@@ -63,7 +63,14 @@ For every task, you must produce **evidence**:
 ✅ GOOD: `let data: HistoryResponse = response;` — update interfaces if needed
 ```
 
-### 5. The Silent Error
+### 5. The Privilege Escalation Trap
+```
+❌ BAD:  Using `sudo`, `su`, or any privilege escalation command
+✅ GOOD: Using `podman unshare`, adjusting container user mappings, or asking 
+         the human to handle permission issues that require root
+```
+
+### 6. The Silent Error
 ```
 ❌ BAD:  `.subscribe({ next: (data) => { ... }, error: (err) => console.error(err) })`
 ✅ GOOD: `.subscribe({ 

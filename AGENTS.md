@@ -589,6 +589,7 @@ CONTAINER_RUNTIME=docker ./start
 - **Cookie files** — YouTube cookies at `./yt-dlp/cookies/` mounted read-only into containers
 - **Rootless by default** — Podman runs rootless
 - **VPN isolation** — Separate VPN containers; can run alongside JDownloader with different external IPs
+- **NO `sudo` or `su`** — Agents must NEVER use privilege escalation. Use `podman unshare` for container-user-namespace permission fixes, or ask the human to handle root-requiring operations
 
 ---
 

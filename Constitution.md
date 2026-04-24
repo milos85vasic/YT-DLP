@@ -54,6 +54,7 @@ Agents must NEVER:
 - Use `any` type when a specific type is knowable
 - Leave `console.log` in production code
 - Change cache headers to `immutable` for non-hash-busted assets
+- **Use `sudo`, `su`, or any privilege escalation command** — agents run as the current user only
 
 ### 3.3 Required Patterns
 Agents must ALWAYS:
