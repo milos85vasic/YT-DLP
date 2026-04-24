@@ -234,11 +234,11 @@ components:
 
     VersionResponse:
       type: object
-      required: [version, yt_dlp_version]
+      required: [version, yt-dlp]
       properties:
         version:
           type: string
-        yt_dlp_version:
+        yt-dlp:
           type: string
 
     CookieStatusResponse:

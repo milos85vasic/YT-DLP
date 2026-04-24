@@ -143,8 +143,8 @@ export class MetubeService {
     return this.http.get<{ status: string; has_cookies: boolean }>(`${this.base}/cookie-status`);
   }
 
-  getVersion(): Observable<{ version: string; yt_dlp_version: string }> {
-    return this.http.get<{ version: string; yt_dlp_version: string }>(`${this.base}/version`);
+  getVersion(): Observable<{ version: string; 'yt-dlp': string }> {
+    return this.http.get<{ version: string; 'yt-dlp': string }>(`${this.base}/version`);
   }
 
   /**
