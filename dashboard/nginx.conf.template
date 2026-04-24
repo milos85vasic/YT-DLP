@@ -12,9 +12,10 @@ server {
         try_files $uri =404;
     }
 
-    # Cache static assets (hashed filenames — long cache, but allow revalidation)
+    # Cache static assets (hashed filenames — allow caching but force revalidation
+    # so content changes are always picked up even if the build hash collides)
     location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
-        add_header Cache-Control "public, max-age=86400, must-revalidate" always;
+        add_header Cache-Control "public, no-cache, must-revalidate" always;
         try_files $uri =404;
     }
 

@@ -1,0 +1,29 @@
+import { test, expect } from '@playwright/test';
+
+test('cleanup single history item', async ({ page, request }) => {
+  await request.post('http://localhost:8088/add', {
+    data: { url: 'https://www.youtube.com/watch?v=jNQXAC9IVRw' }
+  });
+  await page.waitForTimeout(3000);
+
+  await page.goto('http://localhost:9090/history');
+  await expect(page.locator('.list .item')).toHaveCount(1);
+
+  await page.click('.btn-cleanup');
+  await expect(page.locator('.toast')).toContainText('Removed from history');
+  await expect(page.locator('.list .item')).toHaveCount(0);
+});
+
+test('start pending download', async ({ page, request }) => {
+  await request.post('http://localhost:8088/add', {
+    data: { url: 'https://www.youtube.com/watch?v=9bZkp7q19f0', auto_start: false }
+  });
+  await page.waitForTimeout(1000);
+
+  await page.goto('http://localhost:9090/queue');
+  await expect(page.locator('.item.pending')).toHaveCount(1);
+
+  await page.click('.btn-start');
+  await page.waitForTimeout(1500);
+  await expect(page.locator('.item.pending')).toHaveCount(0);
+});
