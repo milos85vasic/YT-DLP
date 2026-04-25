@@ -18,6 +18,10 @@ services:
     security_opt:
       - label=disable
     restart: unless-stopped
+    mem_limit: 256m
+    memswap_limit: 256m
+    pids_limit: 256
+    oom_score_adj: 500
     healthcheck:
       test: ["CMD", "ping", "-c", "1", "8.8.8.8"]
       interval: 30s
@@ -33,6 +37,10 @@ services:
       openvpn-yt-dlp:
         condition: service_healthy
     network_mode: "service:openvpn-yt-dlp"
+    mem_limit: 1g
+    memswap_limit: 1g
+    pids_limit: 512
+    oom_score_adj: 500
 
     environment:
       - UID=${PUID}
@@ -60,6 +68,10 @@ services:
     ports:
       - "8087:8080/tcp"
     user: "${PUID}:${PGID}"
+    mem_limit: 256m
+    memswap_limit: 256m
+    pids_limit: 256
+    oom_score_adj: 500
 
     environment:
       - METUBE_URL=http://metube:8081
@@ -81,6 +93,10 @@ services:
       - vpn-cli
       - no-vpn
     user: "${PUID}:${PGID}"
+    mem_limit: 1500m
+    memswap_limit: 1500m
+    pids_limit: 512
+    oom_score_adj: 500
 
     environment:
       - PUID=${PUID}
@@ -109,6 +125,10 @@ services:
         condition: service_healthy
     network_mode: "service:openvpn-yt-dlp"
     user: "${PUID}:${PGID}"
+    mem_limit: 1500m
+    memswap_limit: 1500m
+    pids_limit: 512
+    oom_score_adj: 500
 
     environment:
       - PUID=${PUID}
@@ -133,6 +153,10 @@ services:
       - no-vpn
     ports:
       - "8088:8081/tcp"
+    mem_limit: 1g
+    memswap_limit: 1g
+    pids_limit: 512
+    oom_score_adj: 500
     environment:
       - UID=${PUID}
       - GID=${PGID}
@@ -159,6 +183,10 @@ services:
     ports:
       - "8086:8080/tcp"
     user: "${PUID}:${PGID}"
+    mem_limit: 256m
+    memswap_limit: 256m
+    pids_limit: 256
+    oom_score_adj: 500
 
     environment:
       - METUBE_URL=http://metube-direct:8081
@@ -181,6 +209,10 @@ services:
       - no-vpn
     ports:
       - "9090:8080/tcp"
+    mem_limit: 256m
+    memswap_limit: 256m
+    pids_limit: 256
+    oom_score_adj: 500
     environment:
       - NGINX_ENVSUBST_OUTPUT_DIR=/etc/nginx/conf.d
     depends_on:
@@ -201,6 +233,10 @@ services:
       - WATCHTOWER_NO_STARTUP_CHECK=true
       - WATCHTOWER_SCHEDULE=0 0 */3 * * *
       - DOCKER_API_VERSION=1.44
+    mem_limit: 384m
+    memswap_limit: 384m
+    pids_limit: 256
+    oom_score_adj: 500
     labels:
       - "com.centurylinklabs.watchtower.enable=false"
     restart: unless-stopped
