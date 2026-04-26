@@ -1,12 +1,12 @@
 # AGENTS.md — Dashboard Subdirectory
 
-> **Authority chain:** `Constitution.md` > `CLAUDE.MD` > `AGENTS.md` (this file)
+> **Authority chain:** `Constitution.md` > `CLAUDE.md` > `AGENTS.md` (this file)
 
 ## Scope
 
 This directory contains the Angular 19 dashboard application. All rules here apply to `dashboard/` and its subdirectories.
 
-## Additional Constraints (Beyond Constitution + CLAUDE.MD)
+## Additional Constraints (Beyond Constitution + CLAUDE.md)
 
 ### Angular Build Discipline
 1. After ANY TypeScript change, run `npm run build` before declaring done.

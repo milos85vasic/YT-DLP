@@ -1,12 +1,12 @@
 # AGENTS.md — Landing Page Subdirectory
 
-> **Authority chain:** `Constitution.md` > `CLAUDE.MD` > `AGENTS.md` (this file)
+> **Authority chain:** `Constitution.md` > `CLAUDE.md` > `AGENTS.md` (this file)
 
 ## Scope
 
 This directory contains the Python/Flask landing page proxy. All rules here apply to `landing/` and its subdirectories.
 
-## Additional Constraints (Beyond Constitution + CLAUDE.MD)
+## Additional Constraints (Beyond Constitution + CLAUDE.md)
 
 ### Python Rules
 - Use type hints for all function signatures.

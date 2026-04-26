@@ -108,7 +108,7 @@ Restarting the container is NOT sufficient — the old image has stale JS.
 When manual testing finds a bug:
 1. Stop. Do not just fix it.
 2. Add a test to `scripts/smoke-test.sh` or `tests/test-integration-realhttp.sh`.
-3. Update `AGENTS.md` or `CLAUDE.MD` if the bug reveals a missing constraint.
+3. Update `AGENTS.md` or `CLAUDE.md` if the bug reveals a missing constraint.
 4. Fix the bug.
 5. Verify the new test fails before the fix and passes after.
 
@@ -122,7 +122,7 @@ The same bug must never be caught twice. If it is, the process failed, not the c
 When documents conflict, resolution order is:
 1. **User instruction** (direct conversation)
 2. **Constitution.md** (this document)
-3. **CLAUDE.MD** (agent-specific constraints)
+3. **CLAUDE.md** (agent-specific constraints)
 4. **AGENTS.md** (directory-specific guidance)
 5. **README.md** (human documentation)
 

@@ -1,6 +1,6 @@
 # AGENTS.md — Tests Subdirectory
 
-> **Authority chain:** `Constitution.md` > `CLAUDE.MD` > `AGENTS.md` (this file)
+> **Authority chain:** `Constitution.md` > `CLAUDE.md` > `AGENTS.md` (this file)
 
 ## Scope
 
