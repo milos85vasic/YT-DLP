@@ -2,23 +2,15 @@
 
 # AGENTS.md - Agentic Coding Guide for YT-DLP Container Project
 
-> **⚠️ SUPREME AUTHORITY NOTICE:** This file is subordinate to two higher documents:
-> - [`Constitution.md`](../Constitution.md) — The non-negotiable laws of this project
-> - [`CLAUDE.MD`](../CLAUDE.MD) — Claude-specific constraints and anti-patterns
->
-> When documents conflict, the hierarchy is: **User > Constitution.md > CLAUDE.MD > AGENTS.md > README.md**
->
-> **Every agent MUST read Constitution.md and CLAUDE.MD before reading this file.**
-
 ## Project Overview
 
 This project is a **Docker/Podman-based orchestration system** for running [yt-dlp](https://github.com/yt-dlp/yt-dlp) (a YouTube/video downloader) with optional VPN support. It manages multiple services including:
 
 - **MeTube Web UI** (`ghcr.io/alexta69/metube:latest`) — Original web interface for managing downloads
-- **YT-DLP Dashboard** (custom Angular 19 app) — Modern standalone dashboard on port 9090
+- **YT-DLP Dashboard** (custom Angular 17 app) — Modern standalone dashboard on port 9090
 - **yt-dlp CLI** (`ghcr.io/jim60105/yt-dlp:pot`) — The actual downloader with Deno support for YouTube JS challenges
 - **OpenVPN Client** (`dperson/openvpn-client`) — VPN tunnel for privacy/anonymity
-- **Landing Page** (custom Python/Flask app) — Cookie authentication gateway that guides users through exporting/uploading YouTube cookies
+- **Landing Page** (custom Python/Flask app named "Боба") — Cookie authentication gateway that guides users through exporting/uploading YouTube cookies
 - **Watchtower** (`containrrr/watchtower:latest`) — Auto-image updates for Docker users
 
 **Container runtime preference:** Podman is preferred over Docker when both are available.
@@ -35,15 +27,17 @@ This project is a **Docker/Podman-based orchestration system** for running [yt-d
 | **Orchestration** | Docker Compose / Podman Compose |
 | **CLI / Downloader** | yt-dlp (`ghcr.io/jim60105/yt-dlp:pot`) |
 | **Web UI** | MeTube (`ghcr.io/alexta69/metube:latest`) |
-| **Dashboard** | Angular 19 + nginx (`dashboard/`) |
+| **Dashboard** | Angular 17 + nginx (`dashboard/`) |
 | **VPN** | OpenVPN Client (`dperson/openvpn-client`) |
 | **Landing Page** | Python 3.11 + Flask + requests |
 | **Auto-Updates (Docker)** | Watchtower (`containrrr/watchtower:latest`) |
 | **Auto-Updates (Podman)** | Host cron job |
 | **Orchestration Scripts** | Bash (`#!/bin/bash`, `set -e`) |
 | **Configuration** | `.env` file + `docker-compose.yml` |
+| **API Contract** | OpenAPI 3.0 (`contracts/metube-api.openapi.yaml`) |
+| **E2E Testing** | Playwright (`tests/e2e/`) |
 
-**Note:** There is no `pyproject.toml`, `package.json`, `Cargo.toml`, or similar language-specific manifest at the project root. Build steps are the Flask landing page (`landing/Dockerfile`) and the Angular dashboard (`dashboard/Dockerfile`).
+**Note:** There is no `pyproject.toml`, `package.json`, `Cargo.toml`, or similar language-specific manifest at the project root. Build steps are the Flask landing page (`landing/Dockerfile`) and the Angular dashboard (`dashboard/Dockerfile`). The dashboard uses Angular 17.3.0 (not 19), as declared in `dashboard/package.json`.
 
 ---
 
@@ -69,45 +63,83 @@ This project is a **Docker/Podman-based orchestration system** for running [yt-d
 ├── setup-auto-update         # Install cron job for Podman auto-updates
 ├── prepare-release.sh        # Git commit/push helper for releases
 │
+├── Makefile                   # Convenience targets (init, start, stop, test, ci, smoke, audit, dev-check, build)
+│
 ├── lib/
 │   └── container-runtime.sh  # Shared runtime detection functions
 │
 ├── landing/
 │   ├── app.py                # Flask landing page proxy + cookie upload handler
 │   ├── Dockerfile            # python:3.11-slim, installs flask + requests
-│   └── requirements.txt      # flask>=2.0, requests>=2.25
+│   ├── requirements.txt      # flask>=2.0, requests>=2.25
+│   ├── logo.png              # Branding asset
+│   └── AGENTS.md             # Landing-page-specific agent guidance
 │
 ├── dashboard/
-│   ├── src/app/              # Angular 19 standalone components
-│   │   ├── components/       # download-form, queue, history
-│   │   ├── services/         # MetubeService (HTTP + polling)
+│   ├── src/app/              # Angular 17 standalone components
+│   │   ├── components/       # download-form, queue, history, cookies, navbar, not-found, error-boundary
+│   │   ├── services/         # MetubeService (HTTP + polling), ErrorInterceptorService
+│   │   ├── models/           # download.model.ts
 │   │   └── app.routes.ts     # Lazy-loaded routes
+│   ├── src/environments/     # environment.ts, environment.prod.ts
 │   ├── Dockerfile            # Multi-stage: node:22-alpine → nginx:alpine
-│   └── nginx.conf            # SPA fallback + /api proxy to metube-direct
+│   ├── nginx.conf.template   # SPA fallback + /api proxy with dynamic resolver
+│   ├── entrypoint.sh         # Generates nginx.conf from template at runtime
+│   ├── package.json          # Angular 17.3.0 dependencies
+│   └── AGENTS.md             # Dashboard-specific agent guidance
 │
 ├── yt-dlp/
 │   ├── config/
 │   │   └── yt-dlp.conf       # Default yt-dlp config (generated by ./init)
-│   ├── cookies/              # YouTube cookie files for restricted content
+│   ├── cookies/              # YouTube cookie files + export scripts for restricted content
 │   └── archive/              # Download archive tracking
 │
 ├── metube/
 │   └── config/               # MeTube state & cookies
 │
+├── contracts/
+│   └── metube-api.openapi.yaml  # OpenAPI spec for MeTube API proxy contract
+│
+├── scripts/
+│   ├── bootstrap.sh          # Environment bootstrap
+│   ├── dev-check.sh          # Pre-push validation gate (shell syntax, Python, compose, build, smoke, audit, git)
+│   ├── smoke-test.sh         # E2E smoke tests against REAL running services
+│   ├── test-audit.sh         # Test suite quality audit (mock vs integration ratio)
+│   ├── validate-contract.sh  # OpenAPI contract validation against live API
+│   └── install-hooks.sh      # Git hooks installer
+│
 ├── tests/                     # Automated test suite
-│   ├── run-tests.sh          # Main test runner
+│   ├── run-tests.sh          # Main test runner with assertions and profiling
 │   ├── run-full-suite.sh     # Full suite with container lifecycle management
-│   ├── test-unit.sh          # Unit tests
-│   ├── test-integration.sh   # Integration tests
-│   ├── test-scenarios.sh     # Scenario tests
-│   ├── test-errors.sh        # Error tests
+│   ├── run-comprehensive-tests.sh  # Extended comprehensive runner
+│   ├── test-unit.sh          # Unit tests (runtime detection, compose, colors, env, ports)
+│   ├── test-integration.sh   # Integration tests (init, start, stop, download, update-images)
+│   ├── test-integration-realhttp.sh  # Real HTTP integration tests
+│   ├── test-scenarios.sh     # Scenario tests (Podman/Docker × VPN/no-VPN combinations)
+│   ├── test-errors.sh        # Error tests (missing runtime, missing .env, invalid configs)
+│   ├── test-dashboard.sh     # Dashboard & landing page HTTP/container tests
+│   ├── test-media-services.sh # Media service tests
+│   ├── test-chaos.sh         # Chaos/resilience tests
+│   ├── test-vpn-smoke.sh     # VPN-specific smoke tests
+│   ├── test-dashboard-operations.sh  # Dashboard operations tests
 │   ├── config/               # Test .env files
 │   ├── logs/                 # Test execution logs
-│   └── results/              # Test reports
+│   ├── results/              # Test reports
+│   ├── e2e/                  # Playwright E2E tests
+│   ├── cookies/              # Cookie auth validation tests
+│   ├── benchmark/            # Performance benchmarks
+│   ├── README.md             # Test suite documentation
+│   └── AGENTS.md             # Test-specific agent guidance
 │
 ├── docs/                      # Additional documentation
 │   ├── FIX_SUMMARY.md
+│   ├── VERIFICATION.md
 │   └── YOUTUBE_DOWNLOAD_FIX.md
+│
+├── .github/workflows/
+│   ├── ci.yml                # CI: shell checks, unit tests, compose validation, dashboard build, Python validation, code quality
+│   ├── integration.yml       # Integration: container startup, dashboard tests, integration/scenario tests, E2E smoke, contract validation
+│   └── gates.yml             # Quality gates
 │
 ├── Upstreams/
 │   └── GitHub.sh             # Git upstream configuration
@@ -119,6 +151,8 @@ This project is a **Docker/Podman-based orchestration system** for running [yt-d
 ├── RELEASE_v1.2.0.md         # Release notes
 ├── TEST_RESULTS.md           # Test reports
 ├── READY_FOR_TESTING.md      # Release checklist
+├── CHALLENGES.md             # Known challenges and decisions
+├── Constitution.md           # Project constitution/governance
 └── AGENTS.md                 # This file
 ```
 
@@ -156,6 +190,24 @@ This project is a **Docker/Podman-based orchestration system** for running [yt-d
 ./update-images           # Pull latest container images
 ./setup-auto-update       # Setup cron job for auto-updates (Podman)
 ./cleanup [all|ytdlp|jdownloader]  # Remove containers
+```
+
+### Makefile Convenience Targets
+
+```bash
+make init        # Initialize environment
+make start       # Start all services (no-VPN mode)
+make stop        # Stop all services
+make restart     # Stop then start
+make status      # Show service status + HTTP health checks
+make smoke       # Run E2E smoke tests (requires running services)
+make audit       # Run test suite quality audit
+make dev-check   # Run all pre-push validation gates
+make build       # Build dashboard container image
+make test        # Run full test suite
+make ci          # Run CI-level validation (compose, build, tests)
+make validate    # Validate API contract
+make chaos       # Run chaos tests
 ```
 
 ### Container Runtime Detection
@@ -210,12 +262,12 @@ docker compose --profile vpn up -d
 |---------|-------|---------|---------|-------|---------|
 | `openvpn-yt-dlp` | `dperson/openvpn-client` | `vpn` | bridge | `3130:3129/tcp` | VPN tunnel |
 | `metube` | `ghcr.io/alexta69/metube:latest` | `vpn` | `service:openvpn-yt-dlp` | — | Web UI via VPN |
-| `landing-vpn` | Build `./landing` | `vpn` | bridge | `8087:80/tcp` | Cookie auth gateway → MeTube VPN |
+| `landing-vpn` | Build `./landing` | `vpn` | bridge | `8087:8080/tcp` | Cookie auth gateway → MeTube VPN |
 | `yt-dlp-cli` | `ghcr.io/jim60105/yt-dlp:pot` | `vpn`, `vpn-cli`, `no-vpn` | bridge | — | General CLI container |
 | `yt-dlp-cli-vpn` | `ghcr.io/jim60105/yt-dlp:pot` | `vpn`, `vpn-cli` | `service:openvpn-yt-dlp` | — | CLI forced through VPN |
 | `metube-direct` | `ghcr.io/alexta69/metube:latest` | `no-vpn` | bridge | `8088:8081/tcp` | Direct MeTube web UI |
 | `landing-no-vpn` | Build `./landing` | `no-vpn` | bridge | `8086:80/tcp` | Cookie auth gateway → MeTube direct |
-| `dashboard` | Build `./dashboard` | `no-vpn` | bridge | `9090:80/tcp` | Angular dashboard → MeTube API |
+| `dashboard` | Build `./dashboard` | `no-vpn` | bridge | `9090:8080/tcp` | Angular dashboard → MeTube API |
 | `watchtower` | `containrrr/watchtower:latest` | `docker` | bridge | — | Auto-image updates every 3h |
 
 ### Port Mapping
@@ -256,11 +308,22 @@ docker compose --profile vpn up -d
 
 ### Landing Page (`landing/app.py`)
 
-A Flask application that:
+A Flask application (branded "Боба") that:
 1. Serves a 3-step authentication UI (open YouTube → sign in → export/upload cookies)
 2. Handles drag-and-drop cookie file uploads via `/api/upload-cookies`
 3. Proxies requests to MeTube via `/app`
 4. Checks cookie status via `/api/cookie-status`
+5. Provides `/api/delete-download` to remove history items and optionally files
+6. Exposes `/health` endpoint for monitoring
+
+### Dashboard (`dashboard/`)
+
+An Angular 17 standalone application served by nginx:
+- **Routes:** `/` (download form), `/queue`, `/history`, `/cookies`
+- **API Proxy:** nginx proxies `/api/*` to `metube-direct:8081` and `/api/delete-download`, `/api/upload-cookies`, `/api/delete-cookies`, `/api/cookie-status` to `metube-landing:8080`
+- **DNS Resilience:** Uses `resolver` directive + variable-based `proxy_pass` to survive container restarts
+- **SPA Fallback:** `try_files $uri $uri/ /index.html` for Angular routing
+- **Cache Control:** `index.html` is never cached; static assets use `public, no-cache, must-revalidate`
 
 ---
 
@@ -307,8 +370,6 @@ The following images are used by the project:
 - `ghcr.io/jim60105/yt-dlp:pot` — Used in `docker-compose.yml`
 - `dperson/openvpn-client:latest`
 - `containrrr/watchtower:latest` — Docker only
-
-**Note:** The `./update-images` script currently lists `th3a/yt-dlp:latest`, which is inconsistent with `docker-compose.yml` that uses `ghcr.io/jim60105/yt-dlp:pot`. The `ghcr.io/jim60105/yt-dlp:pot` image includes Deno runtime required for YouTube's JS challenges.
 
 ---
 
@@ -426,6 +487,7 @@ fi
 - **Restart policy:** `unless-stopped`
 - **Health checks:** For VPN containers
 - **Network mode:** `service:openvpn-yt-dlp` for VPN routing
+- **Resource limits:** All services have `mem_limit`, `memswap_limit`, `pids_limit`, and `oom_score_adj`
 
 ### Error Handling
 
@@ -531,8 +593,8 @@ When running `run-full-suite.sh`:
 
 ### Test Categories
 
-1. **Unit Tests** (`test-unit.sh`): Individual function testing (runtime detection, compose commands, colors, env parsing, ports)
-2. **Integration Tests** (`test-integration.sh`): Script workflow testing (init, start, stop, download, update-images, cleanup, status)
+1. **Unit Tests** (`test-unit.sh`): Individual function testing (runtime detection, compose commands, colors, env parsing, ports, file permissions, string manipulation, VPN config parsing, compose syntax)
+2. **Integration Tests** (`test-integration.sh`): Script workflow testing (init, start, stop, download, update-images, cleanup, status, check-vpn, setup-auto-update, compose health)
 3. **Scenario Tests** (`test-scenarios.sh`): Combination testing:
    - Podman + No VPN
    - Podman + VPN
@@ -541,6 +603,9 @@ When running `run-full-suite.sh`:
    - Batch/Channel downloads
    - Complete workflows
 4. **Error Tests** (`test-errors.sh`): Edge cases and error conditions (missing runtime, missing .env, invalid configs, permission issues, port conflicts)
+5. **Dashboard Tests** (`test-dashboard.sh`): Container health, HTTP responses, API proxy, DNS resilience, landing page, E2E download flow, CORS, history management, file deletion, cookie/version verification
+6. **Media Services Tests** (`test-media-services.sh`): Media-specific validation
+7. **Real HTTP Integration** (`test-integration-realhttp.sh`): Live HTTP tests against running services
 
 ### Test Assertions
 
@@ -550,6 +615,76 @@ Available in `tests/run-tests.sh`:
 - `assert_file_exists "path"`
 - `assert_dir_exists "path"`
 - `assert_command_exists "cmd"`
+
+### Smoke Tests
+
+```bash
+# Run E2E smoke tests against REAL running services
+./scripts/smoke-test.sh
+```
+
+Tests 6 gates:
+1. Service Availability (HTTP 200 on dashboard, landing, MeTube)
+2. MeTube Direct API Contract (`/history`, `/version` fields)
+3. Dashboard API Proxy (`/api/history`, `/api/version`)
+4. Landing Page API (`/api/cookie-status`, `/health`)
+5. Critical User Journey (landing has dashboard link, Angular app markers, add download, delete endpoint)
+6. Container Health (running containers)
+
+### Test Quality Audit
+
+```bash
+# Audit test suite for mock-vs-integration ratio, E2E coverage, contract specs, health checks
+./scripts/test-audit.sh
+```
+
+Scores out of 70. Need ≥ 60 for "strong" rating. Flags "fantasy-land" tests that mock across boundaries.
+
+### API Contract Validation
+
+```bash
+# Validate live API responses against contracts/metube-api.openapi.yaml
+./scripts/validate-contract.sh
+```
+
+Validates `HistoryResponse`, `DownloadInfo`, `VersionResponse`, `CookieStatusResponse`, `StatusResponse` schemas and cross-service consistency.
+
+### Pre-Push Validation Gate
+
+```bash
+# Run before every commit/push — equivalent of CI locally
+./scripts/dev-check.sh
+```
+
+Checks 6 gates:
+0. Shell script syntax (`bash -n`)
+1. Python syntax (`python3 -m py_compile`)
+2. Docker Compose validation
+3. Dashboard build (`ng build --configuration production`)
+4. Smoke tests (if containers running)
+5. Test audit score (need ≥ 60/70)
+6. Git hygiene (staged/unstaged changes)
+
+### CI/CD Pipelines
+
+**`.github/workflows/ci.yml`** runs on push/PR to `main`:
+- Shell script syntax validation
+- Unit tests (`run-tests.sh -p unit`)
+- Docker Compose configuration validation
+- Angular dashboard build (Node 22)
+- Python syntax validation
+- Code quality checks (executable permissions, trailing whitespace)
+
+**`.github/workflows/integration.yml`** runs on push/PR/manual dispatch:
+- Environment verification
+- Container startup with `no-vpn` profile
+- Service readiness checks (dashboard HTML, landing page, MeTube API)
+- Unit tests, dashboard tests, integration tests, scenario tests
+- E2E smoke tests
+- Real HTTP integration tests
+- Test quality audit
+- API contract validation
+- Uploads test logs as artifacts
 
 ### Manual Testing
 
@@ -576,6 +711,9 @@ CONTAINER_RUNTIME=docker ./start
 
 # 5. Verify containers
 ./status
+
+# 6. Run dev-check before pushing
+./scripts/dev-check.sh
 ```
 
 ---
@@ -586,10 +724,11 @@ CONTAINER_RUNTIME=docker ./start
 - **Mask credentials in output** — scripts mask `USERNAME` and `PASSWORD` fields
 - **Use 600 permissions for sensitive files** — `vpn-auth.txt` is created with `chmod 600`
 - **VPN credentials** stored in `vpn-auth.txt` (two lines: username, password)
-- **Cookie files** — YouTube cookies at `./yt-dlp/cookies/` mounted read-only into containers
-- **Rootless by default** — Podman runs rootless
+- **Cookie files** — YouTube cookies at `./yt-dlp/cookies/` and `./metube/config/cookies.txt`
+- **Rootless by default** — Podman runs rootless; `./start` uses `--userns=keep-id`
 - **VPN isolation** — Separate VPN containers; can run alongside JDownloader with different external IPs
-- **NO `sudo` or `su`** — Agents must NEVER use privilege escalation. Use `podman unshare` for container-user-namespace permission fixes, or ask the human to handle root-requiring operations
+- **Path traversal protection** — `landing/app.py` `delete_download()` validates `target_dir.startswith(os.path.abspath(DOWNLOAD_DIR))`
+- **Cookie validation** — `landing/app.py` `_validate_cookie_file()` enforces Netscape format and recognises video-platform domains
 
 ---
 
@@ -601,7 +740,8 @@ CONTAINER_RUNTIME=docker ./start
 2. Add to appropriate profile(s)
 3. Set explicit `container_name`
 4. Add `restart: unless-stopped`
-5. Update `./status` script
+5. Set resource limits (`mem_limit`, `memswap_limit`, `pids_limit`, `oom_score_adj`)
+6. Update `./status` script
 
 ### Add a new script
 
@@ -611,6 +751,8 @@ CONTAINER_RUNTIME=docker ./start
 4. Make executable: `chmod +x scriptname`
 5. Follow color output conventions
 6. Add `--help` support
+7. Add to `scripts/dev-check.sh` shell syntax gate
+8. Add to `.github/workflows/ci.yml` shell check step
 
 ### Update documentation
 
@@ -629,6 +771,7 @@ CONTAINER_RUNTIME=docker ./start
 - Drop-in Docker replacement
 - Use `podman-compose` or `podman compose`
 - Auto-updates via host cron (`./setup-auto-update`)
+- `./start` passes `--in-pod false --podman-run-args="--userns=keep-id"` to preserve host UID ownership
 
 ### Docker (Fallback)
 - Traditional container runtime
@@ -651,118 +794,118 @@ CONTAINER_RUNTIME=docker ./start
 
 ---
 
-## Agent Execution Discipline (MANDATORY)
+## Subdirectory AGENTS.md Files
 
-This section defines how agents MUST work on this project. Following these rules prevents the universal "green tests, broken product" failure mode.
+This project contains additional `AGENTS.md` files in subdirectories that provide more specific guidance:
 
-### Definition of Done — The 4 Gates
+- **`landing/AGENTS.md`** — Flask app-specific conventions
+- **`dashboard/AGENTS.md`** — Angular dashboard-specific conventions
+- **`tests/AGENTS.md`** — Test suite-specific conventions
 
-A task is **NOT complete** when unit tests pass. A task is complete only after passing **all 4 gates**:
-
-```
-Gate 1: Contract Test      → Does the API/schema match contracts/metube-api.openapi.yaml?
-Gate 2: Integration Test   → Do real services talk to each other (no mocks across boundaries)?
-Gate 3: E2E Smoke Test     → Does ./scripts/smoke-test.sh pass against running containers?
-Gate 4: Manual Acceptance  → Human verifies the feature using the actual dashboard at :9090
-```
-
-**Agent Rule:** You must report the output of `./scripts/smoke-test.sh` in your task completion summary. If it fails, the task is not done.
+When working in those directories, their local `AGENTS.md` takes precedence over this root file for directory-specific concerns.
 
 ---
 
-### Task Prompt Template (Use for Every Task)
+## Universal Mandatory Constraints
 
-When assigning work to an agent, use this structure:
+> Cascaded from the HelixAgent root `CLAUDE.md` via `/tmp/UNIVERSAL_MANDATORY_RULES.md`.
+> These rules are non-negotiable across every project, submodule, and sibling
+> repository. Project-specific addenda are welcome but cannot weaken or
+> override these.
 
-```markdown
-## Context
-- Service: [which service — dashboard, landing, scripts, etc.]
-- Consumer: [what uses this — Angular dashboard, landing proxy, CLI scripts]
-- Contract: [path to OpenAPI spec or interface definition]
+### Hard Stops (permanent, non-negotiable)
 
-## Constraints
-- DO NOT mock HTTP calls or container runtime behavior in new tests.
-- API responses MUST match contracts/metube-api.openapi.yaml exactly.
-- Dashboard changes MUST be manually verifiable at http://localhost:9090.
-- Bash scripts MUST use set -e and follow the color conventions in this file.
+1. **NO CI/CD pipelines.** No `.github/workflows/`, `.gitlab-ci.yml`,
+   `Jenkinsfile`, `.travis.yml`, `.circleci/`, or any automated pipeline.
+   No Git hooks either. All builds and tests run manually or via
+   Makefile/script targets.
+2. **NO HTTPS for Git.** SSH URLs only (`git@github.com:…`,
+   `git@gitlab.com:…`, etc.) for clones, fetches, pushes, and submodule
+   updates. Including for public repos. SSH keys are configured on every
+   service.
+3. **NO manual container commands.** Container orchestration is owned by
+   the project's binary/orchestrator (e.g. `make build` → `./bin/<app>`).
+   Direct `docker`/`podman start|stop|rm` and `docker-compose up|down`
+   are prohibited as workflows. The orchestrator reads its configured
+   `.env` and brings up everything.
 
-## Verification Steps (MANDATORY — execute in order)
-1. Read the relevant contract/spec file.
-2. Write the code.
-3. Run the E2E smoke test: ./scripts/smoke-test.sh
-4. Run the test audit: ./scripts/test-audit.sh
-5. If smoke or audit fails, fix the CODE — never "fix" the test to match broken behavior.
-6. Only after all gates pass, mark the task done and include smoke-test output.
-```
+### Mandatory Development Standards
 
----
+1. **100% Test Coverage.** Every component MUST have unit, integration,
+   E2E, automation, security/penetration, and benchmark tests. No false
+   positives. Mocks/stubs ONLY in unit tests; all other test types use
+   real data and live services.
+2. **Challenge Coverage.** Every component MUST have Challenge scripts
+   (`./challenges/scripts/`) validating real-life use cases. No false
+   success — validate actual behavior, not return codes.
+3. **Real Data.** Beyond unit tests, all components MUST use actual API
+   calls, real databases, live services. No simulated success. Fallback
+   chains tested with actual failures.
+4. **Health & Observability.** Every service MUST expose health
+   endpoints. Circuit breakers for all external dependencies.
+   Prometheus / OpenTelemetry integration where applicable.
+5. **Documentation & Quality.** Update `CLAUDE.md`, `AGENTS.md`, and
+   relevant docs alongside code changes. Pass language-appropriate
+   format/lint/security gates. Conventional Commits:
+   `<type>(<scope>): <description>`.
+6. **Validation Before Release.** Pass the project's full validation
+   suite (`make ci-validate-all`-equivalent) plus all challenges
+   (`./challenges/scripts/run_all_challenges.sh`).
+7. **No Mocks or Stubs in Production.** Mocks, stubs, fakes,
+   placeholder classes, TODO implementations are STRICTLY FORBIDDEN in
+   production code. All production code is fully functional with real
+   integrations. Only unit tests may use mocks/stubs.
+8. **Comprehensive Verification.** Every fix MUST be verified from all
+   angles: runtime testing (actual HTTP requests / real CLI
+   invocations), compile verification, code structure checks,
+   dependency existence checks, backward compatibility, and no false
+   positives in tests or challenges. Grep-only validation is NEVER
+   sufficient.
+9. **Resource Limits for Tests & Challenges (CRITICAL).** ALL test and
+   challenge execution MUST be strictly limited to 30-40% of host
+   system resources. Use `GOMAXPROCS=2`, `nice -n 19`, `ionice -c 3`,
+   `-p 1` for `go test`. Container limits required. The host runs
+   mission-critical processes — exceeding limits causes system crashes.
+10. **Bugfix Documentation.** All bug fixes MUST be documented in
+    `docs/issues/fixed/BUGFIXES.md` (or the project's equivalent) with
+    root cause analysis, affected files, fix description, and a link to
+    the verification test/challenge.
+11. **Real Infrastructure for All Non-Unit Tests.** Mocks/fakes/stubs/
+    placeholders MAY be used ONLY in unit tests (files ending
+    `_test.go` run under `go test -short`, equivalent for other
+    languages). ALL other test types — integration, E2E, functional,
+    security, stress, chaos, challenge, benchmark, runtime
+    verification — MUST execute against the REAL running system with
+    REAL containers, REAL databases, REAL services, and REAL HTTP
+    calls. Non-unit tests that cannot connect to real services MUST
+    skip (not fail).
+12. **Reproduction-Before-Fix (CONST-032 — MANDATORY).** Every reported
+    error, defect, or unexpected behavior MUST be reproduced by a
+    Challenge script BEFORE any fix is attempted. Sequence:
+    (1) Write the Challenge first. (2) Run it; confirm fail (it
+    reproduces the bug). (3) Then write the fix. (4) Re-run; confirm
+    pass. (5) Commit Challenge + fix together. The Challenge becomes
+    the regression guard for that bug forever.
+13. **Concurrent-Safe Containers (Go-specific, where applicable).** Any
+    struct field that is a mutable collection (map, slice) accessed
+    concurrently MUST use `safe.Store[K,V]` / `safe.Slice[T]` from
+    `digital.vasic.concurrency/pkg/safe` (or the project's equivalent
+    primitives). Bare `sync.Mutex + map/slice` combinations are
+    prohibited for new code.
 
-### Testing Rules — No Fantasy Land
+### Definition of Done (universal)
 
-| What | Rule |
-|------|------|
-| Unit tests | Allowed ONLY for pure logic (parsing, formatting, algorithms). |
-| Integration tests | MUST use real HTTP calls to real running services. |
-| Container tests | MUST use actual podman/docker commands, not mocks. |
-| DB tests | Use testcontainers or real DB instances. No in-memory SQLite unless the prod uses SQLite. |
-| Mocks | Banned across service boundaries. Mocking the MeTube API in dashboard tests is forbidden. |
+A change is NOT done because code compiles and tests pass. "Done"
+requires pasted terminal output from a real run, produced in the same
+session as the change.
 
-**The Smoke Test is the Source of Truth.** If `./scripts/smoke-test.sh` passes but manual testing fails, the smoke test is wrong and must be strengthened.
-
----
-
-### API-First Development
-
-1. The API contract lives in `contracts/metube-api.openapi.yaml`.
-2. Before changing an endpoint, update the contract first.
-3. Dashboard TypeScript interfaces MUST match the OpenAPI schema fields.
-4. Landing page proxy endpoints MUST preserve the exact request/response shape.
-
----
-
-### Error Handling Requirements
-
-Every agent-produced feature MUST handle these visible states:
-
-1. **Loading state** — Show a spinner or skeleton while data loads.
-2. **Empty state** — Show a friendly message when no data exists.
-3. **Error state** — Show a visible error message (not just console.log).
-4. **Retry capability** — Allow the user to retry failed operations.
-
-**Agent Check:** After implementing a feature, temporarily break the API (stop the container) and verify the UI shows a clear error. If it silently fails, the feature is not done.
-
----
-
-### Cache and Build Discipline
-
-1. After changing dashboard code, rebuild the image: `./update-images` or `podman-compose build dashboard`
-2. The nginx config uses `max-age=86400, must-revalidate` for JS assets — not immutable.
-3. Always verify the new build is in the container before declaring done:
-   ```bash
-   podman exec yt-dlp-dashboard grep -o 'your-change' /usr/share/nginx/html/chunk-*.js
-   ```
-
----
-
-### When Manual Testing Finds a Bug
-
-1. **Stop.** Do not just fix the bug.
-2. Add an integration test or smoke test that would have caught it.
-3. Update this AGENTS.md with the lesson if it reveals a missing constraint.
-4. Fix the bug.
-5. Verify the new test fails before the fix and passes after.
-
----
-
-## Appendix: Verification Checklist (For Human Reviewers)
-
-Before merging any agent-produced PR:
-
-- [ ] `./scripts/smoke-test.sh` passes locally
-- [ ] `./scripts/test-audit.sh` score is ≥ 60/100
-- [ ] I manually tested the feature in the running dashboard (:9090)
-- [ ] I tested the error case (stopped containers, invalid input)
-- [ ] I refreshed the page and the feature still works
-- [ ] No new mocks were added across service boundaries
-- [ ] The agent's completion message includes smoke-test output
-
+- **No self-certification.** Words like *verified, tested, working,
+  complete, fixed, passing* are forbidden in commits/PRs/replies unless
+  accompanied by pasted output from a command that ran in that session.
+- **Demo before code.** Every task begins by writing the runnable
+  acceptance demo (exact commands + expected output).
+- **Real system, every time.** Demos run against real artifacts.
+- **Skips are loud.** `t.Skip` / `@Ignore` / `xit` / `describe.skip`
+  without a trailing `SKIP-OK: #<ticket>` comment break validation.
+- **Evidence in the PR.** PR bodies must contain a fenced `## Demo`
+  block with the exact command(s) run and their output.
