@@ -373,6 +373,7 @@ source "$TEST_DIR/test-media-services.sh" 2>/dev/null || true
 source "$TEST_DIR/test-dashboard.sh" 2>/dev/null || true
 source "$TEST_DIR/test-cookie-validator.sh" 2>/dev/null || true
 source "$TEST_DIR/test-vpn-compose.sh" 2>/dev/null || true
+source "$TEST_DIR/test-add-download.sh" 2>/dev/null || true
 
 # =============================================================================
 # Main Test Runner
@@ -568,6 +569,10 @@ main() {
             run_integration_tests
             log_section "Running Dashboard Tests"
             run_dashboard_tests
+            if type run_add_download_tests &> /dev/null; then
+                log_section "Running /api/add Coverage Tests"
+                run_add_download_tests
+            fi
             log_section "Running Media Services Tests"
             run_media_services_tests
             # Stop containers if we started them
@@ -614,6 +619,10 @@ main() {
             
             run_integration_tests
             run_dashboard_tests
+            if type run_add_download_tests &> /dev/null; then
+                log_section "Running /api/add Coverage Tests"
+                run_add_download_tests
+            fi
             run_media_services_tests
             run_scenario_tests
             run_error_tests
