@@ -109,6 +109,65 @@ test_vpn_landing_vpn_publishes_8087() {
     fi
 }
 
+test_every_service_has_mem_limit() {
+    # CONST-033 OOM-cascade defence: every compose service MUST have
+    # an explicit mem_limit so a runaway process inside one container
+    # can't pull the user session down via the kernel OOM killer.
+    # Without this, neighbour-project incidents like 2026-04-27 22:22
+    # (V8/python3 pod OOM-cascade → user@1000.service: status=9/KILL)
+    # repeat. Anti-bluff (CONST-034): we don't trust eyeballed yaml —
+    # we extract every service name from the resolved compose config
+    # and require each one to declare mem_limit.
+    if [ ! -f "$COMPOSE_FILE" ]; then return 1; fi
+
+    # Resolve the compose to a normalised form so we don't have to
+    # parse the original yaml's anchors/inheritance.
+    local cmd
+    cmd=$(_vpn_compose_runtime)
+    if [ -z "$cmd" ]; then
+        echo "no compose runtime available — cannot resolve"
+        return 1
+    fi
+    local resolved
+    resolved=$($cmd -f "$COMPOSE_FILE" config 2>/dev/null) || {
+        echo "compose config failed to resolve"
+        return 1
+    }
+
+    # Walk every top-level service block, look for mem_limit inside.
+    # awk emits "service_name|HAS_LIMIT|VALUE" per service.
+    local report missing
+    report=$(echo "$resolved" | python3 <<'PY' 2>&1
+import sys, yaml
+try:
+    doc = yaml.safe_load(sys.stdin.read()) or {}
+except Exception as e:
+    print(f"PARSE_ERROR: {e}", file=sys.stderr)
+    sys.exit(2)
+
+services = doc.get("services", {}) or {}
+missing = []
+for name, body in services.items():
+    body = body or {}
+    if "mem_limit" not in body:
+        missing.append(name)
+        print(f"  MISSING: {name}")
+    else:
+        print(f"  OK: {name} = {body['mem_limit']}")
+
+if missing:
+    print(f"FAIL_COUNT: {len(missing)}")
+    sys.exit(1)
+sys.exit(0)
+PY
+)
+    if [ $? -ne 0 ]; then
+        echo "$report"
+        echo "Some compose services have no mem_limit. Add one to each — see CONST-033."
+        return 1
+    fi
+}
+
 test_vpn_openvpn_has_required_capabilities() {
     # openvpn-yt-dlp needs NET_ADMIN + /dev/net/tun to bring up the
     # tunnel. Without either, the tunnel never comes up and the whole
@@ -139,9 +198,10 @@ run_vpn_compose_tests() {
         run_test "test_vpn_metube_exposes_no_own_ports" test_vpn_metube_exposes_no_own_ports
         run_test "test_vpn_landing_vpn_publishes_8087" test_vpn_landing_vpn_publishes_8087
         run_test "test_vpn_openvpn_has_required_capabilities" test_vpn_openvpn_has_required_capabilities
+        run_test "test_every_service_has_mem_limit" test_every_service_has_mem_limit
     else
         local pass=0 fail=0
-        for t in test_vpn_compose_validates test_vpn_compose_has_expected_services test_vpn_metube_uses_shared_network_namespace test_vpn_metube_exposes_no_own_ports test_vpn_landing_vpn_publishes_8087 test_vpn_openvpn_has_required_capabilities; do
+        for t in test_vpn_compose_validates test_vpn_compose_has_expected_services test_vpn_metube_uses_shared_network_namespace test_vpn_metube_exposes_no_own_ports test_vpn_landing_vpn_publishes_8087 test_vpn_openvpn_has_required_capabilities test_every_service_has_mem_limit; do
             if "$t"; then pass=$((pass+1)); else fail=$((fail+1)); fi
         done
         echo "Pass: $pass  Fail: $fail"

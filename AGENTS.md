@@ -548,6 +548,18 @@ echo -e "${CYAN}Container Runtime:${NC} $CONTAINER_RUNTIME"
 > `CONSTITUTION.md` § CONST-034 for the full rule and forbidden
 > patterns. Code-review heuristic: *"If I deleted the implementation,
 > would this test still pass?"* If yes, the test is bluff. Rewrite it.
+>
+> **ARTIFACT rule:** for any feature that produces a file / DB row /
+> queue message / sent email, the test MUST stat-verify the artifact
+> exists with the right shape — not just that the API endpoint
+> promising it returned 200. Reference templates:
+>   - `challenges/scripts/download_completes_challenge.sh` —
+>     submit URL, wait for `finished`, stat-verify a file >1KB
+>     in `$DOWNLOAD_DIR` from the host (not from inside the
+>     container — inodes can exist in /proc but not on disk).
+>   - `tests/test-aborted-history.sh:test_aborted_history_post_appends_and_get_reads_back` —
+>     POST + immediate GET round-trip, the recorded entry must be
+>     visible to a fresh observer.
 
 ### Automated Test Suite
 
@@ -957,6 +969,18 @@ scanner) and
 Both MUST be wired into the project's CI / `run_all_challenges.sh`.
 
 **Full background:** `docs/HOST_POWER_MANAGEMENT.md` and `CONSTITUTION.md` (CONST-033).
+
+**OOM-cascade vector (2026-04-27 addendum).** A neighbour project's
+uncapped container pod can OOM-cascade and take the user session
+down — observationally indistinguishable from a logout/suspend. The
+host-side defence is
+`scripts/host-power-management/protect-user-session-from-oom.sh`
+(privileged installer, manual prereq), and the project-local defence
+is the rule that EVERY compose service must have an explicit
+`mem_limit` (enforced by `tests/test-vpn-compose.sh::test_every_service_has_mem_limit`).
+See CONST-033 in `CONSTITUTION.md` for the forensic + the docker /
+podman daemon notes (the daemons themselves are not the failure
+mode; uncapped sibling containers in the user's cgroup tree are).
 
 <!-- END host-power-management addendum (CONST-033) -->
 

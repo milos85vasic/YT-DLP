@@ -280,6 +280,27 @@ else
     echo -e "${GREEN}✓${NC} Download directory exists: $DOWNLOAD_DIR"
 fi
 
+# CONST-034 anti-bluff: refuse to start if DOWNLOAD_DIR is on a
+# tmpfs filesystem. With podman + systemd PrivateTmp, bind-mounts
+# of tmpfs paths into containers fail SILENTLY — files appear in
+# /proc but writes don't land on the host. The user's downloads
+# would all show "finished" status while the disk stays empty.
+# Loud refusal is better than a confusing later FAIL.
+DOWNLOAD_DIR_FSTYPE=$(df -T "$DOWNLOAD_DIR" 2>/dev/null | awk 'NR==2 {print $2}')
+if [ "$DOWNLOAD_DIR_FSTYPE" = "tmpfs" ]; then
+    echo -e "${RED}✗ DOWNLOAD_DIR ($DOWNLOAD_DIR) is on a tmpfs filesystem.${NC}"
+    echo -e "${RED}  Bind-mounting tmpfs paths into containers fails silently with podman${NC}"
+    echo -e "${RED}  + systemd PrivateTmp on this host. Downloads will report 'finished'${NC}"
+    echo -e "${RED}  but no file will appear on disk.${NC}"
+    echo
+    echo -e "${YELLOW}Fix: move DOWNLOAD_DIR off /tmp. Examples that work:${NC}"
+    echo -e "${YELLOW}  - DOWNLOAD_DIR=\$HOME/Downloads/MeTube${NC}"
+    echo -e "${YELLOW}  - DOWNLOAD_DIR=$(pwd)/downloads${NC}"
+    echo -e "${YELLOW}  - DOWNLOAD_DIR=/var/lib/metube-downloads${NC}"
+    exit 1
+fi
+echo -e "${GREEN}✓${NC} Download directory is on $DOWNLOAD_DIR_FSTYPE (not tmpfs)"
+
 # Create yt-dlp directories
 echo ""
 echo -e "${BLUE}Creating yt-dlp directories...${NC}"

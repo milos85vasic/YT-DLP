@@ -93,8 +93,9 @@ These are the failure modes that have hit this codebase before. Do not repeat th
    - **Body, not status.** Assert on response body content (`grep '"status".*"ok"'` on JSON), not on `%{http_code}` alone — curl returns `000` on early-close even when the body is correct, and `200` can mask an HTML 502 page.
    - **No silent skips.** A test that `return 0`s when an upstream is unreachable MUST print a documented platform/geo/upstream skip message; the runner counts those as `SKIP`, not `PASS`.
    - **End-to-end at least once per feature.** A new UI button isn't covered by component-instance unit tests alone — there must be at least one test that traverses the full user path (HTTP wire / rendered DOM / disk side-effect).
+   - **ARTIFACT rule.** "Download succeeded" ≠ "/add returned 200". For any feature that produces an artifact (file, DB row, queue msg, email), the test MUST stat-verify the artifact, not just the API response that promises it. The `download_completes_challenge.sh` is the reference template — submit, wait for `finished`, assert a file >1KB exists in `$DOWNLOAD_DIR` from the host's POV (not from inside the container).
    - **Code-review heuristic:** "If I deleted the implementation, would this test still pass?" If yes, the test is bluff. Rewrite it.
-   - Full rule in `CONSTITUTION.md` § CONST-034.
+   - Full rule in `CONSTITUTION.md` § CONST-034 including the explicit ARTIFACT rule examples.
 
 ## API change protocol
 
@@ -156,11 +157,37 @@ allowlist without an explicit non-host-context justification comment.
 **Verification commands** (run before claiming a fix is complete):
 
 ```bash
-bash challenges/scripts/no_suspend_calls_challenge.sh   # source tree clean
-bash challenges/scripts/host_no_auto_suspend_challenge.sh   # host hardened
+bash challenges/scripts/no_suspend_calls_challenge.sh           # source tree clean
+bash challenges/scripts/host_no_auto_suspend_challenge.sh       # host hardened against suspend
+bash challenges/scripts/user_session_oom_protected_challenge.sh # user session hardened against OOM-cascade
 ```
 
-Both must PASS.
+All three must PASS.
+
+**OOM-cascade vector (2026-04-27 incident).** Killing the user session
+via the kernel OOM killer has the same blast radius as suspend — every
+container the user runs dies at once, the GUI shows the lock screen,
+the SSH session drops. Forensic from the journal showed
+`user@1000.service: Main process exited, code=killed, status=9/KILL`
+followed by `user.slice: A process of this unit has been killed by
+the OOM killer.` The trigger was a NEIGHBOUR project's uncapped
+container pod (V8 + python3 + webm muxing), NOT MeTube. MeTube has
+explicit `mem_limit` on every service and the
+`test_every_service_has_mem_limit` test enforces it.
+
+The host-side fix is
+`scripts/host-power-management/protect-user-session-from-oom.sh`
+(privileged installer, manual prereq, run once with sudo). It writes
+a systemd drop-in setting `OOMScoreAdjust=-500` on `user@1000.service`
+AND hot-applies the value to the running PID's
+`/proc/<pid>/oom_score_adj` so the kernel picks neighbour-project
+containers as OOM victims first, never the session.
+
+Docker / Podman themselves do NOT call suspend/logout primitives —
+their daemon is not the failure mode. The failure mode is purely
+memory pressure from uncapped sibling containers in the user's
+cgroup tree (rootless podman runs containers as children of
+`user@<uid>.service`).
 
 <!-- END host-power-management addendum (CONST-033) -->
 

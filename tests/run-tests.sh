@@ -82,20 +82,27 @@ setup_test_env() {
     mkdir -p "$TEST_RESULTS_DIR"
     mkdir -p "$TEST_LOGS_DIR"
     mkdir -p "$TEST_CONFIG_DIR"
-    mkdir -p /tmp/test-downloads
+
+    # Test downloads dir lives alongside the test logs (NOT under /tmp,
+    # because CONST-034 anti-bluff init refuses tmpfs paths — and for
+    # good reason: bind-mounting tmpfs into containers fails silently
+    # with podman + systemd PrivateTmp).
+    TEST_DOWNLOADS_DIR="$TEST_DIR/.test-downloads"
+    mkdir -p "$TEST_DOWNLOADS_DIR"
     
-    # Create test .env files
-    cat > "$TEST_CONFIG_DIR/.env.no-vpn" << 'EOF'
+    # Create test .env files. `$TEST_DOWNLOADS_DIR` is interpolated
+    # (not 'EOF' literal) so the path matches whatever this run resolved.
+    cat > "$TEST_CONFIG_DIR/.env.no-vpn" << EOF
 USE_VPN=false
-DOWNLOAD_DIR=/tmp/test-downloads
+DOWNLOAD_DIR=$TEST_DOWNLOADS_DIR
 METUBE_PORT=18086
 YTDLP_VPN_PORT=13130
 TZ=UTC
 EOF
 
-    cat > "$TEST_CONFIG_DIR/.env.with-vpn" << 'EOF'
+    cat > "$TEST_CONFIG_DIR/.env.with-vpn" << EOF
 USE_VPN=true
-DOWNLOAD_DIR=/tmp/test-downloads
+DOWNLOAD_DIR=$TEST_DOWNLOADS_DIR
 VPN_USERNAME=testuser
 VPN_PASSWORD=testpass
 VPN_OVPN_PATH=/tmp/test-vpn/config.ovpn
@@ -132,12 +139,17 @@ cleanup_test_env() {
     rm -rf "$TEST_LOGS_DIR"
     rm -rf "$TEST_CONFIG_DIR"
     
-    # Remove download directory (may contain files owned by container mapped UID)
+    # Remove download directory (may contain files owned by container mapped UID).
+    # NOTE: TEST_DOWNLOADS_DIR is set in setup_test_env(); fall through to
+    # the legacy /tmp path for compatibility when cleanup runs without setup.
+    local _td="${TEST_DOWNLOADS_DIR:-$TEST_DIR/.test-downloads}"
     if command -v podman &> /dev/null; then
-        podman unshare rm -rf /tmp/test-downloads 2>/dev/null || rm -rf /tmp/test-downloads 2>/dev/null || true
+        podman unshare rm -rf "$_td" 2>/dev/null || rm -rf "$_td" 2>/dev/null || true
     else
-        rm -rf /tmp/test-downloads 2>/dev/null || true
+        rm -rf "$_td" 2>/dev/null || true
     fi
+    # Legacy location — clean on the way out so the next run isn't confused.
+    rm -rf /tmp/test-downloads 2>/dev/null || true
     rm -rf /tmp/test-vpn
     
     # Remove test containers if they exist

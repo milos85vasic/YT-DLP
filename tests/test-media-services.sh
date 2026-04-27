@@ -223,7 +223,14 @@ test_metube_api_vk() {
 }
 
 test_metube_api_youtube() {
-    local url="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+    # Anti-bluff (CONST-034): a previous version of this test only
+    # asserted that /add returns status:ok. A broken-volume-mount
+    # regression sat undetected for weeks because of that — /add
+    # returned 200 happily while no file ever landed on disk. This
+    # version submits a small URL, waits for the worker to finish,
+    # and asserts a file appears in $DOWNLOAD_DIR with non-zero size.
+    # Anything weaker is bluff per CONST-034.
+    local url="https://www.youtube.com/watch?v=jNQXAC9IVRw"   # "Me at the zoo", 19s, ~500KB
     local response
     local exit_code=0
 
@@ -243,22 +250,108 @@ test_metube_api_youtube() {
         return 1
     fi
 
+    # Resolve DOWNLOAD_DIR from .env so we know where to look.
+    # PROJECT_DIR is set by run-tests.sh; in standalone runs default
+    # to the repo root inferred from this file's location.
+    local project_dir="${PROJECT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+    local download_dir
+    download_dir=$(grep -E "^DOWNLOAD_DIR=" "$project_dir/.env" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '"' | tr -d "'")
+    if [ -z "$download_dir" ] || [ ! -d "$download_dir" ]; then
+        echo "DOWNLOAD_DIR ($download_dir) not set or not a directory — platform restriction"
+        return 0
+    fi
+
+    # Snapshot existing files so we can identify the new one.
+    local before_list after_list
+    before_list=$(mktemp)
+    ls -1 "$download_dir" 2>/dev/null > "$before_list" || true
+
     response=$(curl -s -X POST "http://127.0.0.1:8088/add" \
         -H "Content-Type: application/json" \
-        -d "{\"url\":\"$url\",\"quality\":\"720\"}" \
-        --max-time 120 2>&1) || exit_code=$?
+        -d "{\"url\":\"$url\",\"quality\":\"360\"}" \
+        --max-time 30 2>&1) || exit_code=$?
 
     if [ "$exit_code" -ne 0 ]; then
+        rm -f "$before_list"
         echo "MeTube API request failed (curl exit $exit_code): $response"
         return 1
     fi
 
-    if echo "$response" | grep -q '"status" *: *"ok"'; then
-        return 0
+    if ! echo "$response" | grep -q '"status" *: *"ok"'; then
+        rm -f "$before_list"
+        echo "MeTube API returned error: $response"
+        return 1
     fi
 
-    echo "MeTube API returned error: $response"
-    return 1
+    # Wait for finished status (max 90s).
+    local i status msg
+    for i in $(seq 1 90); do
+        local snapshot
+        snapshot=$(curl -s --max-time 5 "http://127.0.0.1:8088/history" 2>/dev/null \
+            | python3 -c "
+import json, sys
+url = sys.argv[1]
+d = json.load(sys.stdin)
+for k in ('queue', 'pending', 'done'):
+    for it in d.get(k, []):
+        if it.get('url') == url:
+            print((it.get('status') or '') + '|' + (it.get('msg') or '')[:200])
+            sys.exit(0)
+print('|')
+" "$url" 2>/dev/null)
+        status=$(echo "$snapshot" | cut -d'|' -f1)
+        msg=$(echo "$snapshot" | cut -d'|' -f2)
+        if [ "$status" = "finished" ]; then
+            break
+        fi
+        if [ "$status" = "error" ]; then
+            rm -f "$before_list"
+            echo "Download failed: $msg"
+            return 1
+        fi
+        sleep 1
+    done
+
+    if [ "$status" != "finished" ]; then
+        rm -f "$before_list"
+        echo "Download did not reach finished status within 90s (last status=$status)"
+        return 1
+    fi
+
+    # File-on-disk assertion (the anti-bluff anchor).
+    after_list=$(mktemp)
+    ls -1 "$download_dir" 2>/dev/null > "$after_list" || true
+    local new_files
+    new_files=$(comm -13 <(sort "$before_list") <(sort "$after_list"))
+    rm -f "$before_list" "$after_list"
+
+    if [ -z "$new_files" ]; then
+        echo "Download reported finished but NO file appeared in $download_dir (CONST-034 violation)"
+        return 1
+    fi
+
+    # Largest new file must be >1KB.
+    local max_size=0
+    while IFS= read -r f; do
+        [ -z "$f" ] && continue
+        local sz
+        sz=$(stat -c '%s' "$download_dir/$f" 2>/dev/null || echo 0)
+        if [ "$sz" -gt "$max_size" ]; then max_size=$sz; fi
+    done <<< "$new_files"
+    if [ "$max_size" -lt 1024 ]; then
+        echo "Largest new file is $max_size B (<1KB) — looks like a stub, not a real download"
+        return 1
+    fi
+
+    # Cleanup so the test is idempotent.
+    while IFS= read -r f; do
+        [ -z "$f" ] && continue
+        $CONTAINER_RUNTIME exec metube-direct sh -c "rm -f '/downloads/$f'" >/dev/null 2>&1 || true
+    done <<< "$new_files"
+    curl -s -X POST "http://127.0.0.1:8088/delete" \
+        -H "Content-Type: application/json" \
+        -d "{\"ids\":[\"$url\"],\"where\":\"done\"}" >/dev/null
+    return 0
 }
 
 # =============================================================================

@@ -328,27 +328,35 @@ test_scenario_vpn_cli_profile() {
 
 test_scenario_env_combinations() {
     cd "$PROJECT_DIR"
-    
-    # Test various environment variable combinations
-    
+
+    # Test various environment variable combinations.
+    # NOTE (CONST-033 anti-OOM addendum): we deliberately do NOT use
+    # /tmp/test-downloads here — the init script refuses tmpfs paths
+    # because podman + systemd PrivateTmp silently drops bind-mounted
+    # writes (downloads report "finished" but the disk stays empty).
+    # Use TEST_DOWNLOADS_DIR (set by setup_test_env in run-tests.sh)
+    # which is a non-tmpfs path under tests/.test-downloads.
+    local _td="${TEST_DOWNLOADS_DIR:-$TEST_DIR/.test-downloads}"
+    mkdir -p "$_td"
+
     # Combination 1: Minimal config (only required vars)
-    cat > .env << 'EOF'
+    cat > .env <<EOF
 USE_VPN=false
-DOWNLOAD_DIR=/tmp/test-downloads
+DOWNLOAD_DIR=$_td
 EOF
-    
+
     if ! ./init > "$TEST_LOGS_DIR/scenario-env-minimal.log" 2>&1; then
         echo "Minimal env configuration failed"
         rm -f .env
         return 1
     fi
-    
+
     rm -f .env
-    
+
     # Combination 2: Full config (all optional vars)
-    cat > .env << 'EOF'
+    cat > .env <<EOF
 USE_VPN=false
-DOWNLOAD_DIR=/tmp/test-downloads
+DOWNLOAD_DIR=$_td
 CONTAINER_RUNTIME=podman
 METUBE_PORT=18086
 YTDLP_VPN_PORT=13130
@@ -357,15 +365,15 @@ SERVICE_MODE=false
 YOUTUBE_COOKIES=false
 DEFAULT_QUALITY=1080p
 EOF
-    
+
     if ! ./init > "$TEST_LOGS_DIR/scenario-env-full.log" 2>&1; then
         echo "Full env configuration failed"
         rm -f .env
         return 1
     fi
-    
+
     rm -f .env
-    
+
     return 0
 }
 

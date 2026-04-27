@@ -218,6 +218,58 @@ are unsafe for this host.
    the running host's state matches layer-1 masking.
 5. `challenges/scripts/no_suspend_calls_challenge.sh` — wraps the
    scanner as a challenge that runs in CI / `run_all_challenges.sh`.
+6. `scripts/host-power-management/protect-user-session-from-oom.sh` —
+   **Added 2026-04-27 after a second incident.** Privileged
+   installer, manual prereq, run once per host with sudo. Sets
+   `OOMScoreAdjust=-500` on `user@1000.service` via systemd drop-in
+   AND hot-applies it to the running PID's
+   `/proc/<pid>/oom_score_adj` so the kernel OOM killer treats the
+   user session as the LAST candidate (rather than the first, which
+   it picks by default because the user session has the highest
+   cumulative RSS in `user.slice`).
+7. `challenges/scripts/user_session_oom_protected_challenge.sh` —
+   asserts the live `oom_score_adj` on the running unit's PID is
+   ≤ -100. Anti-bluff: it reads `/proc/<pid>/oom_score_adj` directly
+   rather than trusting the unit file, because a drop-in that's
+   never re-applied to the running PID gives a false-positive on a
+   `systemctl show` check.
+
+**The OOM-cascade vector (2026-04-27 incident):**
+On 2026-04-27 22:22:14 the journal showed:
+```
+user@1000.service: Main process exited, code=killed, status=9/KILL
+user-1000.slice: A process of this unit has been killed by the OOM killer.
+user.slice: A process of this unit has been killed by the OOM killer.
+```
+Forensic showed the OOM cascade originated in a NON-MeTube pod
+(`pod_41847d97…` running `python3` + `V8 DefaultWorke` + `mux0:webm`
+— a neighbour project's video-processing workload) that had no
+`mem_limit` configured on its containers. Once that pod's cgroup
+hit its memory ceiling, the kernel walked up the cgroup tree
+looking for the highest-RSS victim and picked `user@1000.service`,
+killing every container — MeTube, HelixAgent, all parallel CLI
+agents — at once. The blast radius is identical to a suspend; the
+user perceives it as "logged out" even though no logout was issued.
+
+**Mitigations split between project-local and host-level:**
+- **Project-local (already enforced for MeTube):** every compose
+  service MUST have an explicit `mem_limit`. Uncapped containers
+  are how OOM cascades start. The mem-limit invariant is asserted
+  by `tests/test-vpn-compose.sh::test_every_service_has_mem_limit`.
+- **Host-level (manual prereq, sudo, run once):**
+  `scripts/host-power-management/protect-user-session-from-oom.sh`
+  ensures the user session is the LAST OOM victim.
+
+**Note on Docker / Podman daemon-level concerns:**
+Podman's rootless mode (the default on this host) runs containers
+under the user's session — meaning their cgroup is a child of
+`user@<uid>.service` and any OOM in those containers can escalate
+upward in the cgroup tree to the user session. Docker with the
+system daemon does NOT have this property (containers live under
+`docker.service`, separate from `user.slice`) but introduces other
+attack surface. Either runtime needs the layer-7 protection above.
+Docker / Podman themselves do NOT call suspend / logout primitives
+— the failure mode is purely memory pressure.
 
 **Enforcement:** Every project's CI / `run_all_challenges.sh`
 equivalent MUST run both challenges (host state + source tree). A
@@ -293,6 +345,32 @@ light.
   success; an end-of-run summary line is.
 - Manual smoke testing (Article I, Gate 4) is mandatory before any
   release. "All automated tests passed" is necessary, not sufficient.
+
+**ARTIFACT RULE (added 2026-04-27 after a download-volume regression
+that hid behind /add-returns-200 tests for weeks):**
+For any feature that produces an artifact — a file on disk, a
+database row, a queue message, a sent email, an outbound HTTP
+request — the test or challenge that covers it MUST verify the
+artifact exists with the right shape, not just that the API
+endpoint promising it returned 200. Examples of the rule applied:
+
+- **"Download succeeded"** ⇒ a file >1KB exists in `$DOWNLOAD_DIR`
+  with a recognisable extension, NOT just `{"status":"ok"}` from /add.
+  The host-side stat must succeed; an inode visible only inside the
+  container's namespace doesn't count.
+- **"Cookie uploaded"** ⇒ `/config/cookies.txt` exists with non-zero
+  size and the validator's recognised-domain check passes against
+  its content.
+- **"Cancelled queue item moved to History"** ⇒ a GET against
+  `/api/aborted-history` returns the canonical URL with
+  `status:'aborted'` and a non-zero `aborted_at`.
+- **"Email sent"** ⇒ the SMTP send call returned a delivery confirm
+  AND the receiver's inbox / mail-trap was checked.
+
+If the test cannot reasonably verify the artifact (e.g. the artifact
+is on a system the test can't reach), the test MUST mark itself
+SKIP-OK with a documented external-dependency reason. Bluff-passing
+is forbidden.
 
 **Code-review heuristic:** "If I deleted the implementation, would
 this test still pass?" If yes, the test is bluff — rewrite it to

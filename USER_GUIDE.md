@@ -97,6 +97,27 @@ Copy the example configuration:
 cp .env.example .env
 ```
 
+### ⚠ Important: where to put DOWNLOAD_DIR
+
+`DOWNLOAD_DIR` **must not** be on a `tmpfs` filesystem.
+
+Anywhere under `/tmp` is on tmpfs on most Linux distros. When podman
+bind-mounts a tmpfs path into a container, the systemd PrivateTmp
+boundary makes the bind-mount appear to succeed (you can `cd` into
+it, `ls` it, even `touch` files inside) **but writes don't land on
+the host disk**. Downloads report `finished` while leaving an empty
+downloads folder.
+
+The `./init` script detects this and refuses to start with a clear
+error message. Recommended values:
+
+| Use case | Suggested DOWNLOAD_DIR |
+|---|---|
+| Personal machine, default | `$HOME/Downloads/MeTube` |
+| Project-local sandbox | `<project>/downloads` (gitignored) |
+| Server / NAS | `/mnt/<disk>/Downloads` or `/var/lib/metube-downloads` |
+| External drive | `/run/media/<user>/<label>/Downloads` |
+
 ### Required Settings
 
 Edit `.env` with your settings:
