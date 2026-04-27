@@ -89,6 +89,12 @@ These are the failure modes that have hit this codebase before. Do not repeat th
 4. **The type escape.** No `any` for API responses in the dashboard — use `DownloadInfo`, `HistoryResponse`, etc. from `dashboard/src/app/services/metube.service.ts`. Update the interface when the contract changes.
 5. **The silent error.** Every RxJS `subscribe` error handler must clear loading state and surface a user-visible message — not just `console.error`.
 6. **The hidden state.** Every Angular component template must render four states: loading, error (with retry), empty, content. See `dashboard/AGENTS.md`.
+7. **The bluff test (CONST-034).** A test that exits 0 without proving the feature works is forbidden. Concretely:
+   - **Body, not status.** Assert on response body content (`grep '"status".*"ok"'` on JSON), not on `%{http_code}` alone — curl returns `000` on early-close even when the body is correct, and `200` can mask an HTML 502 page.
+   - **No silent skips.** A test that `return 0`s when an upstream is unreachable MUST print a documented platform/geo/upstream skip message; the runner counts those as `SKIP`, not `PASS`.
+   - **End-to-end at least once per feature.** A new UI button isn't covered by component-instance unit tests alone — there must be at least one test that traverses the full user path (HTTP wire / rendered DOM / disk side-effect).
+   - **Code-review heuristic:** "If I deleted the implementation, would this test still pass?" If yes, the test is bluff. Rewrite it.
+   - Full rule in `CONSTITUTION.md` § CONST-034.
 
 ## API change protocol
 

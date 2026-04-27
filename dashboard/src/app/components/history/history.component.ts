@@ -1,12 +1,19 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
-import { MetubeService, DownloadInfo } from '../../services/metube.service';
+import {
+  MetubeService,
+  DownloadInfo,
+  BulkDeleteResult,
+} from '../../services/metube.service';
+
+type BulkScope = 'all' | 'selected' | 'single';
 
 @Component({
   selector: 'app-history',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   template: `
     <div class="page">
       <!-- Safety Banner -->
@@ -24,14 +31,59 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
 
       <div class="header-row">
         <h2>📜 Download History</h2>
-        <button
-          *ngIf="history.length > 0"
-          class="btn-clear-all"
-          (click)="clearAll()"
-          title="Remove all items from history (files are kept)"
-        >
-          🧹 Clear All History
-        </button>
+        <div class="header-actions" *ngIf="history.length > 0">
+          <button
+            class="btn-clear-all"
+            (click)="clearAll()"
+            title="Remove all items from history (files are kept)"
+            data-testid="history-clear-all"
+          >
+            🧹 Clear All ({{ history.length }})
+          </button>
+          <button
+            class="btn-delete-all"
+            (click)="openBulkDeleteDialog('all')"
+            title="Permanently delete all items AND files from disk"
+            data-testid="history-delete-all"
+          >
+            🗑️ Delete All ({{ history.length }})
+          </button>
+        </div>
+      </div>
+
+      <!-- Selection toolbar -->
+      <div class="selection-toolbar" *ngIf="history.length > 0">
+        <label class="select-all-label" data-testid="history-select-all-label">
+          <input
+            type="checkbox"
+            class="checkbox"
+            [checked]="allSelected"
+            [indeterminate]="someSelected && !allSelected"
+            (change)="toggleSelectAll()"
+            data-testid="history-select-all"
+          />
+          <span *ngIf="selectedCount === 0">Select all</span>
+          <span *ngIf="selectedCount > 0 && !allSelected">{{ selectedCount }} selected</span>
+          <span *ngIf="allSelected">All {{ history.length }} selected</span>
+        </label>
+        <div class="batch-actions" *ngIf="selectedCount > 0">
+          <button
+            class="btn-batch-clear"
+            (click)="clearSelected()"
+            title="Remove selected items from history (files are kept)"
+            data-testid="history-clear-selected"
+          >
+            🧹 Clear {{ selectedCount }}
+          </button>
+          <button
+            class="btn-batch-delete"
+            (click)="openBulkDeleteDialog('selected')"
+            title="Permanently delete selected items AND files from disk"
+            data-testid="history-delete-selected"
+          >
+            🗑️ Delete {{ selectedCount }}
+          </button>
+        </div>
       </div>
 
       <div *ngIf="loading" class="loading">
@@ -51,7 +103,21 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
       </div>
 
       <div class="list">
-        <div class="item" *ngFor="let item of history" [class.error]="item.status === 'error'" [class.finished]="item.status === 'finished'">
+        <div
+          class="item"
+          *ngFor="let item of history; trackBy: trackById"
+          [class.error]="item.status === 'error'"
+          [class.finished]="item.status === 'finished'"
+          [class.selected]="isSelected(item)"
+        >
+          <input
+            type="checkbox"
+            class="checkbox row-checkbox"
+            [checked]="isSelected(item)"
+            (change)="toggleSelected(item)"
+            [attr.data-testid]="'history-row-checkbox-' + item.id"
+            [attr.aria-label]="'Select ' + (item.title || item.url)"
+          />
           <div class="thumb">
             <span *ngIf="item.status === 'error'">❌</span>
             <span *ngIf="item.status === 'finished'">✅</span>
@@ -82,21 +148,59 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
       </div>
     </div>
 
-    <!-- Confirmation Dialog -->
-    <div class="dialog-overlay" *ngIf="dialogItem" (click)="cancelDialog()">
-      <div class="dialog" (click)="$event.stopPropagation()">
-        <h3>🗑️ Confirm Deletion</h3>
-        <p>Are you sure you want to permanently delete this download?</p>
-        <div class="dialog-item">
+    <!-- Confirmation Dialog (unified — single / selected / all) -->
+    <div class="dialog-overlay" *ngIf="dialogScope" (click)="cancelDialog()" data-testid="history-delete-dialog">
+      <div class="dialog" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+        <h3>🗑️ Confirm Permanent Deletion</h3>
+        <p>{{ dialogTitle }}</p>
+
+        <!-- Single-item preview -->
+        <div class="dialog-item" *ngIf="dialogScope === 'single' && dialogItem">
           <strong>{{ dialogItem.title || 'Untitled' }}</strong>
           <span *ngIf="dialogItem.filename">{{ dialogItem.filename }}</span>
         </div>
-        <p class="dialog-warning">This will remove the file from disk and delete the history entry. This action cannot be undone.</p>
+
+        <!-- Multi-item preview -->
+        <div class="dialog-list" *ngIf="dialogScope !== 'single'">
+          <ul class="dialog-list-items">
+            <li *ngFor="let it of dialogTargetsPreview">
+              <strong>{{ it.title || 'Untitled' }}</strong>
+              <span *ngIf="it.filename" class="dialog-filename">{{ it.filename }}</span>
+            </li>
+          </ul>
+          <p class="dialog-list-more" *ngIf="dialogTargets.length > dialogTargetsPreview.length">
+            …and {{ dialogTargets.length - dialogTargetsPreview.length }} more
+          </p>
+        </div>
+
+        <p class="dialog-warning">
+          ⚠ This will remove <strong>{{ dialogTargets.length }}</strong>
+          history entr{{ dialogTargets.length === 1 ? 'y' : 'ies' }}
+          AND delete the corresponding file{{ dialogTargets.length === 1 ? '' : 's' }} from disk.
+          <strong>This action cannot be undone.</strong>
+        </p>
+
+        <label class="dialog-confirm-checkbox" data-testid="history-delete-confirm-checkbox-label">
+          <input
+            type="checkbox"
+            [(ngModel)]="dialogConfirmAcknowledged"
+            data-testid="history-delete-confirm-checkbox"
+          />
+          I understand that the file{{ dialogTargets.length === 1 ? '' : 's' }} on disk will be deleted permanently.
+        </label>
+
         <div class="dialog-actions">
-          <button class="btn-cancel" (click)="cancelDialog()">Cancel</button>
-          <button class="btn-confirm" (click)="executeDelete()" [disabled]="dialogLoading">
+          <button class="btn-cancel" (click)="cancelDialog()" [disabled]="dialogLoading">
+            Cancel
+          </button>
+          <button
+            class="btn-confirm"
+            (click)="executeBulkDelete()"
+            [disabled]="dialogLoading || !dialogConfirmAcknowledged"
+            data-testid="history-delete-confirm-button"
+          >
             <span *ngIf="!dialogLoading">Delete Permanently</span>
-            <span *ngIf="dialogLoading">Deleting…</span>
+            <span *ngIf="dialogLoading">Deleting {{ dialogProgress }} / {{ dialogTargets.length }}…</span>
           </button>
         </div>
       </div>
@@ -140,18 +244,103 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
       flex-wrap: wrap;
     }
     h2 { margin: 0; font-size: 20px; color: #a9b7c6; }
-    .btn-clear-all {
-      padding: 8px 16px;
+    .header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-clear-all,
+    .btn-delete-all,
+    .btn-batch-clear,
+    .btn-batch-delete {
+      padding: 8px 14px;
       border-radius: 10px;
-      border: 1px solid rgba(217,164,65,0.3);
-      background: rgba(217,164,65,0.08);
-      color: #d9a441;
       cursor: pointer;
       font-size: 13px;
       font-weight: 600;
       transition: all 0.2s;
     }
-    .btn-clear-all:hover { background: rgba(217,164,65,0.15); }
+    .btn-clear-all,
+    .btn-batch-clear {
+      border: 1px solid rgba(217,164,65,0.3);
+      background: rgba(217,164,65,0.08);
+      color: #d9a441;
+    }
+    .btn-clear-all:hover,
+    .btn-batch-clear:hover { background: rgba(217,164,65,0.15); }
+    .btn-delete-all,
+    .btn-batch-delete {
+      border: 1px solid rgba(157,0,30,0.3);
+      background: rgba(157,0,30,0.08);
+      color: #cc7832;
+    }
+    .btn-delete-all:hover,
+    .btn-batch-delete:hover { background: rgba(157,0,30,0.18); }
+    .selection-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      background: rgba(104,151,187,0.04);
+      border: 1px solid rgba(104,151,187,0.12);
+      border-radius: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .select-all-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #a9b7c6;
+      font-size: 13px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .batch-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .checkbox {
+      width: 16px;
+      height: 16px;
+      accent-color: #6897bb;
+      cursor: pointer;
+    }
+    .row-checkbox { margin-top: 4px; }
+    .item.selected { background: rgba(104,151,187,0.10); border-color: rgba(104,151,187,0.30); }
+    .dialog-list {
+      max-height: 220px;
+      overflow-y: auto;
+      margin: 12px 0;
+      padding: 8px 12px;
+      background: rgba(0,0,0,0.18);
+      border: 1px solid rgba(169,183,198,0.10);
+      border-radius: 10px;
+    }
+    .dialog-list-items {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      font-size: 12px;
+      color: #a9b7c6;
+    }
+    .dialog-list-items li {
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(169,183,198,0.05);
+    }
+    .dialog-list-items li:last-child { border-bottom: none; }
+    .dialog-list-items strong { font-weight: 600; display: block; }
+    .dialog-filename { font-family: monospace; font-size: 11px; color: #808080; }
+    .dialog-list-more { margin-top: 6px; font-size: 11px; color: #808080; font-style: italic; }
+    .dialog-confirm-checkbox {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin: 10px 0 16px;
+      padding: 10px 12px;
+      background: rgba(217,164,65,0.06);
+      border: 1px solid rgba(217,164,65,0.20);
+      border-radius: 10px;
+      color: #d9a441;
+      font-size: 13px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .dialog-confirm-checkbox input { margin-top: 2px; }
     .empty {
       text-align: center;
       padding: 60px 20px;
@@ -411,8 +600,20 @@ export class HistoryComponent implements OnInit, OnDestroy {
   error: string | null = null;
   private sub?: Subscription;
 
-  dialogItem: DownloadInfo | null = null;
+  // ----- Multi-scope confirm dialog state -----
+  // dialogScope === null  → dialog hidden
+  //               'single' → single-item delete (legacy 🗑️ row button)
+  //               'selected' → bulk delete from current selection
+  //               'all'      → bulk delete every history item
+  dialogScope: BulkScope | null = null;
+  dialogItem: DownloadInfo | null = null;        // populated for 'single'
+  dialogTargets: DownloadInfo[] = [];            // populated for 'selected' / 'all'
+  dialogConfirmAcknowledged = false;
   dialogLoading = false;
+  dialogProgress = 0;
+
+  // ----- Selection state -----
+  selectedIds = new Set<string>();
 
   toastMsg = '';
   toastError = false;
@@ -503,38 +704,175 @@ export class HistoryComponent implements OnInit, OnDestroy {
     });
   }
 
+  // ----- Selection helpers -----
+
+  trackById(_index: number, item: DownloadInfo): string {
+    return item.id;
+  }
+
+  isSelected(item: DownloadInfo): boolean {
+    return this.selectedIds.has(item.id);
+  }
+
+  toggleSelected(item: DownloadInfo): void {
+    if (this.selectedIds.has(item.id)) {
+      this.selectedIds.delete(item.id);
+    } else {
+      this.selectedIds.add(item.id);
+    }
+  }
+
+  toggleSelectAll(): void {
+    if (this.allSelected) {
+      this.selectedIds.clear();
+    } else {
+      this.selectedIds = new Set(this.history.map((i) => i.id));
+    }
+  }
+
+  get selectedCount(): number {
+    // Count only IDs that are still present in history (the polling
+    // loop may have removed an item the user had selected).
+    let n = 0;
+    for (const item of this.history) {
+      if (this.selectedIds.has(item.id)) n += 1;
+    }
+    return n;
+  }
+
+  get allSelected(): boolean {
+    return this.history.length > 0 && this.selectedCount === this.history.length;
+  }
+
+  get someSelected(): boolean {
+    return this.selectedCount > 0;
+  }
+
+  selectedItems(): DownloadInfo[] {
+    return this.history.filter((i) => this.selectedIds.has(i.id));
+  }
+
+  // ----- Single-item legacy 🗑️ button -----
+
   confirmDelete(item: DownloadInfo): void {
+    this.dialogScope = 'single';
     this.dialogItem = item;
+    this.dialogTargets = [item];
+    this.dialogConfirmAcknowledged = false;
     this.dialogLoading = false;
+    this.dialogProgress = 0;
+  }
+
+  // ----- Bulk dialog opener -----
+
+  openBulkDeleteDialog(scope: 'all' | 'selected'): void {
+    const targets = scope === 'all' ? [...this.history] : this.selectedItems();
+    if (targets.length === 0) {
+      this.showToast(scope === 'all' ? 'History is empty' : 'No items selected', true);
+      return;
+    }
+    this.dialogScope = scope;
+    this.dialogItem = null;
+    this.dialogTargets = targets;
+    this.dialogConfirmAcknowledged = false;
+    this.dialogLoading = false;
+    this.dialogProgress = 0;
   }
 
   cancelDialog(): void {
+    this.dialogScope = null;
     this.dialogItem = null;
+    this.dialogTargets = [];
+    this.dialogConfirmAcknowledged = false;
     this.dialogLoading = false;
+    this.dialogProgress = 0;
   }
 
-  executeDelete(): void {
-    if (!this.dialogItem) return;
+  get dialogTitle(): string {
+    switch (this.dialogScope) {
+      case 'single':
+        return 'Are you sure you want to permanently delete this download?';
+      case 'selected':
+        return `You are about to permanently delete ${this.dialogTargets.length} selected item${this.dialogTargets.length === 1 ? '' : 's'} and their files from disk.`;
+      case 'all':
+        return `You are about to permanently delete ALL ${this.dialogTargets.length} history item${this.dialogTargets.length === 1 ? '' : 's'} and their files from disk.`;
+      default:
+        return '';
+    }
+  }
+
+  /** First few items shown in the bulk dialog preview. */
+  get dialogTargetsPreview(): DownloadInfo[] {
+    return this.dialogTargets.slice(0, 5);
+  }
+
+  // ----- Bulk delete executor -----
+
+  executeBulkDelete(): void {
+    if (this.dialogTargets.length === 0 || !this.dialogConfirmAcknowledged) return;
     this.dialogLoading = true;
-    this.metube.deleteDownloadWithFile(this.dialogItem, true).subscribe({
-      next: (res) => {
-        const deletedId = this.dialogItem!.id;
-        this.dialogItem = null;
-        this.dialogLoading = false;
-        if (res.success) {
-          this.history = this.history.filter(item => item.id !== deletedId);
-          const fileCount = res.files_deleted?.length || 0;
-          this.showToast(fileCount > 0 ? `Deleted (${fileCount} file${fileCount > 1 ? 's' : ''})` : 'Removed from history');
-        } else {
-          this.showToast('Delete failed: ' + (res.error || 'Unknown error'), true);
-        }
+    this.dialogProgress = 0;
+
+    this.metube.deleteSelectedWithFiles(this.dialogTargets).subscribe({
+      next: (result: BulkDeleteResult) => {
+        const deletedIds = new Set(this.dialogTargets.map((i) => i.id));
+        this.history = this.history.filter((i) => !deletedIds.has(i.id));
+        deletedIds.forEach((id) => this.selectedIds.delete(id));
+        this.cancelDialog();
+        this.summarizeBulkResult(result);
       },
       error: (err) => {
-        this.dialogItem = null;
-        this.dialogLoading = false;
-        this.showToast('Delete failed: ' + (err.error?.error || err.message), true);
+        this.cancelDialog();
+        this.showToast('Bulk delete failed: ' + (err.error?.error || err.message), true);
       },
     });
+  }
+
+  // ----- Bulk clear (no files) -----
+
+  clearSelected(): void {
+    const items = this.selectedItems();
+    if (items.length === 0) {
+      this.showToast('No items selected', true);
+      return;
+    }
+    if (!confirm(
+      `Remove ${items.length} item${items.length === 1 ? '' : 's'} from history?\n\n` +
+      `✅ Files on disk are KEPT.\n` +
+      `Press OK to proceed.`
+    )) return;
+    const urls = items.map((i) => i.url);
+    this.metube.clearSelected(urls, 'done').subscribe({
+      next: () => {
+        const removedIds = new Set(items.map((i) => i.id));
+        this.history = this.history.filter((i) => !removedIds.has(i.id));
+        removedIds.forEach((id) => this.selectedIds.delete(id));
+        this.showToast(`Cleared ${items.length} item${items.length === 1 ? '' : 's'}`);
+      },
+      error: (err) => this.showToast('Failed to clear: ' + (err.error?.msg || err.message), true),
+    });
+  }
+
+  private summarizeBulkResult(result: BulkDeleteResult): void {
+    if (result.errors.length === 0) {
+      const fileCount = result.files_deleted.length;
+      this.showToast(
+        `Deleted ${result.succeeded} item${result.succeeded === 1 ? '' : 's'}` +
+        (fileCount > 0 ? ` (${fileCount} file${fileCount === 1 ? '' : 's'})` : '')
+      );
+    } else if (result.succeeded === 0) {
+      this.showToast(
+        `All ${result.errors.length} delete${result.errors.length === 1 ? '' : 's'} failed: ` +
+        result.errors[0].error,
+        true,
+      );
+    } else {
+      this.showToast(
+        `Deleted ${result.succeeded} of ${result.total_requested}; ` +
+        `${result.errors.length} failed (${result.errors[0].error})`,
+        true,
+      );
+    }
   }
 
   formatSize(size: number | string): string {

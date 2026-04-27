@@ -8,6 +8,7 @@ Complete guide for using the YT-DLP Container Project with Podman/Docker and VPN
 2. [Installation](#installation)
 3. [Configuration](#configuration)
 4. [Basic Usage](#basic-usage)
+   - [Managing Queue and History](#managing-queue-and-history)
 5. [Advanced Usage](#advanced-usage)
 6. [VPN Setup](#vpn-setup)
 7. [Troubleshooting](#troubleshooting)
@@ -191,6 +192,64 @@ Once started, open your browser:
 - Select video quality
 - Download playlists
 - Download history
+
+**Dashboard (http://localhost:9090) — recommended:**
+- All MeTube features plus a multi-select / batch-action UX for the
+  Queue and History pages (see [Managing Queue and History](#managing-queue-and-history)).
+- Per-platform status badges (✓ works / 🍪 needs cookies / ⚠ partial / 🌍 geo/IP-blocked).
+- Cookie management page with per-platform freshness breakdown.
+- VPN-state pill in the top navbar so you always know which compose
+  profile is active.
+
+### Managing Queue and History
+
+The dashboard's Queue (`/queue`) and History (`/history`) pages support
+both **single-item actions** (per-row buttons) and **bulk actions**
+(checkbox selection plus header buttons).
+
+**Selecting items**
+
+- Each row has a checkbox on the left.
+- The toolbar above the list has a **Select all** checkbox that toggles
+  every visible row. Once *some* but not all rows are selected, the
+  header checkbox renders in the indeterminate state.
+- The toolbar legend updates live: "Select all" → "*N* selected" →
+  "All *N* selected" depending on how many rows are checked.
+
+**Bulk actions on the Queue**
+
+| Button | What it does | Confirm? |
+|---|---|---|
+| **Clear All (*N*)** in the header | Cancel and remove every pending + active queue item | Yes — `confirm()` prompt |
+| **Clear *N*** in the toolbar (visible only when ≥ 1 selected) | Cancel and remove the selected items | Yes — `confirm()` prompt |
+
+Queue items are downloads in flight or about to start — no files
+exist on disk yet, so there is no "Delete" variant; "Clear" is the
+only meaningful action.
+
+**Bulk actions on History**
+
+| Button | What it does | Confirm? |
+|---|---|---|
+| **Clear All (*N*)** in the header | Remove every history record. Files on disk are kept. | Yes — `confirm()` prompt |
+| **Delete All (*N*)** in the header | Remove every history record AND delete the corresponding files from disk. **Destructive.** | Yes — modal dialog with mandatory acknowledgement checkbox |
+| **Clear *N*** in the toolbar (visible only when ≥ 1 selected) | Remove the selected records. Files on disk are kept. | Yes — `confirm()` prompt |
+| **Delete *N*** in the toolbar (visible only when ≥ 1 selected) | Remove the selected records AND delete their files from disk. **Destructive.** | Yes — modal dialog with mandatory acknowledgement checkbox |
+| **🗑️ on a single row** | Same as "Delete 1" but for one row | Yes — same modal dialog |
+
+The Delete dialog enumerates the targets (showing up to 5 by name,
+"…and N more" below), and the **Delete Permanently** button is disabled
+until you tick the box that reads *"I understand that the file(s) on
+disk will be deleted permanently."*. Cancel closes the dialog and
+makes no changes.
+
+**Behaviour during polling**
+
+Both pages auto-refresh every second. If MeTube removes an item you
+had selected (e.g. it finished and moved from queue to history), the
+selection is re-validated against the live list — `selectedCount`
+ignores stale IDs. You won't see the "*N* selected" counter drift
+out of sync with what's actually visible.
 
 ### Downloading Videos
 

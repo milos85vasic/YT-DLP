@@ -177,8 +177,18 @@ The Landing Page handles cookie authentication and redirects to MeTube when read
 - Modern Angular standalone application
 - Add downloads with quality/format selection
 - Real-time queue and history tracking
-- 15+ supported platforms indicator
+- 16 supported platforms with per-platform status badges
+- VPN-state pill in the navbar
+- Cookie management page with per-platform freshness breakdown
+- **Bulk operations on Queue and History**: per-row checkboxes,
+  Select-all in the toolbar, and dedicated **Clear All** /
+  **Delete All** buttons (both with confirmation; *Delete* requires
+  ticking an acknowledgement checkbox before it can fire)
 - Dark theme UI
+
+> See **[USER_GUIDE → Managing Queue and History](USER_GUIDE.md#managing-queue-and-history)**
+> for the full bulk-action workflow including how the modal
+> acknowledgement gating works.
 
 **MeTube UI (at http://localhost:8088):**
 - Paste URLs to download

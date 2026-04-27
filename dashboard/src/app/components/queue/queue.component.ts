@@ -1,15 +1,55 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { MetubeService, DownloadInfo } from '../../services/metube.service';
 
 @Component({
   selector: 'app-queue',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   template: `
     <div class="page">
-      <h2>⏳ Download Queue</h2>
+      <div class="header-row">
+        <h2>⏳ Download Queue</h2>
+        <div class="header-actions" *ngIf="allItems.length > 0">
+          <button
+            class="btn-clear-all"
+            (click)="clearAllQueue()"
+            title="Cancel and remove ALL queue + pending items"
+            data-testid="queue-clear-all"
+          >
+            🧹 Clear All ({{ allItems.length }})
+          </button>
+        </div>
+      </div>
+
+      <!-- Selection toolbar -->
+      <div class="selection-toolbar" *ngIf="allItems.length > 0">
+        <label class="select-all-label" data-testid="queue-select-all-label">
+          <input
+            type="checkbox"
+            class="checkbox"
+            [checked]="allSelected"
+            [indeterminate]="someSelected && !allSelected"
+            (change)="toggleSelectAll()"
+            data-testid="queue-select-all"
+          />
+          <span *ngIf="selectedCount === 0">Select all</span>
+          <span *ngIf="selectedCount > 0 && !allSelected">{{ selectedCount }} selected</span>
+          <span *ngIf="allSelected">All {{ allItems.length }} selected</span>
+        </label>
+        <div class="batch-actions" *ngIf="selectedCount > 0">
+          <button
+            class="btn-batch-clear"
+            (click)="clearSelected()"
+            title="Cancel and remove selected items from queue"
+            data-testid="queue-clear-selected"
+          >
+            🧹 Clear {{ selectedCount }}
+          </button>
+        </div>
+      </div>
 
       <div *ngIf="loading" class="loading">
         <div class="spinner"></div>
@@ -29,7 +69,19 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
 
       <div class="list">
         <!-- Pending items -->
-        <div class="item pending" *ngFor="let item of pending">
+        <div
+          class="item pending"
+          *ngFor="let item of pending; trackBy: trackById"
+          [class.selected]="isSelected(item)"
+        >
+          <input
+            type="checkbox"
+            class="checkbox row-checkbox"
+            [checked]="isSelected(item)"
+            (change)="toggleSelected(item)"
+            [attr.data-testid]="'queue-row-checkbox-' + item.id"
+            [attr.aria-label]="'Select pending ' + (item.title || item.url)"
+          />
           <div class="thumb">⏳</div>
           <div class="info">
             <div class="title" [title]="item.title">{{ item.title || 'Preparing...' }}</div>
@@ -43,7 +95,20 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
         </div>
 
         <!-- Queue items -->
-        <div class="item" *ngFor="let item of queue" [class.error]="item.status === 'error'">
+        <div
+          class="item"
+          *ngFor="let item of queue; trackBy: trackById"
+          [class.error]="item.status === 'error'"
+          [class.selected]="isSelected(item)"
+        >
+          <input
+            type="checkbox"
+            class="checkbox row-checkbox"
+            [checked]="isSelected(item)"
+            (change)="toggleSelected(item)"
+            [attr.data-testid]="'queue-row-checkbox-' + item.id"
+            [attr.aria-label]="'Select ' + (item.title || item.url)"
+          />
           <div class="thumb">
             <span *ngIf="item.status === 'error'">❌</span>
             <span *ngIf="item.status !== 'error'">⬇️</span>
@@ -79,6 +144,60 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
   `,
   styles: [`
     .page { padding: 24px; max-width: 900px; margin: 0 auto; }
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .header-row h2 { margin: 0; }
+    .header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-clear-all,
+    .btn-batch-clear {
+      padding: 8px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.2s;
+      border: 1px solid rgba(217,164,65,0.3);
+      background: rgba(217,164,65,0.08);
+      color: #d9a441;
+    }
+    .btn-clear-all:hover,
+    .btn-batch-clear:hover { background: rgba(217,164,65,0.15); }
+    .selection-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      background: rgba(104,151,187,0.04);
+      border: 1px solid rgba(104,151,187,0.12);
+      border-radius: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .select-all-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #a9b7c6;
+      font-size: 13px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .batch-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .checkbox {
+      width: 16px;
+      height: 16px;
+      accent-color: #6897bb;
+      cursor: pointer;
+    }
+    .row-checkbox { margin-top: 4px; }
+    .item.selected { background: rgba(104,151,187,0.10); border-color: rgba(104,151,187,0.30); }
     h2 { margin: 0 0 20px; font-size: 20px; color: #a9b7c6; }
     .empty {
       text-align: center;
@@ -263,7 +382,89 @@ export class QueueComponent implements OnInit, OnDestroy {
   error: string | null = null;
   private sub?: Subscription;
 
+  selectedIds = new Set<string>();
+
   constructor(private metube: MetubeService) {}
+
+  trackById(_index: number, item: DownloadInfo): string {
+    return item.id;
+  }
+
+  isSelected(item: DownloadInfo): boolean {
+    return this.selectedIds.has(item.id);
+  }
+
+  toggleSelected(item: DownloadInfo): void {
+    if (this.selectedIds.has(item.id)) {
+      this.selectedIds.delete(item.id);
+    } else {
+      this.selectedIds.add(item.id);
+    }
+  }
+
+  toggleSelectAll(): void {
+    if (this.allSelected) {
+      this.selectedIds.clear();
+    } else {
+      this.selectedIds = new Set(this.allItems.map((i) => i.id));
+    }
+  }
+
+  get selectedCount(): number {
+    let n = 0;
+    for (const item of this.allItems) {
+      if (this.selectedIds.has(item.id)) n += 1;
+    }
+    return n;
+  }
+
+  get allSelected(): boolean {
+    return this.allItems.length > 0 && this.selectedCount === this.allItems.length;
+  }
+
+  get someSelected(): boolean {
+    return this.selectedCount > 0;
+  }
+
+  selectedItems(): DownloadInfo[] {
+    return this.allItems.filter((i) => this.selectedIds.has(i.id));
+  }
+
+  clearAllQueue(): void {
+    if (!confirm(
+      `Clear ALL ${this.allItems.length} queue + pending items?\n\n` +
+      `Active downloads will be cancelled. No files have been written yet.\n\n` +
+      `Press OK to proceed.`
+    )) return;
+    this.metube.clearAllQueue().subscribe({
+      next: () => {
+        this.queue = [];
+        this.pending = [];
+        this.selectedIds.clear();
+      },
+      error: (err) => console.error('Clear queue failed', err),
+    });
+  }
+
+  clearSelected(): void {
+    const items = this.selectedItems();
+    if (items.length === 0) return;
+    if (!confirm(
+      `Cancel ${items.length} selected item${items.length === 1 ? '' : 's'}?\n\n` +
+      `No files have been written yet.\n\n` +
+      `Press OK to proceed.`
+    )) return;
+    const urls = items.map((i) => i.url);
+    this.metube.clearSelected(urls, 'queue').subscribe({
+      next: () => {
+        const removedIds = new Set(items.map((i) => i.id));
+        this.pending = this.pending.filter((i) => !removedIds.has(i.id));
+        this.queue = this.queue.filter((i) => !removedIds.has(i.id));
+        removedIds.forEach((id) => this.selectedIds.delete(id));
+      },
+      error: (err) => console.error('Clear selected failed', err),
+    });
+  }
 
   ngOnInit(): void {
     this.sub = this.metube.getHistoryPolling(1000).subscribe({

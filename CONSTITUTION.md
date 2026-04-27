@@ -231,6 +231,85 @@ diagnostics snapshot to run after any unresponsive-host episode.
 
 <!-- END host-power-management addendum (CONST-033) -->
 
+### CONST-034 — Anti-Bluff Verification (tests must prove user-visible reality)
+
+**Status:** Mandatory. Non-negotiable. Applies to every test, challenge,
+smoke probe, CI gate, and verification command in this repository and
+in every project / submodule that vendors content from this one.
+
+**Background:** This project has shipped — more than once — code where
+every test passed, every challenge passed, the audit was 70/70, the
+contract validated, the dashboard built, and yet the actual feature
+the user wanted to use *did not work*. Examples observed in the field:
+- A "200 OK" status assertion that masked an HTML 502 body.
+- A nginx-config-syntax check that passed while the proxy returned
+  the wrong upstream.
+- A "build succeeded" gate that never executed the binary.
+- Component tests that ran in isolation while the integration was
+  broken at the wire.
+- Tests that returned 0 because a service was unreachable
+  ("upstream issue") without any explicit SKIP marker — silent green.
+
+This rule exists so a green test board means **the user can use the
+feature**, not just that the test process did not throw.
+
+**Rule:** Every automated check in this repository MUST verify the
+behavior it claims to cover **from the END USER's perspective**. A
+test that "passes" without proving the feature is reachable, usable,
+and visibly correct from the user's surface is a bug, not a green
+light.
+
+**Bluff patterns explicitly forbidden:**
+1. Asserting on `http_code` only without checking the response body.
+   curl's `%{http_code}` reports `000` on early-close even when the
+   body is `{"status":"ok"}` — body content is the source of truth.
+2. Asserting on syntactic / structural success (parse OK, build OK,
+   container exists) without runtime evidence that the feature works.
+3. `return 0` from an unreachable / network-flake path without a
+   trailing `SKIP-OK: <reason>` line that the runner recognises.
+   Silent green is forbidden.
+4. Mocks that cross a real component boundary — replacing the
+   service the user actually talks to with a fake. See also
+   Article II §2.1 and Universal Constraint #1.
+5. Counting "the test process exited 0" as success when the test
+   never reached its meaningful assertion (e.g. early-return on
+   container-not-running without skipping the test loudly).
+6. Component-instance assertions that don't exercise the rendered
+   DOM / HTTP wire / disk side-effects the user actually sees.
+7. Coverage-by-line-count claims without coverage-by-user-capability.
+   "100% line coverage" with zero end-to-end flow tests is a bluff.
+
+**Required for every feature shipped:**
+- At least one **end-to-end test** that traverses the full user path:
+  UI gesture → backend call → side-effect verification (DB / disk /
+  /history record / file on disk).
+- Every UI surface MUST handle and visibly render four states —
+  loading, empty, error (with retry), success (Article IV §4.1) — and
+  tests MUST assert each state is reachable and visibly correct.
+- Every API endpoint MUST be exercised by a real-HTTP test that
+  asserts response **body shape**, not just status code.
+- Every long-running pipeline / job MUST verify its own preconditions
+  before claiming success. Silence on stdout for 60 minutes is not
+  success; an end-of-run summary line is.
+- Manual smoke testing (Article I, Gate 4) is mandatory before any
+  release. "All automated tests passed" is necessary, not sufficient.
+
+**Code-review heuristic:** "If I deleted the implementation, would
+this test still pass?" If yes, the test is bluff — rewrite it to
+assert on something the implementation actually produces.
+
+**Enforcement:** A finding that a check is bluff blocks merge until
+the check is rewritten or removed. Adding a test for the sake of
+coverage numbers, with no assertion that the user-visible behavior is
+correct, is forbidden — coverage numbers without behavioral assertions
+are noise, not signal.
+
+**See also:**
+- Article I (Four Gates) — Contract / Integration / Smoke / Manual
+- Article II §2.1 (Integration is the only truth)
+- Article VI (Bug → Test rule — bugs catch themselves once)
+- Universal Constraint #11 (Real Infrastructure for All Non-Unit Tests)
+
 ---
 
 ## Universal Mandatory Constraints

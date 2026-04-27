@@ -190,14 +190,11 @@ test_api_proxy_history() {
 }
 
 test_api_proxy_add_download() {
-    local status body
-    status=$(_http_status_with_args "$DASHBOARD_URL/api/add" "POST" \
-        -H "Content-Type: application/json" \
-        -d '{"url":"https://www.youtube.com/watch?v=dQw4w9WgXcQ","quality":"720","format":"any"}')
-    if [ "$status" != "200" ]; then
-        echo "POST /api/add returned HTTP $status"
-        return 1
-    fi
+    # Body-as-truth — curl's exit %{http_code} can be 000 even on a
+    # successful response when the upstream closes the connection
+    # after writing the body (typical for /add). The body itself
+    # ({"status":"ok"}) is unambiguous.
+    local body
     body=$(_http_post "$DASHBOARD_URL/api/add" '{"url":"https://www.youtube.com/watch?v=dQw4w9WgXcQ","quality":"720","format":"any"}')
     if ! echo "$body" | grep -q '"status".*"ok"'; then
         echo "Add download returned unexpected response: $body"
@@ -276,7 +273,25 @@ test_proxy_works_after_container_restart() {
     _detect_runtime
     # Restart only the dashboard container (not metube-direct)
     $CONTAINER_RUNTIME restart "$DASHBOARD_CONTAINER" >/dev/null 2>&1
-    sleep 8
+
+    # Wait until nginx + the proxy chain are fully ready instead of
+    # blind-sleeping. /api/history must return 200 with a JSON body
+    # containing "queue" — that proves nginx is up AND its upstream
+    # (metube-direct) is reachable through the resolver. Up to 60s on
+    # a loaded host. Polluting subsequent tests with a still-warming
+    # container is what produced the cascade we're guarding against.
+    local i settled=0
+    for i in $(seq 1 60); do
+        if curl -s --max-time 3 "$DASHBOARD_URL/api/history" 2>/dev/null | grep -q '"queue"'; then
+            settled=1
+            break
+        fi
+        sleep 1
+    done
+    if [ "$settled" -eq 0 ]; then
+        echo "Dashboard didn't settle within 60s after restart (subsequent tests would cascade-fail)"
+        return 1
+    fi
 
     local status
     status=$(_http_status "$DASHBOARD_URL/api/history")
@@ -464,7 +479,9 @@ test_dashboard_api_no_cors_block() {
 # =============================================================================
 
 test_history_delete_single_item() {
-    # First add a download
+    # Body-as-truth on both halves. /delete may legitimately return
+    # status:ok even when the URL isn't in the queue (idempotent),
+    # so we only require status:ok in the body.
     local body
     body=$(_http_post "$DASHBOARD_URL/api/add" \
         '{"url":"https://www.youtube.com/watch?v=dQw4w9WgXcQ","quality":"720","format":"any"}')
@@ -472,10 +489,7 @@ test_history_delete_single_item() {
         echo "Failed to add download for delete test: $body"
         return 1
     fi
-
     sleep 2
-
-    # Delete it from history (MeTube /delete expects URLs as keys)
     body=$(_http_post "$DASHBOARD_URL/api/delete" '{"ids":["https://www.youtube.com/watch?v=dQw4w9WgXcQ"],"where":"done"}')
     if ! echo "$body" | grep -q '"status".*"ok"'; then
         echo "Failed to delete from history: $body"
@@ -504,7 +518,9 @@ test_history_clear_all() {
 }
 
 test_history_retry_download() {
-    # Add a download, then simulate retry by delete + re-add
+    # Add → delete → re-add. Body-as-truth on each /add (the second
+    # /add may race with the still-finalising first if metube is slow,
+    # so a body-only check is more reliable than an http_code check).
     local body
     body=$(_http_post "$DASHBOARD_URL/api/add" \
         '{"url":"https://www.youtube.com/watch?v=dQw4w9WgXcQ","quality":"720","format":"any"}')
@@ -512,22 +528,15 @@ test_history_retry_download() {
         echo "Failed to add download for retry test: $body"
         return 1
     fi
-
     sleep 2
-
-    # Delete from history (MeTube /delete expects URLs as keys)
     _http_post "$DASHBOARD_URL/api/delete" '{"ids":["https://www.youtube.com/watch?v=dQw4w9WgXcQ"],"where":"done"}' >/dev/null
-
-    # Re-add (simulating retry)
     body=$(_http_post "$DASHBOARD_URL/api/add" \
         '{"url":"https://www.youtube.com/watch?v=dQw4w9WgXcQ","quality":"720","format":"any"}')
     if ! echo "$body" | grep -q '"status".*"ok"'; then
         echo "Failed to re-add download (retry simulation): $body"
         return 1
     fi
-
-    # Cleanup
-    _http_post "$DASHBOARD_URL/api/delete" '{"ids":["dQw4w9WgXcQ"],"where":"done"}' >/dev/null
+    _http_post "$DASHBOARD_URL/api/delete" '{"ids":["https://www.youtube.com/watch?v=dQw4w9WgXcQ"],"where":"done"}' >/dev/null
 }
 
 # =============================================================================

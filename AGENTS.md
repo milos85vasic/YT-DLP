@@ -537,6 +537,18 @@ echo -e "${CYAN}Container Runtime:${NC} $CONTAINER_RUNTIME"
 
 ## Testing
 
+> **Anti-Bluff (CONST-034) — read before adding any test.**
+> A test passes only when the user-visible behavior it claims to
+> cover actually works. Every check in `tests/`, every script in
+> `challenges/scripts/`, every gate in `scripts/dev-check.sh`, and
+> every assertion under `dashboard/src/**/*.spec.ts` is held to this
+> bar. Bluff patterns (status-only assertions, silent network
+> short-circuits, mocks across service boundaries, syntactic-success
+> as a stand-in for behavioral success) are forbidden — see
+> `CONSTITUTION.md` § CONST-034 for the full rule and forbidden
+> patterns. Code-review heuristic: *"If I deleted the implementation,
+> would this test still pass?"* If yes, the test is bluff. Rewrite it.
+
 ### Automated Test Suite
 
 A comprehensive automated test suite is available in the `tests/` directory:

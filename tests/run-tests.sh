@@ -375,6 +375,7 @@ source "$TEST_DIR/test-cookie-validator.sh" 2>/dev/null || true
 source "$TEST_DIR/test-vpn-compose.sh" 2>/dev/null || true
 source "$TEST_DIR/test-add-download.sh" 2>/dev/null || true
 source "$TEST_DIR/test-add-all-platforms.sh" 2>/dev/null || true
+source "$TEST_DIR/test-bulk-operations.sh" 2>/dev/null || true
 
 # =============================================================================
 # Main Test Runner
@@ -578,6 +579,10 @@ main() {
                 log_section "Running /api/add Per-Platform NO-500 Tests"
                 run_add_all_platforms_tests
             fi
+            if type run_bulk_operations_tests &> /dev/null; then
+                log_section "Running Bulk Operations Tests"
+                run_bulk_operations_tests
+            fi
             log_section "Running Media Services Tests"
             run_media_services_tests
             # Stop containers if we started them
@@ -631,6 +636,10 @@ main() {
             if type run_add_all_platforms_tests &> /dev/null; then
                 log_section "Running /api/add Per-Platform NO-500 Tests"
                 run_add_all_platforms_tests
+            fi
+            if type run_bulk_operations_tests &> /dev/null; then
+                log_section "Running Bulk Operations Tests"
+                run_bulk_operations_tests
             fi
             run_media_services_tests
             run_scenario_tests

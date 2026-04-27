@@ -70,6 +70,13 @@ export interface ProfileStatusResponse {
   metube_reachable?: boolean;
 }
 
+export interface BulkDeleteResult {
+  total_requested: number;
+  succeeded: number;
+  files_deleted: string[];
+  errors: { url: string; error: string }[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class MetubeService {
   private readonly base = '/api';
@@ -164,6 +171,143 @@ export class MetubeService {
         delete_file: deleteFile,
       }
     );
+  }
+
+  /**
+   * Bulk-clear records by URL — removes from queue OR done list,
+   * NEVER touches files. Equivalent to repeated cleanup() calls but
+   * issued as one /delete request.
+   */
+  clearSelected(urls: string[], where: 'queue' | 'done'): Observable<{ status: string }> {
+    if (urls.length === 0) {
+      // Avoid an empty POST that the backend may treat as a clear-all.
+      return new Observable((observer) => {
+        observer.next({ status: 'ok' });
+        observer.complete();
+      });
+    }
+    return this.deleteDownloads(urls, where);
+  }
+
+  /**
+   * Bulk-delete history records AND files from disk. Iterates
+   * /api/delete-download for each URL because the landing endpoint
+   * resolves filenames per-item; aggregates results into a single
+   * summary the caller can show in a toast.
+   *
+   * Returns:
+   *   total_requested  — count of URLs we attempted
+   *   succeeded        — count where success=true
+   *   files_deleted    — flat list of all files removed across all items
+   *   errors           — list of {url, error} for failed items
+   */
+  deleteSelectedWithFiles(
+    items: DownloadInfo[]
+  ): Observable<BulkDeleteResult> {
+    return new Observable<BulkDeleteResult>((observer) => {
+      if (items.length === 0) {
+        observer.next({
+          total_requested: 0,
+          succeeded: 0,
+          files_deleted: [],
+          errors: [],
+        });
+        observer.complete();
+        return;
+      }
+      const result: BulkDeleteResult = {
+        total_requested: items.length,
+        succeeded: 0,
+        files_deleted: [],
+        errors: [],
+      };
+      let completed = 0;
+      const tick = () => {
+        completed += 1;
+        if (completed === items.length) {
+          observer.next(result);
+          observer.complete();
+        }
+      };
+      // Issue all requests in parallel — landing's /api/delete-download
+      // is idempotent per-URL so concurrent calls don't conflict.
+      for (const item of items) {
+        this.deleteDownloadWithFile(item, true).subscribe({
+          next: (res) => {
+            if (res.success) {
+              result.succeeded += 1;
+              if (res.files_deleted) {
+                result.files_deleted.push(...res.files_deleted);
+              }
+            } else {
+              result.errors.push({ url: item.url, error: res.error || 'unknown' });
+            }
+            tick();
+          },
+          error: (err) => {
+            result.errors.push({
+              url: item.url,
+              error: err.error?.error || err.message || 'network error',
+            });
+            tick();
+          },
+        });
+      }
+    });
+  }
+
+  /**
+   * Convenience: delete EVERY item currently in the history with
+   * files. Same shape as deleteSelectedWithFiles but operates over
+   * the live /history snapshot to ensure nothing is missed.
+   */
+  deleteAllHistoryWithFiles(): Observable<BulkDeleteResult> {
+    return new Observable<BulkDeleteResult>((observer) => {
+      this.getHistory().subscribe({
+        next: (data) => {
+          const done = data.done || [];
+          this.deleteSelectedWithFiles(done).subscribe({
+            next: (r) => {
+              observer.next(r);
+              observer.complete();
+            },
+            error: (err) => observer.error(err),
+          });
+        },
+        error: (err) => observer.error(err),
+      });
+    });
+  }
+
+  /**
+   * Convenience: clear EVERY item currently in the queue (pending +
+   * active downloads). Records only — no files involved (downloads
+   * haven't completed yet).
+   */
+  clearAllQueue(): Observable<{ status: string }> {
+    return new Observable((observer) => {
+      this.getHistory().subscribe({
+        next: (data) => {
+          const urls = [
+            ...(data.pending || []).map((i) => i.url),
+            ...(data.queue || []).map((i) => i.url),
+          ];
+          if (urls.length === 0) {
+            observer.next({ status: 'ok' });
+            observer.complete();
+            return;
+          }
+          this.deleteDownloads(urls, 'queue').subscribe({
+            next: (res) => {
+              observer.next(res);
+              observer.complete();
+            },
+            error: (err) => observer.error(err),
+          });
+        },
+        error: (err) => observer.error(err),
+      });
+    });
   }
 
   getCookieStatus(): Observable<CookieStatusResponse> {
