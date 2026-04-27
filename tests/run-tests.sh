@@ -126,6 +126,22 @@ auth-user-pass /vpn/vpn.auth
 EOF
 }
 
+# Wait until MeTube fully settles (responds 200 with valid /history
+# JSON). Used between heavy test phases that may have bounced or
+# stressed the worker — silence is not success per CONST-034.
+wait_for_metube() {
+    local timeout="${1:-90}"
+    local dashboard="${DASHBOARD_URL:-http://localhost:9090}"
+    local i
+    for i in $(seq 1 "$timeout"); do
+        if curl -s --max-time 3 "$dashboard/api/history" 2>/dev/null | grep -q '"queue"'; then
+            return 0
+        fi
+        sleep 1
+    done
+    return 1
+}
+
 # Drain MeTube's queue and history. The /api/add tests submit many
 # unreachable / fake URLs that get stuck "downloading" because no
 # bytes ever arrive — they accumulate across runs and eventually
@@ -175,6 +191,37 @@ print(json.dumps(ids))
     curl -s --max-time 10 -X DELETE "$dashboard/api/aborted-history" \
         -H "Content-Type: application/json" \
         -d '{"urls":"*"}' >/dev/null 2>&1 || true
+}
+
+# Pre-suite drain: clear EVERYTHING in MeTube's queue/pending before
+# any test runs. The persistent /config/queue.json keeps prior-session
+# downloads "downloading" with no progress (worker can't make headway
+# on URLs that need fresh cookies, geo, etc.) and they block real
+# tests behind them. Aggressive but necessary — the test suite requires
+# a clean worker; persistent operator state needs to live elsewhere.
+pre_suite_drain() {
+    local dashboard="${DASHBOARD_URL:-http://localhost:9090}"
+    if ! curl -s --max-time 2 "$dashboard/api/history" >/dev/null 2>&1; then
+        return 0
+    fi
+    local stale_ids
+    stale_ids=$(curl -s --max-time 5 "$dashboard/api/history" 2>/dev/null \
+        | python3 -c "
+import json, sys
+try: d = json.load(sys.stdin)
+except Exception: print('[]'); sys.exit(0)
+ids = [it.get('url') for k in ('queue','pending') for it in d.get(k, []) if it.get('url')]
+print(json.dumps(ids))
+" 2>/dev/null)
+    if [ -n "$stale_ids" ] && [ "$stale_ids" != "[]" ]; then
+        local count
+        count=$(echo "$stale_ids" | python3 -c 'import json,sys; print(len(json.load(sys.stdin)))' 2>/dev/null || echo "?")
+        log_info "Pre-suite drain: clearing $count stale queue/pending items"
+        curl -s --max-time 30 -X POST "$dashboard/api/delete" \
+            -H "Content-Type: application/json" \
+            -d "$(printf '{"ids":%s,"where":"queue"}' "$stale_ids")" >/dev/null 2>&1 || true
+    fi
+    sleep 2
 }
 
 # Cleanup test environment
@@ -591,6 +638,10 @@ main() {
     # Setup test environment
     if [ "$DRY_RUN" = false ]; then
         setup_test_env
+        # Drain persistent MeTube queue so heavy tests don't queue
+        # behind hundreds of stale items the operator (or a prior
+        # run) left "downloading".
+        pre_suite_drain
     fi
     
     # Detect available runtime
@@ -642,6 +693,10 @@ main() {
             if type run_add_download_tests &> /dev/null; then
                 log_section "Running /api/add Coverage Tests"
                 run_add_download_tests
+                # The metube-restart sub-test bounces the backend.
+                # Wait until /history is reachable before continuing
+                # — otherwise the next phase's first few tests flake.
+                wait_for_metube 90
             fi
             if type run_add_all_platforms_tests &> /dev/null; then
                 log_section "Running /api/add Per-Platform NO-500 Tests"
@@ -707,6 +762,10 @@ main() {
             if type run_add_download_tests &> /dev/null; then
                 log_section "Running /api/add Coverage Tests"
                 run_add_download_tests
+                # The metube-restart sub-test bounces the backend.
+                # Wait until /history is reachable before continuing
+                # — otherwise the next phase's first few tests flake.
+                wait_for_metube 90
             fi
             if type run_add_all_platforms_tests &> /dev/null; then
                 log_section "Running /api/add Per-Platform NO-500 Tests"

@@ -93,6 +93,25 @@ curl -s --max-time 10 \
     -H "Content-Type: application/json" \
     -d "$(printf '{"ids":["%s"],"where":"queue"}' "$TEST_URL")" >/dev/null
 
+# Drain ANY stale queue items so the worker is free for our submission.
+# A worker stuck on hundreds of prior items will time out our 90s wait.
+STALE_IDS=$(curl -s --max-time 5 "$DASHBOARD_URL/api/history" 2>/dev/null \
+    | python3 -c '
+import json, sys
+try: d = json.load(sys.stdin)
+except Exception: print("[]"); sys.exit(0)
+ids = [it.get("url") for k in ("queue","pending") for it in d.get(k, []) if it.get("url")]
+print(json.dumps(ids))
+' 2>/dev/null)
+if [ -n "$STALE_IDS" ] && [ "$STALE_IDS" != "[]" ]; then
+    STALE_COUNT=$(echo "$STALE_IDS" | python3 -c 'import json,sys; print(len(json.load(sys.stdin)))' 2>/dev/null || echo "?")
+    echo "    (pre-test: draining $STALE_COUNT stale queue/pending items so the worker is free)"
+    curl -s --max-time 30 -X POST "$DASHBOARD_URL/api/delete" \
+        -H "Content-Type: application/json" \
+        -d "$(printf '{"ids":%s,"where":"queue"}' "$STALE_IDS")" >/dev/null 2>&1 || true
+    sleep 2
+fi
+
 # Snapshot files so we can identify the new one(s).
 BEFORE_LIST=$(mktemp)
 ls -1 "$DOWNLOAD_DIR" 2>/dev/null > "$BEFORE_LIST" || true
