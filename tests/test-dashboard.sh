@@ -368,6 +368,31 @@ test_landing_upload_cookies_proxy() {
     fi
 }
 
+test_landing_upload_cookies_rejects_non_utf8_as_400() {
+    # A non-UTF-8 cookies file is bad input; the handler should return
+    # 400 (with a clear message), not 500 from a bare-except wrap of
+    # `decode("utf-8")`. Regression guard for the previous behaviour.
+    local tmp status body
+    tmp=$(mktemp)
+    printf '\xfe\xff\x00\x01\x02' > "$tmp"
+
+    status=$(_http_status_with_args "$LANDING_URL/api/upload-cookies" "POST" \
+        -F "cookies=@$tmp;filename=bad.txt")
+    body=$(curl -s --max-time "$TEST_TIMEOUT" -X POST \
+        -F "cookies=@$tmp;filename=bad.txt" \
+        "$LANDING_URL/api/upload-cookies" 2>&1)
+    rm -f "$tmp"
+
+    if [ "$status" != "400" ]; then
+        echo "Non-UTF-8 cookies upload returned HTTP $status (expected 400). body=$body"
+        return 1
+    fi
+    if ! echo "$body" | grep -qE 'utf-8|UTF-8|encoding|Netscape'; then
+        echo "Non-UTF-8 cookies upload 400 body lacks an explanatory message: $body"
+        return 1
+    fi
+}
+
 test_landing_cookie_status_proxy() {
     local status body
     status=$(_http_status "$LANDING_URL/api/cookie-status")
@@ -615,6 +640,7 @@ run_dashboard_tests() {
     run_test "test_landing_has_metube_classic_link" test_landing_has_metube_classic_link
     run_test "test_landing_redirects_to_dashboard" test_landing_redirects_to_dashboard
     run_test "test_landing_upload_cookies_proxy" test_landing_upload_cookies_proxy
+    run_test "test_landing_upload_cookies_rejects_non_utf8_as_400" test_landing_upload_cookies_rejects_non_utf8_as_400
     run_test "test_landing_cookie_status_proxy" test_landing_cookie_status_proxy
 
     # End-to-End

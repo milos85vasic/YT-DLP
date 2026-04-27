@@ -48,6 +48,28 @@ export interface HistoryResponse {
   pending: DownloadInfo[];
 }
 
+export interface PlatformCookieBucket {
+  domains_present: string[];
+  session_count: number;
+  max_expiry_unix: number;
+  min_expiry_unix: number;
+}
+
+export interface CookieStatusResponse {
+  status?: string;
+  has_cookies: boolean;
+  metube_reachable?: boolean;
+  cookie_age_minutes?: number;
+  platforms?: { [platform: string]: PlatformCookieBucket };
+}
+
+export interface ProfileStatusResponse {
+  profile: 'no-vpn' | 'vpn' | 'unknown' | string;
+  vpn_active: boolean;
+  metube_url?: string;
+  metube_reachable?: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class MetubeService {
   private readonly base = '/api';
@@ -144,8 +166,12 @@ export class MetubeService {
     );
   }
 
-  getCookieStatus(): Observable<{ status: string; has_cookies: boolean; metube_reachable?: boolean; cookie_age_minutes?: number }> {
-    return this.http.get<{ status: string; has_cookies: boolean; metube_reachable?: boolean; cookie_age_minutes?: number }>(`${this.base}/cookie-status`);
+  getCookieStatus(): Observable<CookieStatusResponse> {
+    return this.http.get<CookieStatusResponse>(`${this.base}/cookie-status`);
+  }
+
+  getProfileStatus(): Observable<ProfileStatusResponse> {
+    return this.http.get<ProfileStatusResponse>(`${this.base}/profile-status`);
   }
 
   uploadCookies(file: File): Observable<{ success: boolean; error?: string }> {

@@ -294,3 +294,42 @@ components:
           type: string
         has_cookies:
           type: boolean
+        metube_reachable:
+          type: boolean
+          description: |
+            True if the landing proxy was able to reach MeTube at /history.
+            Surfaced only on the landing /api/cookie-status proxy variant.
+        cookie_age_minutes:
+          type: number
+          description: |
+            File-mtime age of /config/cookies.txt in minutes, rounded to 0.1.
+            Surfaced only on the landing /api/cookie-status proxy variant.
+        platforms:
+          type: object
+          description: |
+            Per-platform breakdown of cookies present in the file. Keyed by
+            canonical platform name (youtube, vimeo, dailymotion, twitch,
+            rumble, peertube, instagram, reddit, facebook, x, threads,
+            tiktok, vk, bilibili, soundcloud, bandcamp). Each value
+            describes the cookies in that bucket; see PlatformCookieBucket.
+          additionalProperties:
+            $ref: '#/components/schemas/PlatformCookieBucket'
+
+    PlatformCookieBucket:
+      type: object
+      required: [domains_present, session_count, max_expiry_unix, min_expiry_unix]
+      properties:
+        domains_present:
+          type: array
+          items:
+            type: string
+          description: Sorted list of distinct cookie domains seen in this bucket (each prefixed with a leading dot).
+        session_count:
+          type: integer
+          description: Number of cookie lines (not unique names) attributed to this platform.
+        max_expiry_unix:
+          type: integer
+          description: Latest expiry epoch in the bucket (0 if no entries had expiry).
+        min_expiry_unix:
+          type: integer
+          description: Earliest non-zero expiry epoch in the bucket (0 if no entries had expiry).

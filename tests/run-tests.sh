@@ -3,8 +3,13 @@
 # YT-DLP Project Test Suite
 # Comprehensive automated testing for all scenarios and combinations
 #
-
-set -e
+# NOTE: do NOT use `set -e` here. The runner counts PASS / FAIL / SKIP
+# in its own bookkeeping and emits a final summary; abort-on-first-fail
+# defeats both. A single network flake against an upstream vendor
+# (Vimeo, SoundCloud) used to truncate the run and lose the summary.
+# `run_test` already isolates each test's failure into a per-case
+# return code that's tallied — the suite as a whole exits non-zero
+# only when TESTS_FAILED > 0 at the end.
 
 # =============================================================================
 # Test Configuration
@@ -367,6 +372,7 @@ source "$TEST_DIR/test-errors.sh" 2>/dev/null || true
 source "$TEST_DIR/test-media-services.sh" 2>/dev/null || true
 source "$TEST_DIR/test-dashboard.sh" 2>/dev/null || true
 source "$TEST_DIR/test-cookie-validator.sh" 2>/dev/null || true
+source "$TEST_DIR/test-vpn-compose.sh" 2>/dev/null || true
 
 # =============================================================================
 # Main Test Runner
@@ -546,6 +552,10 @@ main() {
                 log_section "Running Cookie Validator Tests"
                 run_cookie_validator_tests
             fi
+            if type run_vpn_compose_tests &> /dev/null; then
+                log_section "Running VPN Compose Tests"
+                run_vpn_compose_tests
+            fi
             ;;
         integration)
             # Start containers if needed
@@ -589,6 +599,10 @@ main() {
             if type run_cookie_validator_tests &> /dev/null; then
                 log_section "Running Cookie Validator Tests"
                 run_cookie_validator_tests
+            fi
+            if type run_vpn_compose_tests &> /dev/null; then
+                log_section "Running VPN Compose Tests"
+                run_vpn_compose_tests
             fi
 
             # Start containers for integration and scenario tests

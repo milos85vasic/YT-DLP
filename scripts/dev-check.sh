@@ -117,6 +117,14 @@ else
     fail "Test audit failed"
 fi
 
+# ── Gate 5b: Recognised-domain drift (validator ↔ OpenAPI) ───────────
+info "Gate 5b: Recognised-cookie-domain sync"
+if ./scripts/check-recognised-domains-sync.sh > /tmp/domains-sync.log 2>&1; then
+    pass "$(tail -n1 /tmp/domains-sync.log)"
+else
+    fail "Recognised-domain drift between landing/app.py and OpenAPI (see /tmp/domains-sync.log)"
+fi
+
 # ── Gate 6: Git status check ─────────────────────────────────────────
 info "Gate 6: Git hygiene"
 if git diff --cached --quiet; then

@@ -222,3 +222,8 @@ backup/
 backups/
 tests/e2e/node_modules/
 tests/e2e/test-results/
+
+# -----------------------------------------------------------------------------
+# Claude Code harness state (per-machine, not project-shared)
+# -----------------------------------------------------------------------------
+.claude/

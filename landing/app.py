@@ -687,6 +687,87 @@ def _validate_cookie_file(content: str) -> tuple[bool, str]:
     return True, ""
 
 
+# Mapping from a recognised-domain substring to the canonical platform
+# key surfaced in /api/cookie-status. Keep in sync with the recognised
+# set in _validate_cookie_file. The drift gate
+# scripts/check-recognised-domains-sync.sh asserts validator ↔ OpenAPI;
+# this mapping is for breakdown labelling only.
+_PLATFORM_FOR_DOMAIN = {
+    "youtube.com": "youtube", "youtu.be": "youtube", "google.com": "youtube",
+    "vimeo.com": "vimeo",
+    "dailymotion.com": "dailymotion",
+    "twitch.tv": "twitch",
+    "rumble.com": "rumble",
+    "peertube.tv": "peertube",
+    "instagram.com": "instagram",
+    "reddit.com": "reddit",
+    "facebook.com": "facebook", "fb.watch": "facebook",
+    "twitter.com": "x", "x.com": "x",
+    "threads.net": "threads",
+    "tiktok.com": "tiktok",
+    "vk.com": "vk", "vkvideo.ru": "vk",
+    "bilibili.com": "bilibili", "bilibili.tv": "bilibili",
+    "soundcloud.com": "soundcloud",
+    "bandcamp.com": "bandcamp",
+}
+
+
+def _summarize_cookies_by_platform(content: str) -> dict:
+    """Group Netscape cookie entries by canonical platform.
+
+    Returns a dict keyed by platform name (e.g. "youtube", "tiktok"),
+    each value containing:
+        domains_present: sorted list of distinct cookie domains
+        session_count:   number of cookie lines
+        max_expiry_unix: latest expiry epoch in the bucket (or 0 if none)
+        min_expiry_unix: earliest non-zero expiry epoch in the bucket
+
+    Cookies whose domain doesn't match any recognised platform are
+    silently dropped — they may still be present in the file (the
+    validator accepts the file as long as ONE recognised domain is
+    present), but they don't contribute to platform breakdowns.
+    """
+    buckets: dict = {}
+    for line in content.splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        parts = line.split("\t")
+        if len(parts) < 7:
+            continue
+        domain = parts[0].lstrip(".").lower()
+        try:
+            expiry = int(parts[4])
+        except (ValueError, IndexError):
+            expiry = 0
+
+        platform = None
+        for needle, key in _PLATFORM_FOR_DOMAIN.items():
+            if needle in domain:
+                platform = key
+                break
+        if platform is None:
+            continue
+
+        b = buckets.setdefault(platform, {
+            "domains_present": set(),
+            "session_count": 0,
+            "max_expiry_unix": 0,
+            "min_expiry_unix": 0,
+        })
+        b["domains_present"].add("." + domain)
+        b["session_count"] += 1
+        if expiry > b["max_expiry_unix"]:
+            b["max_expiry_unix"] = expiry
+        if expiry > 0 and (b["min_expiry_unix"] == 0 or expiry < b["min_expiry_unix"]):
+            b["min_expiry_unix"] = expiry
+
+    # Convert sets to sorted lists for JSON serialisation.
+    for b in buckets.values():
+        b["domains_present"] = sorted(b["domains_present"])
+    return buckets
+
+
 @app.route("/api/upload-cookies", methods=["POST"])
 def upload_cookies():
     try:
@@ -694,7 +775,24 @@ def upload_cookies():
             return jsonify({"success": False, "error": "No file provided"}), 400
 
         file = request.files["cookies"]
-        content = file.read().decode("utf-8")
+        raw = file.read()
+        try:
+            content = raw.decode("utf-8")
+        except UnicodeDecodeError as ude:
+            # Non-UTF-8 byte stream is bad client input, not a server fault.
+            # Netscape cookies.txt is plain ASCII text — anything that can't
+            # decode as UTF-8 is either binary, an encoded archive, or a
+            # truncated upload. Return 400 with a clear message instead of
+            # falling through to the bare-except 500 below.
+            return jsonify({
+                "success": False,
+                "error": (
+                    f"Cookie file is not valid UTF-8 text "
+                    f"({ude.reason} at byte {ude.start}). "
+                    "Netscape cookies.txt must be plain UTF-8 / ASCII. "
+                    "Re-export from your browser extension."
+                ),
+            }), 400
 
         is_valid, error_msg = _validate_cookie_file(content)
         if not is_valid:
@@ -726,16 +824,30 @@ def delete_cookies():
 
 @app.route("/api/cookie-status")
 def cookie_status():
-    """Return cookie status including freshness (age in minutes)."""
+    """Return cookie status including freshness and per-platform breakdown.
+
+    Backward-compatible: the existing `has_cookies`, `metube_reachable`,
+    `cookie_age_minutes` fields are unchanged. The new `platforms` field
+    is a dict (possibly empty) keyed by canonical platform — see
+    `_summarize_cookies_by_platform` for shape.
+    """
     has_cookies = False
     cookie_age_minutes = 0
+    platforms: dict = {}
     try:
-        # Check the cookie file directly for age info
         cookie_path = "/config/cookies.txt"
         if os.path.exists(cookie_path):
             has_cookies = True
             mtime = os.path.getmtime(cookie_path)
             cookie_age_minutes = (time.time() - mtime) / 60
+            try:
+                with open(cookie_path, "r", encoding="utf-8", errors="replace") as f:
+                    platforms = _summarize_cookies_by_platform(f.read())
+            except Exception:
+                # Reading the file is best-effort; an unreadable file
+                # still leaves `has_cookies=True` so the user can see
+                # the file exists.
+                platforms = {}
         else:
             # Fall back to MeTube API
             resp = requests.get(f"{METUBE_URL}/cookie-status", timeout=5)
@@ -755,6 +867,32 @@ def cookie_status():
         "has_cookies": has_cookies,
         "metube_reachable": metube_reachable,
         "cookie_age_minutes": round(cookie_age_minutes, 1),
+        "platforms": platforms,
+    })
+
+
+@app.route("/api/profile-status")
+def profile_status():
+    """Report which compose profile is active (vpn / no-vpn / unknown).
+
+    The compose file sets ACTIVE_PROFILE in the landing service's
+    environment so this endpoint is authoritative for the running
+    container. The dashboard surfaces this as a header badge so users
+    know whether their downloads are tunneling through the VPN.
+    """
+    profile = os.environ.get("ACTIVE_PROFILE", "unknown")
+    metube_url = os.environ.get("METUBE_URL", "")
+    metube_reachable = False
+    try:
+        requests.get(f"{metube_url}/history", timeout=3)
+        metube_reachable = True
+    except Exception:
+        pass
+    return jsonify({
+        "profile": profile,
+        "vpn_active": profile == "vpn",
+        "metube_url": metube_url,
+        "metube_reachable": metube_reachable,
     })
 
 

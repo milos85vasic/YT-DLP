@@ -1,7 +1,16 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
-import { MetubeService } from '../../services/metube.service';
+import { MetubeService, PlatformCookieBucket } from '../../services/metube.service';
+
+interface PlatformRow {
+  key: string;
+  display: string;
+  icon: string;
+  bucket: PlatformCookieBucket;
+  status: 'fresh' | 'expiring' | 'expired';
+  expiryHint: string;
+}
 
 @Component({
   selector: 'app-cookies',
@@ -52,6 +61,35 @@ import { MetubeService } from '../../services/metube.service';
             Your cookies are old. Session cookies (especially YouTube and Instagram) expire quickly.
             If downloads fail with "Sign in to confirm you're not a bot" or similar auth prompts, export fresh cookies and re-upload.
           </p>
+        </div>
+
+        <!-- Per-platform breakdown -->
+        <div class="card" *ngIf="hasCookies && platformRows.length > 0">
+          <h2>Cookies By Platform</h2>
+          <p class="subtitle">
+            One cookies.txt can carry sessions for many sites. Earliest expiry per platform shown — when it goes red, re-export from that site.
+          </p>
+          <div class="platform-list">
+            <div
+              class="platform-row"
+              *ngFor="let row of platformRows"
+              [class.fresh]="row.status === 'fresh'"
+              [class.expiring]="row.status === 'expiring'"
+              [class.expired]="row.status === 'expired'"
+              [attr.title]="row.expiryHint"
+            >
+              <span class="p-icon">{{ row.icon }}</span>
+              <span class="p-name">{{ row.display }}</span>
+              <span class="p-count">{{ row.bucket.session_count }} cookie{{ row.bucket.session_count === 1 ? '' : 's' }}</span>
+              <span class="p-status">
+                <ng-container [ngSwitch]="row.status">
+                  <span *ngSwitchCase="'fresh'">✅ {{ row.expiryHint }}</span>
+                  <span *ngSwitchCase="'expiring'">⏳ {{ row.expiryHint }}</span>
+                  <span *ngSwitchCase="'expired'">❌ {{ row.expiryHint }}</span>
+                </ng-container>
+              </span>
+            </div>
+          </div>
         </div>
 
         <!-- Upload Card -->
@@ -333,6 +371,33 @@ import { MetubeService } from '../../services/metube.service';
       from { opacity: 0; transform: translateX(-50%) translateY(20px); }
       to { opacity: 1; transform: translateX(-50%) translateY(0); }
     }
+    .platform-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .platform-row {
+      display: grid;
+      grid-template-columns: 28px 1fr auto auto;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: rgba(0,0,0,0.18);
+      border: 1px solid rgba(169,183,198,0.06);
+      cursor: help;
+      font-size: 13px;
+    }
+    .platform-row.fresh    { border-color: rgba(106,135,89,0.30); }
+    .platform-row.expiring { border-color: rgba(217,164,65,0.30); }
+    .platform-row.expired  { border-color: rgba(157,0,30,0.40); opacity: 0.85; }
+    .platform-row .p-icon { font-size: 18px; text-align: center; }
+    .platform-row .p-name { color: #a9b7c6; font-weight: 600; }
+    .platform-row .p-count { color: #808080; font-size: 12px; }
+    .platform-row .p-status { font-size: 12px; color: #808080; }
+    .platform-row.fresh    .p-status { color: #6a8759; }
+    .platform-row.expiring .p-status { color: #d9a441; }
+    .platform-row.expired  .p-status { color: #cc7832; }
   `],
 })
 export class CookiesComponent implements OnInit, OnDestroy {
@@ -343,6 +408,26 @@ export class CookiesComponent implements OnInit, OnDestroy {
   cookieAge: number | null = null;
   metubeReachable: boolean | null = null;
   statusText = 'Checking...';
+  platformRows: PlatformRow[] = [];
+
+  private readonly PLATFORM_DISPLAY: Record<string, { display: string; icon: string }> = {
+    youtube:     { display: 'YouTube',     icon: '📺' },
+    vimeo:       { display: 'Vimeo',       icon: '🎬' },
+    dailymotion: { display: 'Dailymotion', icon: '▶️' },
+    twitch:      { display: 'Twitch',      icon: '🎮' },
+    rumble:      { display: 'Rumble',      icon: '📡' },
+    peertube:    { display: 'PeerTube',    icon: '🔭' },
+    instagram:   { display: 'Instagram',   icon: '📸' },
+    reddit:      { display: 'Reddit',      icon: '🤖' },
+    facebook:    { display: 'Facebook',    icon: '👤' },
+    x:           { display: 'X / Twitter', icon: '𝕏'  },
+    threads:     { display: 'Threads',     icon: '🧵' },
+    tiktok:      { display: 'TikTok',      icon: '🎵' },
+    vk:          { display: 'VK',          icon: '🇻🇰' },
+    bilibili:    { display: 'Bilibili',    icon: '🇨🇳' },
+    soundcloud:  { display: 'SoundCloud',  icon: '☁️' },
+    bandcamp:    { display: 'Bandcamp',    icon: '🎵' },
+  };
 
   dragOver = false;
   uploading = false;
@@ -376,6 +461,7 @@ export class CookiesComponent implements OnInit, OnDestroy {
         this.cookieAge = data.cookie_age_minutes ?? null;
         this.metubeReachable = data.metube_reachable ?? null;
         this.isStale = !!(this.cookieAge && this.cookieAge > 60);
+        this.platformRows = this.buildPlatformRows(data.platforms || {});
 
         if (!this.hasCookies) {
           this.statusText = '❌ No Cookies';
@@ -400,6 +486,48 @@ export class CookiesComponent implements OnInit, OnDestroy {
     const hours = Math.floor(minutes / 60);
     const mins = Math.round(minutes % 60);
     return `${hours}h ${mins}m`;
+  }
+
+  buildPlatformRows(platforms: { [k: string]: PlatformCookieBucket }): PlatformRow[] {
+    const nowSec = Math.floor(Date.now() / 1000);
+    const rows: PlatformRow[] = [];
+    for (const key of Object.keys(platforms).sort()) {
+      const bucket = platforms[key];
+      const meta = this.PLATFORM_DISPLAY[key] || { display: key, icon: '🍪' };
+
+      // Earliest non-zero expiry decides whether the bucket is stale.
+      // 0 = no expiry recorded (session cookie or pre-expiry). We treat
+      // those as "fresh" since they're either still valid or rely on
+      // the file-level mtime check the parent panel already shows.
+      const minExpiry = bucket.min_expiry_unix;
+      let status: 'fresh' | 'expiring' | 'expired';
+      let expiryHint: string;
+      if (minExpiry === 0) {
+        status = 'fresh';
+        expiryHint = 'session cookies, no recorded expiry';
+      } else {
+        const secondsLeft = minExpiry - nowSec;
+        if (secondsLeft <= 0) {
+          status = 'expired';
+          expiryHint = `expired ${this.formatRelative(-secondsLeft)} ago`;
+        } else if (secondsLeft < 24 * 3600) {
+          status = 'expiring';
+          expiryHint = `expires in ${this.formatRelative(secondsLeft)}`;
+        } else {
+          status = 'fresh';
+          expiryHint = `expires in ${this.formatRelative(secondsLeft)}`;
+        }
+      }
+      rows.push({ key, display: meta.display, icon: meta.icon, bucket, status, expiryHint });
+    }
+    return rows;
+  }
+
+  private formatRelative(seconds: number): string {
+    if (seconds < 60) return `${seconds}s`;
+    if (seconds < 3600) return `${Math.round(seconds / 60)}m`;
+    if (seconds < 86400) return `${Math.round(seconds / 3600)}h`;
+    return `${Math.round(seconds / 86400)}d`;
   }
 
   onDragOver(event: DragEvent): void {

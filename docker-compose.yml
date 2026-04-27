@@ -78,8 +78,13 @@ services:
       - PROXY_PORT=8080
       - DASHBOARD_PORT=9090
       - DOWNLOAD_DIR=/downloads
+      - ACTIVE_PROFILE=vpn
     volumes:
       - ${DOWNLOAD_DIR}:/downloads:rw
+      # Read-only mount so /api/cookie-status can read the cookies file
+      # directly for per-platform freshness breakdown. Writes still go
+      # through MeTube's /upload-cookies endpoint, never directly here.
+      - ./metube/config:/config:ro
     depends_on:
       metube:
         condition: service_started
@@ -193,8 +198,13 @@ services:
       - PROXY_PORT=8080
       - DASHBOARD_PORT=9090
       - DOWNLOAD_DIR=/downloads
+      - ACTIVE_PROFILE=no-vpn
     volumes:
       - ${DOWNLOAD_DIR}:/downloads:rw
+      # Read-only mount so /api/cookie-status can read the cookies file
+      # directly for per-platform freshness breakdown. Writes still go
+      # through MeTube's /upload-cookies endpoint, never directly here.
+      - ./metube/config:/config:ro
     depends_on:
       metube-direct:
         condition: service_started

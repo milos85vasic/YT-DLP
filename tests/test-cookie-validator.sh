@@ -100,6 +100,62 @@ test_validator_still_rejects_unknown_domain() {
     _assert_reject "example.invalid"
 }
 
+test_summarize_cookies_by_platform_groups_correctly() {
+    # Build a cookies file with 3 youtube + 2 tiktok + 1 facebook
+    # entries, varying expiries, then assert the helper buckets them
+    # correctly per platform.
+    local fixture
+    fixture=$(mktemp)
+    cat > "$fixture" <<'EOF'
+# Netscape HTTP Cookie File
+.youtube.com	TRUE	/	TRUE	2000000000	SID	abc
+.youtube.com	TRUE	/	TRUE	2000000100	HSID	def
+.google.com	TRUE	/	TRUE	1900000000	NID	ghi
+.tiktok.com	TRUE	/	TRUE	2100000000	sessionid	tik1
+.tiktok.com	TRUE	/	FALSE	2100000050	csrftoken	tik2
+.facebook.com	TRUE	/	TRUE	2200000000	c_user	fb1
+EOF
+
+    local out
+    out=$(PROJECT_DIR="$PROJECT_DIR" python3 - "$fixture" <<'PY'
+import json, os, sys
+sys.path.insert(0, os.path.join(os.environ["PROJECT_DIR"], "landing"))
+from app import _summarize_cookies_by_platform
+with open(sys.argv[1], "r", encoding="utf-8") as f:
+    content = f.read()
+print(json.dumps(_summarize_cookies_by_platform(content), sort_keys=True))
+PY
+)
+    rm -f "$fixture"
+    local rc=$?
+    if [ "$rc" -ne 0 ]; then
+        echo "  FAIL: helper raised — $out"
+        return 1
+    fi
+
+    # Assertions: youtube bucket sees 3 cookies (youtube.com twice + google.com once),
+    # tiktok 2, facebook 1, no other platforms.
+    if ! echo "$out" | grep -q '"youtube"'; then
+        echo "  FAIL: youtube bucket missing in $out"; return 1
+    fi
+    if ! echo "$out" | grep -q '"tiktok"'; then
+        echo "  FAIL: tiktok bucket missing in $out"; return 1
+    fi
+    if ! echo "$out" | grep -q '"facebook"'; then
+        echo "  FAIL: facebook bucket missing in $out"; return 1
+    fi
+    # Counts via grep on the JSON shape — youtube should have count=3
+    yt_count=$(echo "$out" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d["youtube"]["session_count"])')
+    if [ "$yt_count" != "3" ]; then
+        echo "  FAIL: youtube session_count expected 3, got $yt_count"; return 1
+    fi
+    tk_count=$(echo "$out" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d["tiktok"]["session_count"])')
+    if [ "$tk_count" != "2" ]; then
+        echo "  FAIL: tiktok session_count expected 2, got $tk_count"; return 1
+    fi
+    echo "  PASS: per-platform breakdown groups cookies correctly"
+}
+
 run_cookie_validator_tests() {
     if type log_info &> /dev/null; then
         log_info "Running Cookie Validator Tests..."
@@ -120,11 +176,13 @@ run_cookie_validator_tests() {
     if type run_test &> /dev/null; then
         run_test "test_validator_accepts_extended_video_platforms" test_validator_accepts_extended_video_platforms
         run_test "test_validator_still_rejects_unknown_domain" test_validator_still_rejects_unknown_domain
+        run_test "test_summarize_cookies_by_platform_groups_correctly" test_summarize_cookies_by_platform_groups_correctly
     else
         # Standalone mode
         local pass=0 fail=0
         if test_validator_accepts_extended_video_platforms; then ((pass++)); else ((fail++)); fi
         if test_validator_still_rejects_unknown_domain; then ((pass++)); else ((fail++)); fi
+        if test_summarize_cookies_by_platform_groups_correctly; then ((pass++)); else ((fail++)); fi
         echo "Pass: $pass  Fail: $fail"
         [ "$fail" -eq 0 ]
     fi
