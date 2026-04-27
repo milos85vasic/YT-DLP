@@ -126,15 +126,70 @@ auth-user-pass /vpn/vpn.auth
 EOF
 }
 
+# Drain MeTube's queue and history. The /api/add tests submit many
+# unreachable / fake URLs that get stuck "downloading" because no
+# bytes ever arrive — they accumulate across runs and eventually
+# block the worker. Anti-bluff (CONST-034): tests must clean up
+# after themselves. Best-effort — failure is non-fatal.
+drain_metube_queues() {
+    local dashboard="${DASHBOARD_URL:-http://localhost:9090}"
+    if ! curl -s --max-time 2 "$dashboard/api/history" >/dev/null 2>&1; then
+        return 0   # services not running, nothing to drain
+    fi
+    local stale_ids
+    stale_ids=$(curl -s --max-time 5 "$dashboard/api/history" 2>/dev/null \
+        | python3 -c '
+import json, sys
+try:
+    d = json.load(sys.stdin)
+except Exception:
+    print("[]"); sys.exit(0)
+ids = []
+for k in ("queue", "pending", "done"):
+    for it in d.get(k, []):
+        url = it.get("url") or ""
+        # Conservative: only sweep the URLs the test suite injects.
+        if any(p in url for p in (
+            "test-bulk-",
+            "test-concurrent-",
+            "test-no-500",
+            "test-no-500-burst",
+            "burst-",
+            "test-bulk-clear",
+            "lifecycle-challenge",
+            "[::1]:65535",
+            "abort-test.invalid",
+            "nonexistent.invalid",
+        )):
+            ids.append(url)
+print(json.dumps(ids))
+' 2>/dev/null)
+    if [ -n "$stale_ids" ] && [ "$stale_ids" != "[]" ]; then
+        for where in queue done; do
+            curl -s --max-time 10 -X POST "$dashboard/api/delete" \
+                -H "Content-Type: application/json" \
+                -d "$(printf '{"ids":%s,"where":"%s"}' "$stale_ids" "$where")" >/dev/null 2>&1 || true
+        done
+    fi
+    # Also clear any aborted-history entries injected by the lifecycle challenge.
+    curl -s --max-time 10 -X DELETE "$dashboard/api/aborted-history" \
+        -H "Content-Type: application/json" \
+        -d '{"urls":"*"}' >/dev/null 2>&1 || true
+}
+
 # Cleanup test environment
 cleanup_test_env() {
     log_info "Cleaning up test environment..."
-    
+
     # Restore original .env if it was backed up
     if [ -f .env.backup ]; then
         mv .env.backup .env
     fi
-    
+
+    # Drain MeTube state injected by the test suite so subsequent
+    # runs (or manual usage by the operator) don't see stale items.
+    drain_metube_queues
+
     rm -rf "$TEST_RESULTS_DIR"
     rm -rf "$TEST_LOGS_DIR"
     rm -rf "$TEST_CONFIG_DIR"
@@ -600,6 +655,9 @@ main() {
                 log_section "Running Aborted-History Tests"
                 run_aborted_history_tests
             fi
+            # Drain test-injected URLs before media-services tests so
+            # the worker is free for the real-download assertions.
+            drain_metube_queues
             log_section "Running Media Services Tests"
             run_media_services_tests
             # Stop containers if we started them

@@ -311,6 +311,38 @@ test that "passes" without proving the feature is reachable, usable,
 and visibly correct from the user's surface is a bug, not a green
 light.
 
+**The zero-skip rule (added 2026-04-27 after a SKIP audit found three
+stale "platform restriction" labels masking platforms that actually
+worked):** SKIPs are not a default option. A test that exits 0 with
+a "platform restriction" / "upstream issue" message is a bluff
+unless it has been *converted into an assertion that proves the
+documented restriction is real right now*. Concretely:
+
+- A SKIP for "TikTok IP-blocked" must run yt-dlp against TikTok
+  and assert that the response contains "IP address is blocked" or
+  equivalent. If extraction unexpectedly succeeds, the test FAILS
+  — telling us the restriction has lifted and the dashboard's
+  status badge needs flipping.
+- A SKIP for "upstream extractor bug" must run the extractor and
+  assert it produces the documented error. If extraction works, the
+  bug is fixed and the test FAILS — telling us to update the badge.
+- A SKIP for "test data stale" must be removed entirely (use a
+  fresh test target instead — stale test data is a bug in the
+  test, not a property of the world).
+
+The goal: ZERO silent SKIPs. Every test either (a) PASSes because
+the feature works, or (b) PASSes because the documented
+limitation is provably real, or (c) FAILS — telling someone to
+either fix the feature or update the documented limitation.
+
+If a check genuinely cannot run because of an external dependency
+the test environment can't satisfy (e.g. a CN-egress test on a
+non-CN host), the test still must not silently SKIP — it should
+PASS by asserting the documented failure mode (HTTP 412 from
+Bilibili) and FAIL when the dependency is satisfied. That way the
+suite tells the operator "this used to be blocked here, now
+isn't" — a celebration, not a bug.
+
 **Bluff patterns explicitly forbidden:**
 1. Asserting on `http_code` only without checking the response body.
    curl's `%{http_code}` reports `000` on early-close even when the
