@@ -112,7 +112,17 @@ paths:
   /upload-cookies:
     post:
       summary: Upload cookie file
-      description: Upload a Netscape cookies.txt file.
+      description: |
+        Upload a Netscape-format cookies.txt file. The landing-page proxy at
+        `/api/upload-cookies` validates the file and rejects it if no
+        recognised video-platform domain is present. The current recognised
+        set covers (substring match against each cookie's domain, dot-stripped):
+        youtube.com, youtu.be, google.com, vimeo.com, dailymotion.com,
+        twitch.tv, rumble.com, peertube.tv, instagram.com, reddit.com,
+        facebook.com, fb.watch, twitter.com, x.com, threads.net, tiktok.com,
+        vk.com, vkvideo.ru, bilibili.com, bilibili.tv, soundcloud.com,
+        bandcamp.com. A single file may contain entries for any combination
+        of these.
       requestBody:
         required: true
         content:

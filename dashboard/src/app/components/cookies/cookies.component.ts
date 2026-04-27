@@ -45,10 +45,12 @@ import { MetubeService } from '../../services/metube.service';
             </span>
           </div>
           <p class="hint" *ngIf="!hasCookies">
-            No cookies found. Upload cookies from a signed-in YouTube session to download videos.
+            No cookies found. Upload cookies from a signed-in session of any platform you want to download from
+            (YouTube, Instagram, Facebook, X / Twitter, TikTok, Bilibili, Threads, Reddit, etc.).
           </p>
           <p class="hint stale-hint" *ngIf="isStale">
-            Your cookies are old. YouTube cookies expire quickly. If downloads fail with "Sign in to confirm you're not a bot", export fresh cookies and re-upload.
+            Your cookies are old. Session cookies (especially YouTube and Instagram) expire quickly.
+            If downloads fail with "Sign in to confirm you're not a bot" or similar auth prompts, export fresh cookies and re-upload.
           </p>
         </div>
 
@@ -56,7 +58,8 @@ import { MetubeService } from '../../services/metube.service';
         <div class="card">
           <h2>Upload Cookies</h2>
           <p class="subtitle">
-            Export cookies from your browser while signed in to YouTube, then upload them here.
+            Export cookies from your browser while signed in to the site you want to download from,
+            then upload them here. One Netscape-format file can contain cookies for multiple platforms.
             Use the <a href="http://localhost:8086" target="_blank">Landing Page</a> for a guided walkthrough.
           </p>
 

@@ -7,6 +7,15 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
 
 type TrackState = 'idle' | 'adding' | 'queued' | 'downloading' | 'finished' | 'error' | 'timeout';
 
+type PlatformStatus = 'ok' | 'cookies' | 'restricted' | 'partial';
+
+interface Platform {
+  name: string;
+  icon: string;
+  status: PlatformStatus;
+  hint: string;
+}
+
 @Component({
   selector: 'app-download-form',
   standalone: true,
@@ -122,12 +131,31 @@ type TrackState = 'idle' | 'adding' | 'queued' | 'downloading' | 'finished' | 'e
 
       <div class="card platforms">
         <h3>✅ Supported Platforms</h3>
+        <p class="platform-legend">
+          <span class="legend-item"><span class="legend-badge ok">✓</span> works</span>
+          <span class="legend-item"><span class="legend-badge cookies">🍪</span> needs cookies</span>
+          <span class="legend-item"><span class="legend-badge partial">⚠</span> partial</span>
+          <span class="legend-item"><span class="legend-badge restricted">🌍</span> geo/IP-blocked</span>
+        </p>
         <div class="platform-grid">
-          <div class="platform" *ngFor="let p of platforms" [class.ok]="p.ok" [class.warn]="!p.ok">
+          <div
+            class="platform"
+            *ngFor="let p of platforms"
+            [class.ok]="p.status === 'ok'"
+            [class.cookies]="p.status === 'cookies'"
+            [class.partial]="p.status === 'partial'"
+            [class.restricted]="p.status === 'restricted'"
+            [attr.title]="p.hint"
+            [attr.data-status]="p.status"
+          >
             <span class="icon">{{ p.icon }}</span>
             <span class="name">{{ p.name }}</span>
-            <span class="badge" *ngIf="p.ok">✓</span>
-            <span class="badge" *ngIf="!p.ok">⚠</span>
+            <span class="badge" [ngSwitch]="p.status">
+              <ng-container *ngSwitchCase="'ok'">✓</ng-container>
+              <ng-container *ngSwitchCase="'cookies'">🍪</ng-container>
+              <ng-container *ngSwitchCase="'partial'">⚠</ng-container>
+              <ng-container *ngSwitchCase="'restricted'">🌍</ng-container>
+            </span>
           </div>
         </div>
       </div>
@@ -319,11 +347,28 @@ type TrackState = 'idle' | 'adding' | 'queued' | 'downloading' | 'finished' | 'e
       border-radius: 10px;
       font-size: 13px;
     }
+    .platform { cursor: help; }
     .platform.ok { border: 1px solid rgba(106,135,89,0.15); }
-    .platform.warn { border: 1px solid rgba(217,164,65,0.15); opacity: 0.7; }
+    .platform.cookies { border: 1px solid rgba(104,151,187,0.25); }
+    .platform.partial { border: 1px solid rgba(217,164,65,0.25); opacity: 0.85; }
+    .platform.restricted { border: 1px solid rgba(157,0,30,0.25); opacity: 0.7; }
     .platform .icon { font-size: 16px; }
     .platform .name { flex: 1; color: #808080; }
     .platform .badge { font-size: 11px; }
+    .platform-legend {
+      margin: 0 0 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      font-size: 11px;
+      color: #808080;
+    }
+    .platform-legend .legend-item { display: inline-flex; align-items: center; gap: 4px; }
+    .legend-badge { font-size: 11px; }
+    .legend-badge.ok { color: #6a8759; }
+    .legend-badge.cookies { color: #6897bb; }
+    .legend-badge.partial { color: #d9a441; }
+    .legend-badge.restricted { color: #cc7832; }
   `],
 })
 export class DownloadFormComponent implements OnInit, OnDestroy {
@@ -336,21 +381,23 @@ export class DownloadFormComponent implements OnInit, OnDestroy {
   tracker: { state: TrackState; item: DownloadInfo | null } = { state: 'idle', item: null };
   private trackSub?: Subscription;
 
-  platforms = [
-    { name: 'YouTube', icon: '📺', ok: true },
-    { name: 'Vimeo', icon: '🎬', ok: true },
-    { name: 'Dailymotion', icon: '▶️', ok: true },
-    { name: 'Twitch', icon: '🎮', ok: true },
-    { name: 'Instagram', icon: '📸', ok: true },
-    { name: 'Reddit', icon: '🤖', ok: true },
-    { name: 'Rumble', icon: '📡', ok: true },
-    { name: 'VK', icon: '🇻🇰', ok: true },
-    { name: 'PeerTube', icon: '🔭', ok: true },
-    { name: 'SoundCloud', icon: '☁️', ok: true },
-    { name: 'Bandcamp', icon: '🎵', ok: true },
-    { name: 'TikTok', icon: '🎵', ok: false },
-    { name: 'Bilibili', icon: '🇨🇳', ok: false },
-    { name: 'Facebook', icon: '👤', ok: false },
+  platforms: Platform[] = [
+    { name: 'YouTube',     icon: '📺',  status: 'cookies',    hint: 'Works. Bot-detection sometimes triggers — upload fresh YouTube cookies via Cookie Management if downloads start failing with "Sign in to confirm you are not a bot".' },
+    { name: 'Vimeo',       icon: '🎬',  status: 'ok',         hint: 'Works without cookies for public videos. Sign-in cookies needed for private/password-protected uploads.' },
+    { name: 'Dailymotion', icon: '▶️',  status: 'ok',         hint: 'Works without cookies.' },
+    { name: 'Twitch',      icon: '🎮',  status: 'ok',         hint: 'Works for public VODs and clips. Subscriber-only content needs Twitch cookies.' },
+    { name: 'Instagram',   icon: '📸',  status: 'cookies',    hint: 'Most posts now require an authenticated session — export instagram.com cookies while signed in.' },
+    { name: 'Reddit',      icon: '🤖',  status: 'cookies',    hint: 'Some videos work anonymously; many require reddit.com session cookies (especially NSFW or quarantined subs).' },
+    { name: 'Rumble',      icon: '📡',  status: 'restricted', hint: 'Rumble blocks non-residential / data-centre IPs. Use a residential VPN, then it works without cookies.' },
+    { name: 'VK',          icon: '🇻🇰',  status: 'ok',         hint: 'Works for public videos on vk.com and vkvideo.ru.' },
+    { name: 'PeerTube',    icon: '🔭',  status: 'ok',         hint: 'Federated — works without cookies for public instances.' },
+    { name: 'SoundCloud',  icon: '☁️',  status: 'ok',         hint: 'Works for public tracks. Private / go+ tracks need soundcloud.com cookies.' },
+    { name: 'Bandcamp',    icon: '🎵',  status: 'ok',         hint: 'Works for free + paid-public tracks. Owned-only tracks need bandcamp.com cookies.' },
+    { name: 'TikTok',      icon: '🎵',  status: 'restricted', hint: 'TikTok blocks our outbound IP ("Your IP address is blocked from accessing this post"). Switch to a residential VPN; once unblocked, public videos work without cookies, age-gated ones need tiktok.com cookies.' },
+    { name: 'Bilibili',    icon: '🇨🇳',  status: 'restricted', hint: 'Bilibili requires Chinese network egress (HTTP 412 from outside CN). Use a CN-region VPN; logged-in bilibili.com cookies then unlock region-locked content.' },
+    { name: 'Facebook',    icon: '👤',  status: 'partial',    hint: 'Public /watch/?v=… URLs work. Some legacy /<page>/videos/<id>/ URLs hit a parser bug ("Cannot parse data") in yt-dlp 2026.03.17. Private/login-walled videos need facebook.com cookies.' },
+    { name: 'X / Twitter', icon: '𝕏',  status: 'cookies',    hint: 'Embedded videos require x.com (or twitter.com) session cookies — anonymous extraction stopped working in 2024.' },
+    { name: 'Threads',     icon: '🧵',  status: 'cookies',    hint: 'Threads videos need threads.net session cookies. Use the same instagram.com login.' },
   ];
 
   constructor(private metube: MetubeService) {}

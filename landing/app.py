@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 """
-Боба Landing Page - Seamless YouTube Authentication
-Flow: Open YouTube → Sign in → Export cookies → Auto-redirect to Dashboard
+Боба Landing Page - Seamless multi-platform cookie authentication.
+Flow: Sign in to your platforms (YouTube / Instagram / Facebook / X / TikTok /
+Bilibili / Threads / Reddit / …) → export cookies → upload here →
+auto-redirect to Dashboard. A single Netscape cookies.txt may carry sessions
+for many platforms simultaneously; the validator accepts any of the supported
+video sites (see ``_validate_cookie_file`` for the canonical list).
 """
 
 import os
@@ -333,7 +337,7 @@ INDEX_TEMPLATE = """
     <div class="container">
         <img src="/logo.png" alt="Боба" class="logo-img">
         <h1>Боба</h1>
-        <p class="subtitle">YouTube Video Downloader</p>
+        <p class="subtitle">Universal Video Downloader — YouTube, Instagram, Facebook, X, TikTok, Bilibili & more</p>
 
         <div class="auth-card">
             <div class="step-progress">
@@ -344,33 +348,38 @@ INDEX_TEMPLATE = """
                 <div class="step" id="step3"></div>
             </div>
 
-            <!-- Step 1: Open YouTube -->
+            <!-- Step 1: Sign in to your platform -->
             <div class="step-content active" id="content1">
                 <div style="text-align: center; margin-bottom: 20px;">
                     <button class="action-btn" onclick="goToStep(2)">
                         <svg viewBox="0 0 24 24" fill="currentColor">
                             <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
                         </svg>
-                        Open YouTube & Sign In
+                        Sign In to Your Platform
                     </button>
                 </div>
 
                 <div class="guide">
                     <h3>📋 How it works</h3>
                     <ol>
-                        <li>Click the button above to open YouTube</li>
-                        <li><strong>Sign in to your Google account</strong> on YouTube</li>
+                        <li>Open the site you want to download from in a normal browser tab
+                            (YouTube, Instagram, Facebook, X / Twitter, TikTok, Bilibili, Threads, Reddit, …)</li>
+                        <li><strong>Sign in</strong> to that site with your account</li>
                         <li>Come back to this page when done</li>
                         <li>Export your cookies using a browser extension</li>
                     </ol>
+                    <p style="color: #808080; font-size: 0.85rem; margin-top: 10px;">
+                        Tip: a single cookies.txt can contain entries for multiple sites — sign in to all of them
+                        first, then export once.
+                    </p>
                 </div>
             </div>
 
             <!-- Step 2: Export Cookies -->
             <div class="step-content" id="content2">
                 <p style="color: #808080; margin-bottom: 16px; font-size: 0.95rem;">
-                    Great! Now you need to export your YouTube cookies.<br>
-                    <strong style="color: #a9b7c6;">This is required</strong> to download videos.
+                    Great! Now export your session cookies for the platform(s) you signed in to.<br>
+                    <strong style="color: #a9b7c6;">This is required</strong> to download login-walled or age-restricted videos.
                 </p>
 
                 <div class="guide">
@@ -380,9 +389,10 @@ INDEX_TEMPLATE = """
                             <span class="highlight">Chrome</span> or
                             <span class="highlight">Firefox</span>
                         </li>
-                        <li>Go to <strong>youtube.com</strong> (make sure you're signed in)</li>
+                        <li>Visit each site you signed in to (youtube.com, instagram.com, facebook.com,
+                            x.com, tiktok.com, bilibili.com, threads.net, reddit.com, …) — make sure you are signed in</li>
                         <li>Click the extension icon in your browser toolbar</li>
-                        <li>Click <strong>"Export"</strong> to download cookies file</li>
+                        <li>Click <strong>"Export"</strong> to download the cookies file</li>
                         <li>Drag that file below or click to upload</li>
                     </ol>
                 </div>
@@ -475,7 +485,9 @@ INDEX_TEMPLATE = """
             document.getElementById('content' + n).classList.add('active');
 
             if (n === 2) {
-                window.open('https://www.youtube.com/', '_blank');
+                // Step 1's button now leads to "Sign In to Your Platform" (not just YouTube),
+                // so we no longer auto-open youtube.com. Users open whichever site(s) they
+                // need to sign in to themselves.
                 setupUpload();
             }
 
@@ -557,7 +569,8 @@ INDEX_TEMPLATE = """
                 banner.className = 'cookie-banner stale';
                 banner.innerHTML = `
                     <strong>⚠ Your cookies are ${Math.round(ageMin)} minutes old</strong>
-                    YouTube cookies expire quickly. If downloads fail with "Sign in to confirm you're not a bot",
+                    Session cookies (especially YouTube and Instagram) expire quickly.
+                    If downloads fail with auth prompts like "Sign in to confirm you're not a bot",
                     <a href="#" onclick="goToStep(2); return false;">export fresh cookies</a> and re-upload.
                 `;
             } else {
@@ -639,12 +652,25 @@ def _validate_cookie_file(content: str) -> tuple[bool, str]:
     if not valid_domains:
         return False, "Cookie file contains no valid cookie entries"
 
-    # Warn if no recognised video-platform domains are present
+    # Warn if no recognised video-platform domains are present.
+    # Each entry is a substring matched against the cookie's domain
+    # (leading dot stripped) so e.g. "facebook.com" matches
+    # ".facebook.com" and ".m.facebook.com".
     recognised = {
+        # YouTube + Google session domains (Google sign-in cookies cover YT)
         "youtube.com", "youtu.be", "google.com",
+        # General-purpose video platforms
         "vimeo.com", "dailymotion.com", "twitch.tv",
-        "instagram.com", "reddit.com", "rumble.com",
-        "vk.com", "vkvideo.ru", "peertube.tv",
+        "rumble.com", "peertube.tv",
+        # Social platforms with embedded video
+        "instagram.com", "reddit.com",
+        "facebook.com", "fb.watch",
+        "twitter.com", "x.com", "threads.net",
+        "tiktok.com",
+        # Russian / Chinese platforms
+        "vk.com", "vkvideo.ru",
+        "bilibili.com", "bilibili.tv",
+        # Audio platforms (yt-dlp covers these too)
         "soundcloud.com", "bandcamp.com",
     }
     has_recognised = any(

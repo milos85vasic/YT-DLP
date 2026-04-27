@@ -366,6 +366,7 @@ source "$TEST_DIR/test-scenarios.sh" 2>/dev/null || true
 source "$TEST_DIR/test-errors.sh" 2>/dev/null || true
 source "$TEST_DIR/test-media-services.sh" 2>/dev/null || true
 source "$TEST_DIR/test-dashboard.sh" 2>/dev/null || true
+source "$TEST_DIR/test-cookie-validator.sh" 2>/dev/null || true
 
 # =============================================================================
 # Main Test Runner
@@ -541,6 +542,10 @@ main() {
         unit)
             log_section "Running Unit Tests"
             run_unit_tests
+            if type run_cookie_validator_tests &> /dev/null; then
+                log_section "Running Cookie Validator Tests"
+                run_cookie_validator_tests
+            fi
             ;;
         integration)
             # Start containers if needed
@@ -581,7 +586,11 @@ main() {
         all)
             log_section "Running All Tests"
             run_unit_tests
-            
+            if type run_cookie_validator_tests &> /dev/null; then
+                log_section "Running Cookie Validator Tests"
+                run_cookie_validator_tests
+            fi
+
             # Start containers for integration and scenario tests
             if [ "$containers_already_running" = false ] && [ "$DRY_RUN" = false ]; then
                 if start_test_containers; then
