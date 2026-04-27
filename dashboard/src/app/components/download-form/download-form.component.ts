@@ -452,6 +452,12 @@ export class DownloadFormComponent implements OnInit, OnDestroy {
             this.tracker = { state: 'error', item: { id: '', title: '', url: submittedUrl, quality: '', format: '', folder: '', status: 'error', msg: res.msg || 'Unknown error' } as DownloadInfo };
             return;
           }
+          // /add accepted — re-enable the form RIGHT NOW so the user
+          // can paste another URL while this one is still tracking.
+          // The tracker continues to display the previous submit; the
+          // Queue page is the source of truth for all in-flight items.
+          this.loading = false;
+          this.url = '';
           this.trackDownload(submittedUrl);
         },
         error: (err) => {

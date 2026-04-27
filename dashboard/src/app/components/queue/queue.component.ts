@@ -70,9 +70,11 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
       <div class="list">
         <!-- Pending items -->
         <div
-          class="item pending"
+          class="item state-pending"
           *ngFor="let item of pending; trackBy: trackById"
           [class.selected]="isSelected(item)"
+          [attr.data-testid]="'queue-item-' + item.id"
+          [attr.data-status]="'pending'"
         >
           <input
             type="checkbox"
@@ -82,24 +84,26 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
             [attr.data-testid]="'queue-row-checkbox-' + item.id"
             [attr.aria-label]="'Select pending ' + (item.title || item.url)"
           />
-          <div class="thumb">⏳</div>
+          <div class="thumb" [attr.title]="'pending'">⏳</div>
           <div class="info">
-            <div class="title" [title]="item.title">{{ item.title || 'Preparing...' }}</div>
+            <div class="title" [title]="item.title">{{ item.title || 'Preparing…' }}</div>
             <div class="meta">
-              <span class="status pending">pending</span>
+              <span class="status-badge state-pending">pending</span>
               <span *ngIf="item.url" class="url" [title]="item.url">{{ item.url }}</span>
             </div>
           </div>
           <button class="btn-start" (click)="start(item)" title="Start download">▶️</button>
-          <button class="btn-delete" (click)="delete(item, 'queue')" title="Cancel">✕</button>
+          <button class="btn-delete" (click)="confirmCancel(item)" title="Cancel" data-testid="queue-cancel-button">✕</button>
         </div>
 
-        <!-- Queue items -->
+        <!-- Active queue items (downloading / preparing / postprocessing / error / finished) -->
         <div
           class="item"
           *ngFor="let item of queue; trackBy: trackById"
-          [class.error]="item.status === 'error'"
+          [class]="'item ' + stateClass(item)"
           [class.selected]="isSelected(item)"
+          [attr.data-testid]="'queue-item-' + item.id"
+          [attr.data-status]="item.status"
         >
           <input
             type="checkbox"
@@ -109,17 +113,17 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
             [attr.data-testid]="'queue-row-checkbox-' + item.id"
             [attr.aria-label]="'Select ' + (item.title || item.url)"
           />
-          <div class="thumb">
-            <span *ngIf="item.status === 'error'">❌</span>
-            <span *ngIf="item.status !== 'error'">⬇️</span>
-          </div>
+          <div class="thumb" [attr.title]="item.status">{{ stateIcon(item) }}</div>
           <div class="info">
             <div class="title" [title]="item.title">{{ item.title || 'Untitled' }}</div>
             <div class="meta">
-              <span class="status" [class]="item.status">{{ item.status }}</span>
+              <span class="status-badge" [class]="'status-badge ' + stateClass(item)">
+                {{ stateLabel(item) }}
+              </span>
               <span *ngIf="item.speed">• {{ item.speed }}</span>
               <span *ngIf="item.eta">• ETA {{ item.eta }}</span>
               <span *ngIf="item.size">• {{ formatSize(item.size) }}</span>
+              <span *ngIf="item.percent !== undefined && item.percent !== null && isActive(item)">• {{ item.percent | number:'1.0-1' }}%</span>
             </div>
             <!-- Error message -->
             <div *ngIf="item.msg" class="msg">{{ item.msg }}</div>
@@ -127,17 +131,49 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
             <div *ngIf="item.url && item.status === 'error'" class="url" [title]="item.url">{{ item.url }}</div>
           </div>
 
-          <div class="progress-wrap" *ngIf="item.status === 'downloading' || item.status === 'preparing'">
-            <div class="progress-bar">
-              <div class="fill" [style.width.%]="item.percent || 0"></div>
+          <div class="progress-wrap" *ngIf="isActive(item)">
+            <div class="progress-bar" [class.active]="item.status === 'downloading' || item.status === 'preparing'">
+              <div class="fill" [style.width.%]="item.percent || 0" [class.indeterminate]="!item.percent"></div>
             </div>
-            <span class="percent">{{ item.percent || 0 }}%</span>
           </div>
 
           <div class="actions">
             <button *ngIf="item.status === 'error'" class="btn-retry" (click)="retry(item)" title="Retry">↻</button>
-            <button class="btn-delete" (click)="delete(item, 'queue')" title="Cancel">✕</button>
+            <button class="btn-delete" (click)="confirmCancel(item)" title="Cancel" data-testid="queue-cancel-button">✕</button>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cancel confirmation dialog (single item) -->
+    <div class="dialog-overlay" *ngIf="cancelDialogItem" (click)="cancelDialog()" data-testid="queue-cancel-dialog">
+      <div class="dialog" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+        <h3>✕ Cancel download?</h3>
+        <p>You're about to cancel this download:</p>
+        <div class="dialog-item">
+          <strong>{{ cancelDialogItem.title || cancelDialogItem.url }}</strong>
+          <span *ngIf="cancelDialogItem.percent !== undefined && cancelDialogItem.percent !== null" class="dialog-progress">
+            currently at {{ cancelDialogItem.percent | number:'1.0-1' }}%
+          </span>
+        </div>
+        <p class="dialog-info">
+          The download will stop and be moved to History as
+          <strong class="status-badge state-aborted">aborted</strong>.
+          No partial files will be retained.
+        </p>
+        <div class="dialog-actions">
+          <button class="btn-cancel" (click)="cancelDialog()" [disabled]="cancelDialogLoading">
+            Keep downloading
+          </button>
+          <button
+            class="btn-confirm"
+            (click)="executeCancel()"
+            [disabled]="cancelDialogLoading"
+            data-testid="queue-cancel-confirm-button"
+          >
+            <span *ngIf="!cancelDialogLoading">Cancel download</span>
+            <span *ngIf="cancelDialogLoading">Cancelling…</span>
+          </button>
         </div>
       </div>
     </div>
@@ -217,8 +253,15 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
       transition: background 0.2s;
     }
     .item:hover { background: rgba(169,183,198,0.06); }
-    .item.error { border-color: rgba(157,0,30,0.3); background: rgba(157,0,30,0.03); }
-    .item.pending { border-color: rgba(217,164,65,0.15); }
+    /* Per-state borders + tinted backgrounds — mapped from stateClass(item) */
+    .item.state-pending       { border-color: rgba(217,164,65,0.30); background: rgba(217,164,65,0.04); }
+    .item.state-preparing     { border-color: rgba(104,151,187,0.30); background: rgba(104,151,187,0.04); }
+    .item.state-downloading   { border-color: rgba(106,135,89,0.30);  background: rgba(106,135,89,0.04); }
+    .item.state-postprocessing { border-color: rgba(152,118,170,0.30); background: rgba(152,118,170,0.04); }
+    .item.state-finished      { border-color: rgba(106,135,89,0.50);  background: rgba(106,135,89,0.06); }
+    .item.state-error         { border-color: rgba(157,0,30,0.40);    background: rgba(157,0,30,0.05); }
+    .item.state-aborted       { border-color: rgba(204,120,50,0.30);  background: rgba(204,120,50,0.04); }
+    .item.state-unknown       { border-color: rgba(169,183,198,0.10); }
     .thumb { font-size: 20px; margin-top: 2px; }
     .info { flex: 1; min-width: 0; }
     .title {
@@ -238,19 +281,22 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
       flex-wrap: wrap;
       align-items: center;
     }
-    .status {
+    .status-badge {
       padding: 2px 8px;
       border-radius: 6px;
       font-size: 11px;
       font-weight: 600;
       text-transform: uppercase;
+      letter-spacing: 0.4px;
     }
-    .status.pending { background: rgba(217,164,65,0.12); color: #d9a441; }
-    .status.preparing { background: rgba(104,151,187,0.12); color: #6897bb; }
-    .status.downloading { background: rgba(106,135,89,0.12); color: #6a8759; }
-    .status.processing { background: rgba(152,118,170,0.12); color: #9876aa; }
-    .status.finished { background: rgba(106,135,89,0.12); color: #6a8759; }
-    .status.error { background: rgba(157,0,30,0.12); color: #cc7832; }
+    .status-badge.state-pending       { background: rgba(217,164,65,0.18);  color: #d9a441; }
+    .status-badge.state-preparing     { background: rgba(104,151,187,0.18); color: #6897bb; }
+    .status-badge.state-downloading   { background: rgba(106,135,89,0.18);  color: #6a8759; }
+    .status-badge.state-postprocessing { background: rgba(152,118,170,0.18); color: #9876aa; }
+    .status-badge.state-finished      { background: rgba(106,135,89,0.25);  color: #a5c178; }
+    .status-badge.state-error         { background: rgba(157,0,30,0.20);    color: #cc7832; }
+    .status-badge.state-aborted       { background: rgba(204,120,50,0.20);  color: #cc7832; }
+    .status-badge.state-unknown       { background: rgba(169,183,198,0.10); color: #808080; }
     .msg {
       margin-top: 8px;
       padding: 8px 12px;
@@ -275,23 +321,110 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
       display: flex;
       align-items: center;
       gap: 10px;
-      width: 180px;
+      width: 220px;
       margin-top: 4px;
     }
     .progress-bar {
       flex: 1;
-      height: 6px;
-      background: rgba(169,183,198,0.08);
-      border-radius: 3px;
+      height: 8px;
+      background: rgba(169,183,198,0.10);
+      border-radius: 4px;
       overflow: hidden;
+      position: relative;
+    }
+    .progress-bar.active::after {
+      /* Subtle moving shimmer over the unfilled portion so the bar
+         visibly "lives" even when percent updates pause briefly. */
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255,255,255,0.06) 50%,
+        transparent 100%
+      );
+      animation: progress-shimmer 1.6s linear infinite;
+      pointer-events: none;
+    }
+    @keyframes progress-shimmer {
+      0%   { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
     }
     .fill {
       height: 100%;
       background: linear-gradient(90deg, #9d001e, #d9a441);
-      border-radius: 3px;
-      transition: width 0.5s ease;
+      border-radius: 4px;
+      transition: width 0.4s ease;
     }
-    .percent { font-size: 12px; color: #808080; width: 36px; text-align: right; }
+    .fill.indeterminate {
+      /* No percent reported yet — animate a sliding bar so the user
+         knows something is happening. */
+      width: 30% !important;
+      animation: progress-indeterminate 1.4s ease-in-out infinite;
+    }
+    @keyframes progress-indeterminate {
+      0%   { transform: translateX(-100%); width: 30%; }
+      50%  { transform: translateX(120%); width: 40%; }
+      100% { transform: translateX(280%); width: 30%; }
+    }
+    .dialog-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+    .dialog {
+      background: #3c3f41;
+      border: 1px solid rgba(157,0,30,0.30);
+      border-radius: 14px;
+      padding: 22px 24px;
+      max-width: 460px;
+      width: 100%;
+      color: #a9b7c6;
+    }
+    .dialog h3 { margin: 0 0 12px; font-size: 17px; }
+    .dialog p { margin: 0 0 10px; font-size: 13px; line-height: 1.5; color: #808080; }
+    .dialog-item {
+      margin: 12px 0;
+      padding: 10px 14px;
+      background: rgba(0,0,0,0.18);
+      border-radius: 10px;
+      font-size: 13px;
+    }
+    .dialog-item strong { display: block; color: #a9b7c6; word-break: break-all; }
+    .dialog-progress { display: block; margin-top: 4px; font-size: 11px; color: #6897bb; }
+    .dialog-info { font-size: 12px; color: #808080; }
+    .dialog-actions {
+      margin-top: 16px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    .dialog-actions button {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .btn-cancel {
+      background: rgba(169,183,198,0.10);
+      color: #a9b7c6;
+    }
+    .btn-cancel:hover { background: rgba(169,183,198,0.18); }
+    .btn-confirm {
+      background: rgba(157,0,30,0.20);
+      color: #cc7832;
+      border: 1px solid rgba(157,0,30,0.40);
+    }
+    .btn-confirm:hover:not(:disabled) { background: rgba(157,0,30,0.30); }
+    .btn-confirm:disabled { opacity: 0.5; cursor: not-allowed; }
     .actions {
       display: flex;
       gap: 6px;
@@ -384,7 +517,35 @@ export class QueueComponent implements OnInit, OnDestroy {
 
   selectedIds = new Set<string>();
 
+  // Single-item cancel confirm dialog
+  cancelDialogItem: DownloadInfo | null = null;
+  cancelDialogLoading = false;
+
+  // Status mapping table — keep in sync with the CSS .state-* classes
+  // and the kept-in-history aborted recorder. If MeTube ever emits a
+  // new status string, the fall-through ('unknown') keeps the layout
+  // intact instead of silently rendering a blank badge.
+  private static readonly STATE_META: Record<string, { icon: string; label: string; klass: string; active: boolean }> = {
+    pending:        { icon: '⏳', label: 'pending',        klass: 'state-pending',        active: false },
+    preparing:      { icon: '⚙️', label: 'preparing',      klass: 'state-preparing',      active: true  },
+    downloading:    { icon: '⬇️', label: 'downloading',    klass: 'state-downloading',    active: true  },
+    postprocessing: { icon: '🛠️', label: 'postprocessing', klass: 'state-postprocessing', active: true  },
+    finished:       { icon: '✅', label: 'finished',       klass: 'state-finished',       active: false },
+    error:          { icon: '❌', label: 'error',          klass: 'state-error',          active: false },
+    aborted:        { icon: '🛑', label: 'aborted',        klass: 'state-aborted',        active: false },
+  };
+
   constructor(private metube: MetubeService) {}
+
+  stateMeta(item: DownloadInfo): { icon: string; label: string; klass: string; active: boolean } {
+    const s = (item.status || '').toLowerCase();
+    return QueueComponent.STATE_META[s] || { icon: '📄', label: s || 'unknown', klass: 'state-unknown', active: false };
+  }
+
+  stateIcon(item: DownloadInfo): string  { return this.stateMeta(item).icon; }
+  stateLabel(item: DownloadInfo): string { return this.stateMeta(item).label; }
+  stateClass(item: DownloadInfo): string { return this.stateMeta(item).klass; }
+  isActive(item: DownloadInfo): boolean  { return this.stateMeta(item).active; }
 
   trackById(_index: number, item: DownloadInfo): string {
     return item.id;
@@ -490,6 +651,62 @@ export class QueueComponent implements OnInit, OnDestroy {
     return [...this.pending, ...this.queue];
   }
 
+  /**
+   * Open the cancel confirmation dialog for a single queue item.
+   * Direct deletion without the dialog is forbidden — see CONST-034
+   * (anti-bluff): destructive UI actions MUST visibly gate.
+   */
+  confirmCancel(item: DownloadInfo): void {
+    this.cancelDialogItem = item;
+    this.cancelDialogLoading = false;
+  }
+
+  /** Close the cancel dialog without doing anything. */
+  cancelDialog(): void {
+    this.cancelDialogItem = null;
+    this.cancelDialogLoading = false;
+  }
+
+  /**
+   * Confirmed cancel:
+   *   1. Tell MeTube to drop it from the queue.
+   *   2. Record the abort to landing's /api/aborted-history so it
+   *      shows up on the History page with status='aborted' instead
+   *      of vanishing silently (vendor MeTube doesn't preserve
+   *      cancelled items).
+   */
+  executeCancel(): void {
+    if (!this.cancelDialogItem) return;
+    const item = this.cancelDialogItem;
+    this.cancelDialogLoading = true;
+    this.metube.deleteDownloads([item.url], 'queue').subscribe({
+      next: () => this.recordAndClose(item),
+      error: () => {
+        // Even if /delete failed (item already gone, race with worker),
+        // record the abort intent so the user sees it in history.
+        this.recordAndClose(item);
+      },
+    });
+  }
+
+  private recordAndClose(item: DownloadInfo): void {
+    this.metube.recordAbortedItem(item).subscribe({
+      next: () => {
+        this.cancelDialogLoading = false;
+        this.cancelDialogItem = null;
+        this.selectedIds.delete(item.id);
+      },
+      error: () => {
+        // Non-fatal — the user got their cancellation; recording is
+        // a best-effort UX nicety.
+        this.cancelDialogLoading = false;
+        this.cancelDialogItem = null;
+        this.selectedIds.delete(item.id);
+      },
+    });
+  }
+
+  /** Legacy code-path used by selection toolbar's "Clear N". */
   delete(item: DownloadInfo, where: 'queue' | 'done'): void {
     this.metube.deleteDownloads([item.url], where).subscribe();
   }

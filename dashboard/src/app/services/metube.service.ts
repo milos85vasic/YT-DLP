@@ -77,6 +77,23 @@ export interface BulkDeleteResult {
   errors: { url: string; error: string }[];
 }
 
+export interface AbortedHistoryEntry {
+  url: string;
+  title?: string;
+  folder?: string;
+  reason?: string;
+  percent?: number | null;
+  speed?: string;
+  eta?: string;
+  size?: number | string | null;
+  aborted_at?: number;
+  status: 'aborted';
+}
+
+export interface AbortedHistoryResponse {
+  aborted: AbortedHistoryEntry[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class MetubeService {
   private readonly base = '/api';
@@ -316,6 +333,39 @@ export class MetubeService {
 
   getProfileStatus(): Observable<ProfileStatusResponse> {
     return this.http.get<ProfileStatusResponse>(`${this.base}/profile-status`);
+  }
+
+  /**
+   * Aborted-history: vendor MeTube doesn't preserve cancelled queue
+   * items. We persist them in a landing-side store so the user sees
+   * "aborted" rows on the History page instead of the items vanishing.
+   */
+  getAbortedHistory(): Observable<AbortedHistoryResponse> {
+    return this.http.get<AbortedHistoryResponse>(`${this.base}/aborted-history`);
+  }
+
+  recordAbortedItem(item: DownloadInfo): Observable<{ success: boolean; count?: number; error?: string }> {
+    return this.http.post<{ success: boolean; count?: number; error?: string }>(
+      `${this.base}/aborted-history`,
+      {
+        url: item.url,
+        title: item.title || '',
+        folder: item.folder || '',
+        reason: 'user-cancel',
+        percent: item.percent ?? null,
+        speed: item.speed || '',
+        eta: item.eta || '',
+        size: item.size ?? null,
+      },
+    );
+  }
+
+  deleteAbortedHistory(urls: string[] | '*'): Observable<{ success: boolean; removed?: number; remaining?: number; error?: string }> {
+    return this.http.request<{ success: boolean; removed?: number; remaining?: number; error?: string }>(
+      'DELETE',
+      `${this.base}/aborted-history`,
+      { body: { urls } },
+    );
   }
 
   uploadCookies(file: File): Observable<{ success: boolean; error?: string }> {

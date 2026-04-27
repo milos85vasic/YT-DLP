@@ -8,9 +8,13 @@ for many platforms simultaneously; the validator accepts any of the supported
 video sites (see ``_validate_cookie_file`` for the canonical list).
 """
 
+import fcntl
+import json
 import os
-import uuid
 import time
+import uuid
+from contextlib import contextmanager
+
 from flask import Flask, render_template_string, request, jsonify, make_response, send_from_directory
 import requests
 
@@ -869,6 +873,169 @@ def cookie_status():
         "cookie_age_minutes": round(cookie_age_minutes, 1),
         "platforms": platforms,
     })
+
+
+ABORTED_HISTORY_PATH = "/config/aborted.json"
+ABORTED_HISTORY_LOCK_PATH = "/config/aborted.json.lock"
+
+
+@contextmanager
+def _aborted_history_lock():
+    """Cross-process advisory lock around the aborted-history file.
+    Without this, concurrent POST /api/aborted-history requests race on
+    read-modify-write and lose entries (verified by
+    test_aborted_history_concurrent_posts_no_500). The lock file is
+    separate from the data file so we don't overwrite the lock when
+    we os.replace() the data."""
+    os.makedirs(os.path.dirname(ABORTED_HISTORY_LOCK_PATH), exist_ok=True)
+    fd = os.open(ABORTED_HISTORY_LOCK_PATH, os.O_RDWR | os.O_CREAT, 0o644)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX)
+        yield
+    finally:
+        try:
+            fcntl.flock(fd, fcntl.LOCK_UN)
+        finally:
+            os.close(fd)
+
+
+def _read_aborted_history() -> list:
+    """Return the list of aborted-history entries (newest last). Empty
+    if the file doesn't exist or is unreadable. Never raises.
+    NOT internally locked — callers that read-modify-write must wrap
+    in _aborted_history_lock() to avoid the race."""
+    try:
+        if not os.path.exists(ABORTED_HISTORY_PATH):
+            return []
+        with open(ABORTED_HISTORY_PATH, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if not isinstance(data, list):
+            return []
+        return data
+    except Exception:
+        return []
+
+
+def _write_aborted_history(entries: list) -> None:
+    """Persist the aborted-history list. Best-effort; failures are
+    logged but never raise (the recorder is non-fatal — see
+    QueueComponent.recordAndClose). NOT internally locked — see
+    _read_aborted_history()."""
+    try:
+        os.makedirs(os.path.dirname(ABORTED_HISTORY_PATH), exist_ok=True)
+        tmp = ABORTED_HISTORY_PATH + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(entries, f, indent=2)
+        os.replace(tmp, ABORTED_HISTORY_PATH)
+    except Exception:
+        pass
+
+
+@app.route("/api/aborted-history", methods=["GET"])
+def aborted_history_get():
+    """Return the persisted aborted-history list. Always 200 with a
+    JSON `{aborted: [...]}` envelope so the dashboard can rely on the
+    shape even when the file is missing/empty.
+    Reads outside the lock — a torn read just returns the old list,
+    not an error. POSTs / DELETEs do their own locked read-then-write."""
+    return jsonify({"aborted": _read_aborted_history()})
+
+
+@app.route("/api/aborted-history", methods=["POST"])
+def aborted_history_append():
+    """Append one entry to the aborted-history list.
+
+    Expected body (all fields optional except `url`):
+        {
+          "url": "https://...",       # canonical id; required
+          "title": "...",             # display title
+          "folder": "...",            # destination folder
+          "reason": "user-cancel",    # short tag
+          "percent": 42,              # last reported percent
+          "speed": "5MB/s",
+          "eta": "00:30",
+          "size": 12345
+        }
+
+    Returns:
+        {"success": True, "count": <new total>}
+    """
+    try:
+        body = request.get_json(silent=True) or {}
+        url = (body.get("url") or "").strip()
+        if not url:
+            return jsonify({"success": False, "error": "url is required"}), 400
+
+        entry = {
+            "url": url,
+            "title": body.get("title") or "",
+            "folder": body.get("folder") or "",
+            "reason": body.get("reason") or "user-cancel",
+            "percent": body.get("percent"),
+            "speed": body.get("speed") or "",
+            "eta": body.get("eta") or "",
+            "size": body.get("size"),
+            "aborted_at": int(time.time()),
+            # The "status" key is what the dashboard's history view
+            # reads — fixed to "aborted" so the UI doesn't guess.
+            "status": "aborted",
+        }
+
+        # Locked read-modify-write so concurrent POSTs don't race
+        # and lose entries.
+        with _aborted_history_lock():
+            entries = _read_aborted_history()
+            # Idempotency: if the same URL was aborted within the last
+            # 60 seconds (e.g. the user double-cancelled while the
+            # dialog was still closing), skip the duplicate so /history
+            # doesn't show twin rows.
+            now = entry["aborted_at"]
+            recent = next(
+                (e for e in reversed(entries)
+                 if e.get("url") == url and now - int(e.get("aborted_at", 0)) < 60),
+                None,
+            )
+            if recent is None:
+                entries.append(entry)
+                _write_aborted_history(entries)
+
+        return jsonify({"success": True, "count": len(entries)})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/aborted-history", methods=["DELETE"])
+def aborted_history_delete():
+    """Remove entries from the aborted-history.
+
+    Body:
+        {"urls": ["https://...", "..."]}    # remove specific entries
+        {"urls": "*"}                         # remove ALL entries
+
+    Returns:
+        {"success": True, "removed": <count>, "remaining": <count>}
+    """
+    try:
+        body = request.get_json(silent=True) or {}
+        urls = body.get("urls")
+        if urls == "*":
+            with _aborted_history_lock():
+                removed = len(_read_aborted_history())
+                _write_aborted_history([])
+            return jsonify({"success": True, "removed": removed, "remaining": 0})
+
+        if not isinstance(urls, list) or not urls:
+            return jsonify({"success": False, "error": "urls must be a non-empty list or the literal '*'"}), 400
+
+        url_set = set(urls)
+        with _aborted_history_lock():
+            entries = _read_aborted_history()
+            kept = [e for e in entries if e.get("url") not in url_set]
+            removed = len(entries) - len(kept)
+            _write_aborted_history(kept)
+        return jsonify({"success": True, "removed": removed, "remaining": len(kept)})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @app.route("/api/profile-status")

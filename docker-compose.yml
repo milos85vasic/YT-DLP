@@ -81,10 +81,12 @@ services:
       - ACTIVE_PROFILE=vpn
     volumes:
       - ${DOWNLOAD_DIR}:/downloads:rw
-      # Read-only mount so /api/cookie-status can read the cookies file
-      # directly for per-platform freshness breakdown. Writes still go
-      # through MeTube's /upload-cookies endpoint, never directly here.
-      - ./metube/config:/config:ro
+      # Shared volume with metube-direct (or metube under vpn). Landing
+      # reads cookies.txt for per-platform freshness breakdown and
+      # writes /config/aborted.json for the cancelled-queue-item view
+      # on the History page. Cookie writes still go through MeTube's
+      # /upload-cookies endpoint — landing only persists aborted.json.
+      - ./metube/config:/config:rw
     depends_on:
       metube:
         condition: service_started
@@ -201,10 +203,12 @@ services:
       - ACTIVE_PROFILE=no-vpn
     volumes:
       - ${DOWNLOAD_DIR}:/downloads:rw
-      # Read-only mount so /api/cookie-status can read the cookies file
-      # directly for per-platform freshness breakdown. Writes still go
-      # through MeTube's /upload-cookies endpoint, never directly here.
-      - ./metube/config:/config:ro
+      # Shared volume with metube-direct (or metube under vpn). Landing
+      # reads cookies.txt for per-platform freshness breakdown and
+      # writes /config/aborted.json for the cancelled-queue-item view
+      # on the History page. Cookie writes still go through MeTube's
+      # /upload-cookies endpoint — landing only persists aborted.json.
+      - ./metube/config:/config:rw
     depends_on:
       metube-direct:
         condition: service_started

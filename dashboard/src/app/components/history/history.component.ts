@@ -1,14 +1,38 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subscription } from 'rxjs';
+import { Subscription, forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import {
   MetubeService,
   DownloadInfo,
   BulkDeleteResult,
+  AbortedHistoryEntry,
 } from '../../services/metube.service';
 
 type BulkScope = 'all' | 'selected' | 'single';
+
+/**
+ * Synthesise an aborted-history entry into the DownloadInfo shape the
+ * existing template iterates. Synthetic ids are prefixed with
+ * `aborted:` so we can tell them apart in delete handlers.
+ */
+function abortedToDownloadInfo(a: AbortedHistoryEntry, idx: number): DownloadInfo {
+  return {
+    id: `aborted:${a.url}:${a.aborted_at ?? idx}`,
+    title: a.title || a.url || 'Aborted download',
+    url: a.url,
+    quality: '',
+    format: '',
+    folder: a.folder || '',
+    status: 'aborted',
+    msg: a.reason ? `aborted (${a.reason})` : 'aborted',
+    percent: typeof a.percent === 'number' ? a.percent : undefined,
+    speed: a.speed,
+    eta: a.eta,
+    size: a.size as number | undefined,
+  } as DownloadInfo;
+}
 
 @Component({
   selector: 'app-history',
@@ -108,6 +132,9 @@ type BulkScope = 'all' | 'selected' | 'single';
           *ngFor="let item of history; trackBy: trackById"
           [class.error]="item.status === 'error'"
           [class.finished]="item.status === 'finished'"
+          [class.aborted]="item.status === 'aborted'"
+          [attr.data-testid]="'history-item-' + item.id"
+          [attr.data-status]="item.status"
           [class.selected]="isSelected(item)"
         >
           <input
@@ -121,7 +148,8 @@ type BulkScope = 'all' | 'selected' | 'single';
           <div class="thumb">
             <span *ngIf="item.status === 'error'">❌</span>
             <span *ngIf="item.status === 'finished'">✅</span>
-            <span *ngIf="item.status !== 'error' && item.status !== 'finished'">📄</span>
+            <span *ngIf="item.status === 'aborted'">🛑</span>
+            <span *ngIf="item.status !== 'error' && item.status !== 'finished' && item.status !== 'aborted'">📄</span>
           </div>
           <div class="info">
             <div class="title" [title]="item.title">{{ item.title || 'Untitled' }}</div>
@@ -139,10 +167,10 @@ type BulkScope = 'all' | 'selected' | 'single';
           <div class="actions">
             <!-- Cleanup: remove from history only -->
             <button class="btn-action btn-cleanup" (click)="cleanup(item)" title="Remove from history (keep file)">🧹</button>
-            <!-- Refresh: re-download -->
-            <button class="btn-action btn-refresh" (click)="refresh(item)" title="Re-download">↻</button>
-            <!-- Delete: remove from history + delete file -->
-            <button class="btn-action btn-delete" (click)="confirmDelete(item)" title="Delete file + remove from history">🗑️</button>
+            <!-- Refresh: re-download (hidden for aborted entries — they have no original record to refresh) -->
+            <button *ngIf="item.status !== 'aborted'" class="btn-action btn-refresh" (click)="refresh(item)" title="Re-download">↻</button>
+            <!-- Delete: remove from history + delete file (hidden for aborted — no file exists on disk) -->
+            <button *ngIf="item.status !== 'aborted'" class="btn-action btn-delete" (click)="confirmDelete(item)" title="Delete file + remove from history">🗑️</button>
           </div>
         </div>
       </div>
@@ -393,8 +421,11 @@ type BulkScope = 'all' | 'selected' | 'single';
       transition: background 0.2s;
     }
     .item:hover { background: rgba(169,183,198,0.06); }
-    .item.error { border-color: rgba(157,0,30,0.3); background: rgba(157,0,30,0.03); }
+    .item.error    { border-color: rgba(157,0,30,0.3);   background: rgba(157,0,30,0.03); }
     .item.finished { border-color: rgba(106,135,89,0.15); }
+    .item.aborted  { border-color: rgba(204,120,50,0.30); background: rgba(204,120,50,0.04); }
+    .item.aborted .status { background: rgba(204,120,50,0.20); color: #cc7832; }
+    .status.aborted { background: rgba(204,120,50,0.20); color: #cc7832; }
     .thumb { font-size: 20px; margin-top: 2px; }
     .info { flex: 1; min-width: 0; }
     .title {
@@ -622,11 +653,27 @@ export class HistoryComponent implements OnInit, OnDestroy {
   constructor(private metube: MetubeService) {}
 
   ngOnInit(): void {
+    this.startPolling();
+  }
+
+  private startPolling(): void {
+    // Poll MeTube /history every 1s (vendor); aborted-history every
+    // 3s (changes only on user cancel). Merge into a single list so
+    // the Queue → History "aborted" path is visible end-to-end.
     this.sub = this.metube.getHistoryPolling(1000).subscribe({
       next: (data) => {
-        this.loading = false;
-        this.error = null;
-        this.history = data.done || [];
+        // Pull aborted-history alongside (best-effort, don't block).
+        this.metube.getAbortedHistory().pipe(
+          catchError(() => of({ aborted: [] as AbortedHistoryEntry[] })),
+        ).subscribe((ab) => {
+          this.loading = false;
+          this.error = null;
+          const fromMetube = data.done || [];
+          const fromAborted = (ab.aborted || []).map((a, i) => abortedToDownloadInfo(a, i));
+          // Merge: aborted entries last so the most recent abort sits
+          // at the bottom (newest-first in /history is preserved).
+          this.history = [...fromMetube, ...fromAborted];
+        });
       },
       error: (err) => {
         this.loading = false;
@@ -654,18 +701,7 @@ export class HistoryComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.error = null;
     this.sub?.unsubscribe();
-    this.sub = this.metube.getHistoryPolling(1000).subscribe({
-      next: (data) => {
-        this.loading = false;
-        this.error = null;
-        this.history = data.done || [];
-      },
-      error: (err) => {
-        this.loading = false;
-        this.error = 'Failed to load history. Is the MeTube service running?';
-        console.error('History poll error', err);
-      },
-    });
+    this.startPolling();
   }
 
   clearAll(): void {
@@ -678,23 +714,49 @@ export class HistoryComponent implements OnInit, OnDestroy {
     )) {
       return;
     }
-    this.metube.clearHistory().subscribe({
-      next: () => {
+    // Cascade: clear MeTube /done AND landing aborted-history. Both
+    // run independently — failure of one shouldn't leave the other
+    // half-cleared.
+    let done = 0;
+    const finalize = () => {
+      done += 1;
+      if (done === 2) {
         this.history = [];
         this.showToast('History cleared');
+      }
+    };
+    this.metube.clearHistory().subscribe({
+      next: finalize,
+      error: (err) => {
+        this.showToast('Failed to clear MeTube history: ' + (err.error?.msg || err.message), true);
+        finalize();
       },
-      error: (err) => this.showToast('Failed to clear history: ' + (err.error?.msg || err.message), true),
+    });
+    this.metube.deleteAbortedHistory('*').subscribe({
+      next: finalize,
+      error: () => finalize(),  // best-effort
     });
   }
 
   cleanup(item: DownloadInfo): void {
-    this.metube.deleteDownloads([item.url], 'done').subscribe({
-      next: () => {
-        this.history = this.history.filter(i => i.id !== item.id);
-        this.showToast('Removed from history');
-      },
-      error: (err) => this.showToast('Failed to remove: ' + (err.error?.msg || err.message), true),
-    });
+    // Route aborted-history items to the landing endpoint instead of
+    // MeTube /delete (which doesn't know about them — would silently
+    // succeed and leave the row visible after the next poll).
+    const onSuccess = () => {
+      this.history = this.history.filter((i) => i.id !== item.id);
+      this.showToast('Removed from history');
+    };
+    const onError = (err: any) => {
+      this.showToast(
+        'Failed to remove: ' + (err?.error?.msg || err?.error?.error || err?.message || 'unknown'),
+        true,
+      );
+    };
+    if (item.status === 'aborted') {
+      this.metube.deleteAbortedHistory([item.url]).subscribe({ next: onSuccess, error: onError });
+    } else {
+      this.metube.deleteDownloads([item.url], 'done').subscribe({ next: onSuccess, error: onError });
+    }
   }
 
   refresh(item: DownloadInfo): void {
@@ -813,19 +875,62 @@ export class HistoryComponent implements OnInit, OnDestroy {
     this.dialogLoading = true;
     this.dialogProgress = 0;
 
-    this.metube.deleteSelectedWithFiles(this.dialogTargets).subscribe({
-      next: (result: BulkDeleteResult) => {
-        const deletedIds = new Set(this.dialogTargets.map((i) => i.id));
-        this.history = this.history.filter((i) => !deletedIds.has(i.id));
-        deletedIds.forEach((id) => this.selectedIds.delete(id));
-        this.cancelDialog();
-        this.summarizeBulkResult(result);
-      },
-      error: (err) => {
-        this.cancelDialog();
-        this.showToast('Bulk delete failed: ' + (err.error?.error || err.message), true);
-      },
-    });
+    // Aborted items: no file on disk; route to aborted-history DELETE.
+    // Real MeTube items: file may exist; route to /api/delete-download.
+    const targetsMetube = this.dialogTargets.filter((i) => i.status !== 'aborted');
+    const targetsAborted = this.dialogTargets.filter((i) => i.status === 'aborted');
+    const abortedUrls = targetsAborted.map((i) => i.url);
+
+    let metubeResult: BulkDeleteResult = { total_requested: 0, succeeded: 0, files_deleted: [], errors: [] };
+    let abortedDone = false;
+    let metubeDone = targetsMetube.length === 0;
+    abortedDone = targetsAborted.length === 0;
+
+    const finalize = () => {
+      if (!metubeDone || !abortedDone) return;
+      const deletedIds = new Set(this.dialogTargets.map((i) => i.id));
+      this.history = this.history.filter((i) => !deletedIds.has(i.id));
+      deletedIds.forEach((id) => this.selectedIds.delete(id));
+      this.cancelDialog();
+      // Aggregate counts include both branches.
+      const combined: BulkDeleteResult = {
+        total_requested: this.dialogTargets.length,
+        succeeded: metubeResult.succeeded + targetsAborted.length,
+        files_deleted: metubeResult.files_deleted,
+        errors: metubeResult.errors,
+      };
+      this.summarizeBulkResult(combined);
+    };
+
+    if (targetsMetube.length > 0) {
+      this.metube.deleteSelectedWithFiles(targetsMetube).subscribe({
+        next: (r) => {
+          metubeResult = r;
+          metubeDone = true;
+          finalize();
+        },
+        error: (err) => {
+          this.cancelDialog();
+          this.showToast('Bulk delete failed: ' + (err.error?.error || err.message), true);
+        },
+      });
+    }
+    if (targetsAborted.length > 0) {
+      this.metube.deleteAbortedHistory(abortedUrls).subscribe({
+        next: () => {
+          abortedDone = true;
+          finalize();
+        },
+        error: () => {
+          // Best-effort — count as done so the dialog closes.
+          abortedDone = true;
+          finalize();
+        },
+      });
+    }
+    if (this.dialogTargets.length === 0) {
+      this.cancelDialog();
+    }
   }
 
   // ----- Bulk clear (no files) -----
@@ -841,16 +946,37 @@ export class HistoryComponent implements OnInit, OnDestroy {
       `✅ Files on disk are KEPT.\n` +
       `Press OK to proceed.`
     )) return;
-    const urls = items.map((i) => i.url);
-    this.metube.clearSelected(urls, 'done').subscribe({
-      next: () => {
+    // Split: MeTube items go via /delete; aborted entries via /aborted-history.
+    const fromMetube = items.filter((i) => i.status !== 'aborted').map((i) => i.url);
+    const fromAborted = items.filter((i) => i.status === 'aborted').map((i) => i.url);
+    let pending = 0;
+    if (fromMetube.length > 0) pending += 1;
+    if (fromAborted.length > 0) pending += 1;
+    if (pending === 0) return;
+    const finalize = () => {
+      pending -= 1;
+      if (pending === 0) {
         const removedIds = new Set(items.map((i) => i.id));
         this.history = this.history.filter((i) => !removedIds.has(i.id));
         removedIds.forEach((id) => this.selectedIds.delete(id));
         this.showToast(`Cleared ${items.length} item${items.length === 1 ? '' : 's'}`);
-      },
-      error: (err) => this.showToast('Failed to clear: ' + (err.error?.msg || err.message), true),
-    });
+      }
+    };
+    if (fromMetube.length > 0) {
+      this.metube.clearSelected(fromMetube, 'done').subscribe({
+        next: finalize,
+        error: (err) => {
+          this.showToast('Failed to clear MeTube items: ' + (err.error?.msg || err.message), true);
+          finalize();
+        },
+      });
+    }
+    if (fromAborted.length > 0) {
+      this.metube.deleteAbortedHistory(fromAborted).subscribe({
+        next: finalize,
+        error: () => finalize(),
+      });
+    }
   }
 
   private summarizeBulkResult(result: BulkDeleteResult): void {

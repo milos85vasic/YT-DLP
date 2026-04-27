@@ -100,6 +100,19 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
+    location /api/aborted-history {
+        resolver ${RESOLVER} valid=10s;
+        set $landing_backend http://metube-landing:8080;
+        rewrite ^/api/aborted-history /api/aborted-history break;
+        proxy_pass $landing_backend;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Content-Type $http_content_type;
+    }
+
     location /socket.io/ {
         resolver ${RESOLVER} valid=10s;
         set $metube_backend http://metube-direct:8081;

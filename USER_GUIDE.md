@@ -8,6 +8,9 @@ Complete guide for using the YT-DLP Container Project with Podman/Docker and VPN
 2. [Installation](#installation)
 3. [Configuration](#configuration)
 4. [Basic Usage](#basic-usage)
+   - [The Add-Download Form](#the-add-download-form)
+   - [Queue States and Progress](#queue-states-and-progress)
+   - [Cancelling from the Queue](#cancelling-from-the-queue)
    - [Managing Queue and History](#managing-queue-and-history)
 5. [Advanced Usage](#advanced-usage)
 6. [VPN Setup](#vpn-setup)
@@ -200,6 +203,83 @@ Once started, open your browser:
 - Cookie management page with per-platform freshness breakdown.
 - VPN-state pill in the top navbar so you always know which compose
   profile is active.
+
+### The Add-Download Form
+
+After you submit a URL with the **Add download** button:
+
+1. The button briefly disables (it's making the `POST /api/add` call).
+2. As soon as the backend confirms `status:ok`, the form **re-enables**
+   and the URL field **clears** so you can paste the next link
+   immediately. You don't have to wait for the previous download to
+   finish.
+3. The "Tracker" panel below the form keeps showing the *most recent*
+   submission's progress (queued → downloading → finished).
+4. The full queue is always visible on the **Queue** page — that's
+   the source of truth when you're submitting many URLs in a row.
+
+If `/api/add` returns an error (extractor failure, malformed URL, etc.)
+the URL field stays populated so you can fix it and resubmit.
+
+### Queue States and Progress
+
+The **Queue** page (`/queue`) renders each in-flight item with a
+status badge, an icon, and (when the worker is actively running) a
+progress bar.
+
+| Status | Icon | Badge colour | Meaning |
+|---|---|---|---|
+| `pending` | ⏳ | yellow | Submitted but not yet started |
+| `preparing` | ⚙️ | blue | yt-dlp is fetching metadata / formats |
+| `downloading` | ⬇️ | green | Bytes are flowing; progress bar live |
+| `postprocessing` | 🛠️ | purple | Merging / converting / writing metadata |
+| `finished` | ✅ | bright green | Done — the row is about to move to History |
+| `error` | ❌ | red | yt-dlp returned an error; retry button appears |
+
+**Progress bar behaviour:**
+
+- When `percent` is reported by the backend (most yt-dlp downloads
+  emit progress every ~500ms), the bar fills proportionally with a
+  smooth 0.4s ease.
+- When the backend has accepted the URL but hasn't yet emitted a
+  percent (the `preparing` window before the first byte arrives), the
+  bar shows an indeterminate sliding animation so the user knows
+  something is happening.
+- A subtle moving shimmer overlays the bar whenever the row is in an
+  active state — visual confirmation that the page is live, not stuck.
+
+The progress bar disappears once the row leaves an active state
+(finished / error / pending).
+
+### Cancelling from the Queue
+
+Each Queue row has a **✕ Cancel** button. Clicking it does **NOT**
+cancel immediately — it opens a confirmation dialog:
+
+> **✕ Cancel download?**
+> You're about to cancel this download:
+> *<title or URL>* (currently at 42%)
+>
+> The download will stop and be moved to History as **aborted**.
+> No partial files will be retained.
+>
+> [Keep downloading] [Cancel download]
+
+When you confirm:
+
+1. The dashboard tells MeTube to drop the item from the queue
+   (`POST /api/delete?where=queue`).
+2. The dashboard records the abort to landing's
+   `POST /api/aborted-history` so the row shows up on the History
+   page with status `aborted` instead of vanishing silently.
+
+The "Keep downloading" button (or clicking outside the dialog)
+dismisses without doing anything.
+
+If the worker has already finished by the time you confirm (race
+between you and yt-dlp), the cancel still records the abort intent
+— but you'll also see the completed row in History as `finished`.
+That's the worker-completed-first race, not a bug.
 
 ### Managing Queue and History
 

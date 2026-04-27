@@ -175,8 +175,20 @@ The Landing Page handles cookie authentication and redirects to MeTube when read
 
 **YT-DLP Dashboard (at http://localhost:9090):**
 - Modern Angular standalone application
-- Add downloads with quality/format selection
-- Real-time queue and history tracking
+- Add downloads with quality/format selection — **form re-enables
+  immediately after `/api/add` returns ok**, so you can submit the
+  next URL while the previous is still tracking
+- Real-time queue with per-state visuals: `pending` / `preparing` /
+  `downloading` / `postprocessing` / `finished` / `error`, each with
+  a distinct icon, badge colour, and live progress bar (with shimmer
+  when active and indeterminate animation when no percent is yet
+  reported)
+- **Cancel-from-Queue confirmation dialog** — destructive cancel
+  always prompts before firing
+- **Aborted-history visibility** — cancelled queue items show up on
+  the History page with status `aborted` (vendor MeTube would have
+  silently dropped them; the dashboard records them via the new
+  `/api/aborted-history` landing endpoint)
 - 16 supported platforms with per-platform status badges
 - VPN-state pill in the navbar
 - Cookie management page with per-platform freshness breakdown

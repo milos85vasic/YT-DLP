@@ -121,4 +121,87 @@ describe('QueueComponent — selection + bulk operations', () => {
     httpMock.expectNone((r) => r.url === '/api/delete');
     httpMock.expectNone((r) => r.url === '/api/history');
   });
+
+  // ---- Cancel confirm dialog ----
+
+  it('confirmCancel opens the dialog without firing any HTTP request', () => {
+    component.confirmCancel(component.queue[0]);
+    expect(component.cancelDialogItem).toBe(component.queue[0]);
+    expect(component.cancelDialogLoading).toBe(false);
+    httpMock.expectNone(() => true);
+  });
+
+  it('cancelDialog closes the dialog and clears state', () => {
+    component.confirmCancel(component.queue[0]);
+    component.cancelDialogLoading = true;
+    component.cancelDialog();
+    expect(component.cancelDialogItem).toBeNull();
+    expect(component.cancelDialogLoading).toBe(false);
+  });
+
+  it('executeCancel POSTs /delete then /aborted-history (anti-bluff: both must fire)', () => {
+    component.confirmCancel(component.queue[0]);
+    component.executeCancel();
+
+    const delReq = httpMock.expectOne('/api/delete');
+    expect(delReq.request.body.where).toBe('queue');
+    delReq.flush({ status: 'ok' });
+
+    const abReq = httpMock.expectOne('/api/aborted-history');
+    expect(abReq.request.method).toBe('POST');
+    expect(abReq.request.body.url).toBe(component.queue[0].url);
+    expect(abReq.request.body.reason).toBe('user-cancel');
+    abReq.flush({ success: true, count: 1 });
+
+    expect(component.cancelDialogItem).toBeNull();
+  });
+
+  it('executeCancel still records abort even if MeTube /delete errors (item already gone)', () => {
+    component.confirmCancel(component.queue[0]);
+    component.executeCancel();
+
+    const delReq = httpMock.expectOne('/api/delete');
+    delReq.error(new ProgressEvent('error'), { status: 404, statusText: 'Not Found' });
+
+    // We expect the abort recording to still happen.
+    const abReq = httpMock.expectOne('/api/aborted-history');
+    abReq.flush({ success: true, count: 1 });
+
+    expect(component.cancelDialogItem).toBeNull();
+  });
+
+  // ---- State-to-class mapping (visual contract) ----
+
+  it('stateClass maps every known status to a distinct class', () => {
+    const states = ['pending', 'preparing', 'downloading', 'postprocessing', 'finished', 'error', 'aborted'];
+    const seen = new Set<string>();
+    for (const s of states) {
+      const klass = component.stateClass({ status: s } as any);
+      expect(klass).toMatch(/^state-/);
+      seen.add(klass);
+    }
+    expect(seen.size).toBe(states.length); // all distinct
+  });
+
+  it('stateClass falls through to state-unknown for an unrecognised status', () => {
+    expect(component.stateClass({ status: 'something-new' } as any)).toBe('state-unknown');
+  });
+
+  it('isActive returns true for in-progress statuses and false for terminal ones', () => {
+    expect(component.isActive({ status: 'preparing' } as any)).toBe(true);
+    expect(component.isActive({ status: 'downloading' } as any)).toBe(true);
+    expect(component.isActive({ status: 'postprocessing' } as any)).toBe(true);
+    expect(component.isActive({ status: 'finished' } as any)).toBe(false);
+    expect(component.isActive({ status: 'error' } as any)).toBe(false);
+    expect(component.isActive({ status: 'pending' } as any)).toBe(false);
+  });
+
+  it('stateIcon and stateLabel return non-empty strings for every known status', () => {
+    for (const s of ['pending', 'preparing', 'downloading', 'postprocessing', 'finished', 'error', 'aborted']) {
+      const icon = component.stateIcon({ status: s } as any);
+      const label = component.stateLabel({ status: s } as any);
+      expect(icon.length).toBeGreaterThan(0);
+      expect(label.length).toBeGreaterThan(0);
+    }
+  });
 });
