@@ -1,4 +1,4 @@
-import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { TestBed, ComponentFixture, fakeAsync, tick } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
@@ -84,4 +84,51 @@ describe('DownloadFormComponent — form re-enable after /add', () => {
     expect(component.loading).toBe(false);
     expect(component.url).toBe('');
   });
+
+  it('restores URL and re-enables form when tracker finds error status', fakeAsync(() => {
+    component.url = 'https://example.com/v';
+    component.addDownload();
+    httpMock.expectOne('/api/add').flush({ status: 'ok' });
+    expect(component.url).toBe(''); // cleared on /add success
+    tick(0); // let timer(0) fire inside pollForItem
+
+    // Simulate poll returning error
+    const pollReq = httpMock.expectOne('/api/history');
+    pollReq.flush({
+      done: [],
+      queue: [],
+      pending: [],
+    });
+    // No match yet — need more polls
+    tick(500);
+    const pollReq2 = httpMock.expectOne('/api/history');
+    pollReq2.flush({
+      done: [{ id: '1', title: 'T', url: 'https://example.com/v', quality: 'best', format: 'any', folder: '', status: 'error', msg: 'fail' }],
+      queue: [],
+      pending: [],
+    });
+
+    expect(component.tracker.state).toBe('error');
+    expect(component.url).toBe('https://example.com/v'); // RESTORED so user can retry
+    expect(component.loading).toBe(false);
+  }));
+
+  it('restores URL and re-enables form on tracker timeout', fakeAsync(() => {
+    component.url = 'https://example.com/v';
+    component.addDownload();
+    httpMock.expectOne('/api/add').flush({ status: 'ok' });
+    expect(component.url).toBe('');
+    tick(0); // let timer(0) fire
+
+    // Exhaust all 30 poll attempts without a match
+    for (let i = 0; i < 30; i++) {
+      const req = httpMock.expectOne('/api/history');
+      req.flush({ done: [], queue: [], pending: [] });
+      tick(500);
+    }
+
+    expect(component.tracker.state).toBe('timeout');
+    expect(component.url).toBe('https://example.com/v'); // RESTORED
+    expect(component.loading).toBe(false);
+  }));
 });

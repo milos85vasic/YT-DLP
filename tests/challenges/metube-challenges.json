@@ -1,0 +1,152 @@
+{
+  "version": "1.0",
+  "name": "MeTube Anti-Bluff Challenges",
+  "metadata": {
+    "project": "MeTube",
+    "domain": "video-download",
+    "description": "Anti-bluff challenges validating MeTube functionality really works - downloads complete, queue updates in real-time, form re-enables after failures"
+  },
+  "challenges": [
+    {
+      "id": "metube-download-completes-successfully",
+      "name": "Download Completes Successfully",
+      "description": "Verify that a video download actually completes and the file exists on disk. Anti-bluff: must stat the actual file, not just check API status.",
+      "category": "core",
+      "estimated_duration": "120s",
+      "inputs": [
+        {"name": "metube_url", "source": "env", "required": true, "description": "MeTube API URL (http://localhost:8088)"},
+        {"name": "download_dir", "source": "env", "required": true, "description": "Download directory path"},
+        {"name": "test_video_url", "source": "config", "required": true, "description": "Known short video URL for testing"}
+      ],
+      "outputs": [
+        {"name": "download_status", "type": "string", "description": "Final status from API"},
+        {"name": "file_exists", "type": "boolean", "description": "Whether downloaded file exists on disk"},
+        {"name": "file_size", "type": "number", "description": "Downloaded file size in bytes"},
+        {"name": "file_path", "type": "string", "description": "Path to downloaded file"}
+      ],
+      "assertions": [
+        {"type": "equals", "target": "download_status", "value": "finished", "message": "Download must complete with status 'finished'"},
+        {"type": "equals", "target": "file_exists", "value": true, "message": "Downloaded file must exist on disk"},
+        {"type": "min", "target": "file_size", "value": 1024, "message": "Downloaded file must be at least 1KB"}
+      ]
+    },
+    {
+      "id": "metube-form-reenables-after-failure",
+      "name": "Form Re-enables After Download Failure",
+      "description": "Verify that the download form becomes re-enabled after a failed download. Anti-bluff: actually try to add a bad URL and confirm the form is usable afterwards.",
+      "category": "ui",
+      "estimated_duration": "30s",
+      "inputs": [
+        {"name": "dashboard_url", "source": "env", "required": true, "description": "Dashboard URL (http://localhost:9090)"}
+      ],
+      "outputs": [
+        {"name": "form_disabled_initial", "type": "boolean", "description": "Whether form is disabled during submit"},
+        {"name": "form_enabled_after_error", "type": "boolean", "description": "Whether form re-enables after error"},
+        {"name": "url_field_has_value", "type": "boolean", "description": "Whether URL field retains the failed URL"}
+      ],
+      "assertions": [
+        {"type": "equals", "target": "form_enabled_after_error", "value": true, "message": "Form must be re-enabled after failure"},
+        {"type": "equals", "target": "url_field_has_value", "value": true, "message": "URL field must retain failed URL for retry"}
+      ]
+    },
+    {
+      "id": "metube-retry-appears-immediately",
+      "name": "Retried Download Appears Immediately in Queue",
+      "description": "Verify that when retrying a failed download, it appears in the queue immediately with 'preparing' status. Anti-bluff: check the actual DOM/API, not just console logs.",
+      "category": "ui",
+      "estimated_duration": "45s",
+      "inputs": [
+        {"name": "dashboard_url", "source": "env", "required": true, "description": "Dashboard URL (http://localhost:9090)"},
+        {"name": "metube_url", "source": "env", "required": true, "description": "MeTube API URL"}
+      ],
+      "outputs": [
+        {"name": "item_visible_immediately", "type": "boolean", "description": "Whether retried item appears in queue right away"},
+        {"name": "item_status", "type": "string", "description": "Status of retried item"},
+        {"name": "has_preparing_status", "type": "boolean", "description": "Whether item shows 'preparing' status"}
+      ],
+      "assertions": [
+        {"type": "equals", "target": "item_visible_immediately", "value": true, "message": "Retried item must appear in queue immediately"},
+        {"type": "equals", "target": "has_preparing_status", "value": true, "message": "Item must show 'preparing' status initially"}
+      ]
+    },
+    {
+      "id": "metube-queue-updates-realtime",
+      "name": "Queue Updates in Real-Time",
+      "description": "Verify that queue status updates are reflected in the UI within a reasonable time. Anti-bluff: poll the actual queue API and confirm progress values change.",
+      "category": "ui",
+      "estimated_duration": "90s",
+      "inputs": [
+        {"name": "metube_url", "source": "env", "required": true, "description": "MeTube API URL"},
+        {"name": "test_video_url", "source": "config", "required": true}
+      ],
+      "outputs": [
+        {"name": "progress_changes", "type": "boolean", "description": "Whether progress percentage changes during download"},
+        {"name": "status_updates", "type": "boolean", "description": "Whether status updates are detected"},
+        {"name": "final_status", "type": "string", "description": "Final download status"}
+      ],
+      "assertions": [
+        {"type": "equals", "target": "status_updates", "value": true, "message": "Queue must show status updates during download"},
+        {"type": "equals", "target": "final_status", "value": "finished", "message": "Download must complete successfully"}
+      ]
+    },
+    {
+      "id": "metube-cookie-upload-works",
+      "name": "Cookie Upload Works Correctly",
+      "description": "Verify that cookie upload via landing page actually enables restricted content downloads. Anti-bluff: upload real cookies and try downloading a members-only video.",
+      "category": "auth",
+      "estimated_duration": "60s",
+      "inputs": [
+        {"name": "landing_url", "source": "env", "required": true, "description": "Landing page URL (http://localhost:8086)"},
+        {"name": "cookies_path", "source": "env", "required": false, "description": "Path to valid cookie file"}
+      ],
+      "outputs": [
+        {"name": "upload_success", "type": "boolean", "description": "Whether cookie upload succeeded"},
+        {"name": "cookie_status", "type": "string", "description": "Cookie status from API"},
+        {"name": "has_valid_cookies", "type": "boolean", "description": "Whether valid cookies are detected"}
+      ],
+      "assertions": [
+        {"type": "equals", "target": "upload_success", "value": true, "message": "Cookie upload must succeed"},
+        {"type": "not_empty", "target": "cookie_status", "message": "Cookie status must be returned"}
+      ]
+    },
+    {
+      "id": "metube-history-persists-aborted",
+      "name": "History Persists Aborted Downloads",
+      "description": "Verify that aborted/cancelled downloads appear in history with status 'aborted'. Anti-bluff: actually cancel a download and check history API returns it.",
+      "category": "core",
+      "estimated_duration": "60s",
+      "inputs": [
+        {"name": "metube_url", "source": "env", "required": true}
+      ],
+      "outputs": [
+        {"name": "aborted_item_exists", "type": "boolean", "description": "Whether aborted item appears in history"},
+        {"name": "aborted_status", "type": "string", "description": "Status of aborted item"},
+        {"name": "history_count", "type": "number", "description": "Number of items in history"}
+      ],
+      "assertions": [
+        {"type": "equals", "target": "aborted_status", "value": "aborted", "message": "Cancelled download must have status 'aborted' in history"},
+        {"type": "min", "target": "history_count", "value": 1, "message": "History must contain at least one item"}
+      ]
+    },
+    {
+      "id": "metube-bulk-operations-work",
+      "name": "Bulk Operations Work Correctly",
+      "description": "Verify that bulk delete/clear operations actually remove items from queue and history. Anti-bluff: add multiple items, run bulk delete, verify they're gone from API.",
+      "category": "core",
+      "estimated_duration": "90s",
+      "inputs": [
+        {"name": "metube_url", "source": "env", "required": true},
+        {"name": "test_video_urls", "source": "config", "required": true, "description": "Array of test video URLs"}
+      ],
+      "outputs": [
+        {"name": "items_added", "type": "number", "description": "Number of items successfully added"},
+        {"name": "items_after_bulk_delete", "type": "number", "description": "Number of items remaining after bulk delete"},
+        {"name": "bulk_delete_success", "type": "boolean", "description": "Whether bulk delete succeeded"}
+      ],
+      "assertions": [
+        {"type": "min", "target": "items_added", "value": 2, "message": "Must successfully add at least 2 items"},
+        {"type": "equals", "target": "items_after_bulk_delete", "value": 0, "message": "Bulk delete must remove all items"}
+      ]
+    }
+  ]
+}

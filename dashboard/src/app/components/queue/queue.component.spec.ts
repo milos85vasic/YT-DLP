@@ -204,4 +204,39 @@ describe('QueueComponent — selection + bulk operations', () => {
       expect(label.length).toBeGreaterThan(0);
     }
   });
+
+  it('retry on error item optimistically removes old error and adds preparing item', () => {
+    const errorItem = mkItem({ id: 'err1', status: 'error', msg: 'failed', percent: 0 });
+    component.queue = [errorItem];
+    component.retry(errorItem);
+
+    // Optimistic: old error removed, preparing added
+    expect(component.queue.length).toBe(1);
+    expect(component.queue[0].status).toBe('preparing');
+    expect(component.queue[0].id).toBe('err1');
+
+    // Backend calls: delete from queue, then add
+    const delReq = httpMock.expectOne('/api/delete');
+    expect(delReq.request.body.where).toBe('queue');
+    delReq.flush({ status: 'ok' });
+
+    const addReq = httpMock.expectOne('/api/add');
+    addReq.flush({ status: 'ok' });
+  });
+
+  it('retry on error item reverts optimistic update on backend failure', () => {
+    const errorItem = mkItem({ id: 'err2', status: 'error', msg: 'failed', percent: 0 });
+    component.queue = [errorItem];
+    component.retry(errorItem);
+
+    expect(component.queue[0].status).toBe('preparing');
+
+    const delReq = httpMock.expectOne('/api/delete');
+    delReq.error(new ProgressEvent('error'), { status: 500, statusText: 'Internal Server Error' });
+
+    // Reverted: preparing removed, original error restored
+    expect(component.queue.length).toBe(1);
+    expect(component.queue[0].status).toBe('error');
+    expect(component.queue[0].msg).toBe('failed');
+  });
 });

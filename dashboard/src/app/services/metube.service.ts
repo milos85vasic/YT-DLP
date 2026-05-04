@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, timer, of } from 'rxjs';
-import { switchMap, shareReplay, take, map } from 'rxjs/operators';
+import { switchMap, shareReplay, take, map, catchError, filter } from 'rxjs/operators';
+// NOTE: shareReplay refCount:true prevents memory leaks — when all subscribers
+// unsubscribe (e.g. component destroyed), the underlying timer stops.
 
 export interface AddDownloadRequest {
   url: string;
@@ -114,8 +116,14 @@ export class MetubeService {
 
   getHistoryPolling(intervalMs = 1000): Observable<HistoryResponse> {
     return timer(0, intervalMs).pipe(
-      switchMap(() => this.getHistory()),
-      shareReplay(1)
+      switchMap(() => this.getHistory().pipe(
+        catchError((err) => {
+          console.error('History poll failed, retrying...', err);
+          return of(null);
+        })
+      )),
+      filter((data): data is HistoryResponse => data !== null),
+      shareReplay({ bufferSize: 1, refCount: true })
     );
   }
 
@@ -147,11 +155,11 @@ export class MetubeService {
     });
   }
 
-  /** Retry a failed/completed download by removing from history and re-adding. */
-  retryDownload(item: DownloadInfo): Observable<{ status: string; msg?: string }> {
+  /** Retry a failed/completed download by removing from history/queue and re-adding. */
+  retryDownload(item: DownloadInfo, where: 'queue' | 'done' = 'done'): Observable<{ status: string; msg?: string }> {
     return new Observable((observer) => {
-      // 1. Remove from history (MeTube /delete expects URLs as keys)
-      this.deleteDownloads([item.url], 'done').subscribe({
+      // 1. Remove from queue or history (MeTube /delete expects URLs as keys)
+      this.deleteDownloads([item.url], where).subscribe({
         next: () => {
           // 2. Re-add with same settings
           const req: AddDownloadRequest = {
@@ -389,7 +397,13 @@ export class MetubeService {
   pollForItem(url: string, maxAttempts = 20, intervalMs = 500): Observable<DownloadInfo | null> {
     return timer(0, intervalMs).pipe(
       take(maxAttempts),
-      switchMap(() => this.getHistory()),
+      switchMap(() => this.getHistory().pipe(
+        catchError((err) => {
+          console.error('pollForItem: history request failed, continuing...', err);
+          return of(null);
+        })
+      )),
+      filter((data): data is HistoryResponse => data !== null),
       map((data) => {
         const all = [...(data.pending || []), ...(data.queue || []), ...(data.done || [])];
         return all.find((item) => item.url === url) || null;

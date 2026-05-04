@@ -448,7 +448,10 @@ export class DownloadFormComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (res) => {
           if (res.status !== 'ok') {
+            // FAILED: /add returned status !== 'ok'
+            // CRITICAL: restore URL so form is re-enabled with the failed URL visible for retry
             this.loading = false;
+            this.url = submittedUrl;
             this.tracker = { state: 'error', item: { id: '', title: '', url: submittedUrl, quality: '', format: '', folder: '', status: 'error', msg: res.msg || 'Unknown error' } as DownloadInfo };
             return;
           }
@@ -461,7 +464,10 @@ export class DownloadFormComponent implements OnInit, OnDestroy {
           this.trackDownload(submittedUrl);
         },
         error: (err) => {
+          // FAILED: network error or HTTP error
+          // CRITICAL: restore URL so form is re-enabled with the failed URL visible for retry
           this.loading = false;
+          this.url = submittedUrl;
           this.tracker = { state: 'error', item: { id: '', title: '', url: submittedUrl, quality: '', format: '', folder: '', status: 'error', msg: err.error?.msg || err.message || 'Network error' } as DownloadInfo };
         },
       });
@@ -475,11 +481,11 @@ export class DownloadFormComponent implements OnInit, OnDestroy {
           return;
         }
         if (match.status === 'error') {
-          this.loading = false;
+          // Restore URL so the form button is re-enabled immediately
+          this.url = targetUrl;
           this.tracker = { state: 'error', item: match };
           this.trackSub?.unsubscribe();
         } else if (match.status === 'finished') {
-          this.loading = false;
           this.tracker = { state: 'finished', item: match };
           this.trackSub?.unsubscribe();
         } else if (match.status === 'downloading') {
@@ -489,13 +495,15 @@ export class DownloadFormComponent implements OnInit, OnDestroy {
         }
       },
       error: () => {
-        this.loading = false;
+        // Restore URL so the form button is re-enabled immediately
+        this.url = targetUrl;
         this.tracker = { state: 'timeout', item: null };
       },
       complete: () => {
         // pollForItem completes after maxAttempts if no match found
         if (this.tracker.state !== 'error' && this.tracker.state !== 'finished') {
-          this.loading = false;
+          // Restore URL so the form button is re-enabled immediately
+          this.url = targetUrl;
           this.tracker = { state: 'timeout', item: null };
         }
       },

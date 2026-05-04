@@ -515,6 +515,9 @@ export class QueueComponent implements OnInit, OnDestroy {
   error: string | null = null;
   private sub?: Subscription;
 
+  /** Local optimistic items: items we've just retried/submitted but server hasn't confirmed yet */
+  private optimisticItems: DownloadInfo[] = [];
+
   selectedIds = new Set<string>();
 
   // Single-item cancel confirm dialog
@@ -628,12 +631,24 @@ export class QueueComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.sub = this.metube.getHistoryPolling(1000).subscribe({
+    // Poll every 500ms for real-time status updates (MeTube dashboard on 8088 updates fast)
+    this.sub = this.metube.getHistoryPolling(500).subscribe({
       next: (data) => {
         this.loading = false;
         this.error = null;
-        this.queue = data.queue || [];
-        this.pending = data.pending || [];
+        // Server data
+        const serverQueue = data.queue || [];
+        const serverPending = data.pending || [];
+        // Merge: remove optimistic items that now appear in server data, keep others
+        const serverIds = new Set([...serverQueue.map(i => i.id), ...serverPending.map(i => i.id)]);
+        const stillOptimistic = this.optimisticItems.filter(i => !serverIds.has(i.id));
+        // Use optimistic items for IDs not yet in server response
+        const optimisticPending = stillOptimistic.filter(i => i.status === 'preparing' || i.status === 'pending');
+        const optimisticQueue = stillOptimistic.filter(i => i.status !== 'preparing' && i.status !== 'pending');
+        this.queue = [...optimisticQueue, ...serverQueue];
+        this.pending = [...optimisticPending, ...serverPending];
+        // Clean up optimistic list
+        this.optimisticItems = [...stillOptimistic];
       },
       error: (err) => {
         this.loading = false;
@@ -715,7 +730,8 @@ export class QueueComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.error = null;
     this.sub?.unsubscribe();
-    this.sub = this.metube.getHistoryPolling(1000).subscribe({
+    // Faster poll on retry (500ms)
+    this.sub = this.metube.getHistoryPolling(500).subscribe({
       next: (data) => {
         this.loading = false;
         this.error = null;
@@ -732,19 +748,58 @@ export class QueueComponent implements OnInit, OnDestroy {
 
   start(item: DownloadInfo): void {
     // Moves a pending item to the active download queue
+    // Optimistic: add to optimistic items so it shows immediately
+    const optimisticItem: DownloadInfo = {
+      ...item,
+      id: item.id || `optimistic-${Date.now()}`,
+      status: 'preparing',
+      percent: 0,
+      speed: null,
+      eta: null,
+      msg: '',
+    };
+    this.optimisticItems = [...this.optimisticItems, optimisticItem];
+    this.pending = this.pending.filter(i => i.id !== item.id);
+    this.queue = [...this.queue, optimisticItem];
     this.metube.startDownloads([item.url]).subscribe({
       next: () => {},
-      error: (err) => console.error('Start failed', err),
+      error: (err) => {
+        console.error('Start failed', err);
+        this.optimisticItems = this.optimisticItems.filter(i => i.id !== optimisticItem.id);
+        this.queue = this.queue.filter(i => i.id !== optimisticItem.id);
+        this.pending = [...this.pending, item];
+      },
     });
   }
 
   retry(item: DownloadInfo): void {
-    // For queue items in error state, delete and re-add.
+    // For queue items in error state, delete from queue and re-add.
     // For pending items, start them.
     if (item.status === 'error') {
-      this.metube.retryDownload(item).subscribe({
+      // Create optimistic item with 'preparing' status so it shows IMMEDIATELY
+      const optimisticItem: DownloadInfo = {
+        ...item,
+        id: item.id || `optimistic-${Date.now()}`,
+        status: 'preparing',
+        percent: 0,
+        speed: null,
+        eta: null,
+        msg: '',
+      };
+      // Add to optimistic items list so polling doesn't clobber it
+      this.optimisticItems = [...this.optimisticItems, optimisticItem];
+      // Also add to queue for immediate display
+      this.queue = [...this.queue.filter(i => i.id !== item.id), optimisticItem];
+      this.metube.retryDownload(item, 'queue').subscribe({
         next: () => {},
-        error: (err) => console.error('Retry failed', err),
+        error: (err) => {
+          console.error('Retry failed', err);
+          // Revert optimistic update on error
+          this.optimisticItems = this.optimisticItems.filter(i => i.id !== optimisticItem.id);
+          this.queue = this.queue.filter(i => i.id !== optimisticItem.id);
+          // Put original item back
+          this.queue = [...this.queue, item];
+        },
       });
     } else {
       this.start(item);
