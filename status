@@ -97,24 +97,27 @@ for container in "${!containers[@]}"; do
 done
 
 # HTTP Health Checks
+# CONST-034 (§7.1 "body, not status"): a 200 alone is not health — an HTML 502
+# wrapped in 200, or a curl 000 early-close, must read as UNHEALTHY. Require the
+# expected body token to be present in the response, per endpoint.
 health_check() {
-    local url="$1" name="$2"
-    local code
-    code=$(curl -s -o /dev/null -w "%{http_code}" "$url" 2>/dev/null || echo "000")
-    if [ "$code" = "200" ]; then
-        echo -e "  ${GREEN}✓${NC} $name responds ($code)"
+    local url="$1" name="$2" expect="$3"
+    local body
+    body=$(curl -s --max-time 8 "$url" 2>/dev/null || echo "")
+    if [ -n "$body" ] && echo "$body" | grep -qF "$expect"; then
+        echo -e "  ${GREEN}✓${NC} $name responds (body matched '$expect')"
     else
-        echo -e "  ${RED}✗${NC} $name UNHEALTHY ($code)"
+        echo -e "  ${RED}✗${NC} $name UNHEALTHY (missing '$expect' in body)"
     fi
 }
 
 echo ""
 echo -e "${BLUE}HTTP Health Checks:${NC}"
-health_check "http://localhost:8088/history"       "MeTube Direct API"
-health_check "http://localhost:9090/api/history"    "Dashboard Proxy API"
-health_check "http://localhost:8086/api/cookie-status" "Landing Page API"
-health_check "http://localhost:9090/"               "Dashboard HTML"
-health_check "http://localhost:8086/"               "Landing Page HTML"
+health_check "http://localhost:8088/history"          "MeTube Direct API"  '"queue"'
+health_check "http://localhost:9090/api/history"       "Dashboard Proxy API" '"queue"'
+health_check "http://localhost:8086/api/cookie-status" "Landing Page API"   '"has_cookies"'
+health_check "http://localhost:9090/"                  "Dashboard HTML"     'chunk-'
+health_check "http://localhost:8086/"                  "Landing Page HTML"  'Боба'
 
 # Port status
 echo ""

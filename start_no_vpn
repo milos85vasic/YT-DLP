@@ -95,16 +95,45 @@ echo -e "${YELLOW}Starting services WITHOUT VPN...${NC}"
 echo -e "Runtime: ${CONTAINER_RUNTIME}"
 echo ""
 
+# `|| true`: on arm64 the amd64-only yt-dlp-cli (PoT image) fails to create, so
+# `up -d` returns non-zero even when the real no-vpn services start fine. Don't
+# let that abort the script (set -e) — the readiness gate below is the real
+# authority on whether the services we need are running.
 if [ "$CONTAINER_RUNTIME" = "docker" ]; then
-    $COMPOSE_CMD --profile no-vpn --profile docker up -d
+    $COMPOSE_CMD --profile no-vpn --profile docker up -d || true
 else
-    $COMPOSE_CMD --profile no-vpn up -d
+    $COMPOSE_CMD --profile no-vpn up -d || true
 fi
 
 echo ""
-echo -e "${GREEN}============================================${NC}"
-echo -e "${GREEN}    Services started successfully!${NC}"
-echo -e "${GREEN}============================================${NC}"
+echo -e "${BLUE}Verifying containers reached running state...${NC}"
+# CONST-034: `up -d` returning 0 only means containers were SCHEDULED. Poll until
+# the expected no-vpn services are actually running before claiming success.
+_arch="$(uname -m)"
+_expected="metube-direct metube-landing yt-dlp-dashboard"
+# yt-dlp-cli uses the amd64-only PoT image — legitimately absent on arm64.
+case "$_arch" in arm64|aarch64) : ;; *) _expected="$_expected yt-dlp-cli" ;; esac
+_elapsed=0; _ready=false
+while [ "$_elapsed" -lt 120 ]; do
+    _ready=true
+    for _c in $_expected; do
+        $CONTAINER_RUNTIME ps --format '{{.Names}}' 2>/dev/null | grep -q "^${_c}$" || { _ready=false; break; }
+    done
+    [ "$_ready" = true ] && break
+    sleep 2; _elapsed=$((_elapsed + 2))
+done
+echo ""
+if [ "$_ready" = true ]; then
+    echo -e "${GREEN}============================================${NC}"
+    echo -e "${GREEN}    Services started successfully!${NC}"
+    echo -e "${GREEN}============================================${NC}"
+else
+    echo -e "${YELLOW}============================================${NC}"
+    echo -e "${YELLOW}    FAILED: containers did not reach running state within 120s${NC}"
+    echo -e "${YELLOW}============================================${NC}"
+    $CONTAINER_RUNTIME ps --format 'table {{.Names}}\t{{.Status}}' 2>/dev/null || true
+    exit 1
+fi
 echo ""
 
 echo -e "${YELLOW}WARNING: Running without VPN - your downloads are not protected!${NC}"

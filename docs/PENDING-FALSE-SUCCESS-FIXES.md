@@ -7,46 +7,32 @@ they require a **live stack / real download to verify**, so per CONST-034 they
 have **NOT been shipped unverified**. Apply + verify each, then move it out of
 this file.
 
-Already fixed + verified (for reference): `stop` (now passes all profiles +
-verifies no container survives), `smoke-test.sh` Gate 6 (arm64 documented
-yt-dlp-cli), `init` (artifact check), `update-images` (real cache check).
+Already fixed + verified (for reference): `stop` (passes all profiles + verifies
+no container survives), `smoke-test.sh` Gate 6 (arm64 documented yt-dlp-cli),
+`init` (artifact check), `update-images` (real cache check), **`start_no_vpn`
+(readiness gate — verified: exit 0 only after the 3 no-vpn services are up; the
+arm64 yt-dlp-cli `up -d` failure is tolerated via `|| true` so the gate is
+authoritative)**, **`status` (body-check — verified positive + negative under
+bash 5: stopping metube flips MeTube/proxy to UNHEALTHY)**.
 
 ---
 
-## 1. `start` / `start_no_vpn` — "Services started successfully!" without proof
+## 1. `start` (VPN profile) — "Services started successfully!" without proof
 
-**Defect:** Printed success immediately after `compose ... up -d`. `up -d` only
-*schedules* containers; exit 0 ≠ running (image half-pull, port clash, OOM, bad
-mount can all leave a container down).
+**Defect:** Like the now-fixed `start_no_vpn`, `start` prints success right after
+`compose ... up -d`; exit 0 only means containers were scheduled.
 
-**Fix:** After `up -d`, poll (timeout ~120s) until the expected containers reach
-"running", then print success; otherwise print the `ps` table and `exit 1`.
-Expected names — no-vpn: `metube-direct`, `metube-landing`, `yt-dlp-dashboard`
-(treat `yt-dlp-cli` as the smoke-test arm64 documented-exception — amd64-only
-PoT image); vpn profile: resolve from `docker-compose.yml`.
+**Fix:** Apply the same readiness-gate pattern already shipped in `start_no_vpn`
+(poll until the expected containers are running; `up -d || true` so a documented
+arch failure doesn't abort; the gate decides success). The VPN profile container
+names must be resolved from `docker-compose.yml` (openvpn-yt-dlp + the metube
+that joins its netns + landing-vpn).
 
-**Verification gate (required before shipping):** bring up the no-vpn stack and
-confirm the script exits 0; then deliberately `podman stop metube-direct` before
-a run and confirm it now exits non-zero with the failing container listed.
-(The dashboard image + base images are already cached, so the bring-up is fast.)
+**Verification gate (NOT done here):** needs valid VPN credentials + the `vpn`
+profile to bring up; could not be verified on this session's host. Verify on a
+host with VPN creds before shipping.
 
-## 2. `status` — health reported on HTTP code only, not body
-
-**Defect:** `health_check` marked a service healthy on `%{http_code}==200`
-alone. An HTML 502 wrapped in a 200, or a curl `000` early-close, reads as
-healthy (violates §7.1 "body, not status").
-
-**Fix:** Make `health_check` take an expected-body token and require BOTH a 200
-AND the token present in the body, per endpoint:
-- `:8088/history` → `"queue"`  · `:9090/api/history` → `"queue"`
-- `:8086/api/cookie-status` → `"has_cookies"`  · `:9090/` → `app-root`
-- `:8086/` (or `/health`) → `"status":"ok"`
-
-**Verification gate:** bring up the stack, run `./status`, confirm all checks
-green with bodies; stop one service and confirm it flips to UNHEALTHY (not a
-false green).
-
-## 3. `download` — "downloaded" without an artifact on disk (ARTIFACT rule)
+## 2. `download` — "downloaded" without an artifact on disk (ARTIFACT rule)
 
 **Defect:** Runs `yt-dlp` in the container and returns its exit code; never
 confirms a file landed in `$DOWNLOAD_DIR`. "Download succeeded" ≠ "yt-dlp exit
