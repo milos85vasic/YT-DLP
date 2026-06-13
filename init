@@ -72,6 +72,27 @@ echo -e "${CYAN}Compose Command:${NC} $COMPOSE_CMD"
 echo ""
 
 # =============================================================================
+# Git Submodule Initialization (constitution/, Challenges/)
+# =============================================================================
+# A fresh `git clone` without --recursive leaves submodules empty, which breaks
+# the constitution inheritance gate (dev-check Gate 5c). Self-heal here so
+# `./init` always yields a working tree.
+if git rev-parse --git-dir >/dev/null 2>&1; then
+    if [ ! -f constitution/Constitution.md ]; then
+        echo -e "${BLUE}Initializing git submodules (constitution, Challenges)...${NC}"
+        if git submodule update --init --recursive; then
+            echo -e "${GREEN}✓ Submodules initialized${NC}"
+        else
+            echo -e "${YELLOW}WARNING: submodule init failed — run manually:${NC}"
+            echo "  git submodule update --init --recursive"
+        fi
+    else
+        echo -e "${GREEN}✓ Git submodules already initialized${NC}"
+    fi
+    echo ""
+fi
+
+# =============================================================================
 # Environment File Validation
 # =============================================================================
 

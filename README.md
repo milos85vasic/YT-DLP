@@ -34,9 +34,11 @@ Run [yt-dlp](https://github.com/yt-dlp/yt-dlp) inside a container with optional 
 ## Quick Start
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/milos85vasic/YT-DLP.git
+# 1. Clone the repository (with submodules: constitution/, Challenges/)
+git clone --recursive https://github.com/milos85vasic/YT-DLP.git
 cd YT-DLP
+# Already cloned without --recursive? Run: git submodule update --init --recursive
+# (./init also self-heals this automatically.)
 
 # 2. Copy and edit configuration
 cp .env.example .env
@@ -65,11 +67,16 @@ cp .env.example .env
 
 ### Setup Steps
 
-1. **Clone the repository:**
+1. **Clone the repository (with submodules):**
    ```bash
-   git clone https://github.com/milos85vasic/YT-DLP.git
+   git clone --recursive https://github.com/milos85vasic/YT-DLP.git
    cd YT-DLP
    ```
+
+   > This repo uses git submodules (`constitution/` — the Helix Universal
+   > Constitution this project inherits — and `Challenges/`). The `--recursive`
+   > flag populates them on clone. If you already cloned without it, run
+   > `git submodule update --init --recursive`. `./init` also self-heals this.
 
 2. **Create configuration:**
    ```bash

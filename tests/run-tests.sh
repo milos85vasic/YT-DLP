@@ -497,6 +497,18 @@ source "$TEST_DIR/test-bulk-operations.sh" 2>/dev/null || true
 source "$TEST_DIR/test-aborted-history.sh" 2>/dev/null || true
 source "$TEST_DIR/test-constitution-inheritance.sh" 2>/dev/null || true
 
+# Anti-bluff (§1.1 / CONST-034): the constitution inheritance gate ships IN this
+# repo and is NOT optional. The warn-stub above returns 0 and the source line
+# swallows load errors with `|| true`; without this guard a syntax error, bad
+# chmod, or rename of the gate file would register ZERO tests yet let the runner
+# exit 0 — the exact CONST-034 silent-skip failure mode. Fail loudly instead.
+if ! declare -f _ci_inv_submodule_present >/dev/null 2>&1; then
+    echo "FATAL: tests/test-constitution-inheritance.sh failed to load —" >&2
+    echo "       refusing to run a suite that would silently skip the" >&2
+    echo "       constitution inheritance gate (CONST-034 / §1.1)." >&2
+    exit 1
+fi
+
 # =============================================================================
 # Main Test Runner
 # =============================================================================
