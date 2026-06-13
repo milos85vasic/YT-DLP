@@ -60,14 +60,32 @@ echo ""
 echo -e "${CYAN}Container Runtime:${NC} $CONTAINER_RUNTIME"
 echo ""
 
+unusable=0
 for image in "${IMAGES[@]}"; do
     echo -e "${BLUE}Pulling:${NC} $image"
     if $CONTAINER_RUNTIME pull "$image" >/dev/null 2>&1; then
         echo -e "${GREEN}✓${NC} Updated: $image"
     else
-        echo -e "${YELLOW}⚠${NC} Failed to update: $image (may be using cached version)"
+        # A pull can legitimately fail while a usable image is already cached
+        # (offline) OR the image has no build for this arch (e.g. the amd64-only
+        # PoT image on arm64). "may be cached" is only true if it ACTUALLY is —
+        # CONST-034: prove it rather than assume.
+        if $CONTAINER_RUNTIME image inspect "$image" >/dev/null 2>&1; then
+            echo -e "${YELLOW}⚠${NC} Failed to update: $image (using cached local image)"
+        else
+            echo -e "${YELLOW}⚠${NC} Failed to update: $image (no local cache available)"
+            unusable=$((unusable + 1))
+        fi
     fi
 done
+
+# CONST-034: don't print "completed" as success if NO image is pullable or
+# cached — that would be a false success masking a broken environment.
+if [ "$unusable" -eq "${#IMAGES[@]}" ]; then
+    echo ""
+    echo -e "${YELLOW}ERROR: none of the ${#IMAGES[@]} images could be pulled or found locally.${NC}"
+    exit 1
+fi
 
 echo ""
 echo -e "${GREEN}============================================${NC}"

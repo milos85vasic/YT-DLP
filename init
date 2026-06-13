@@ -427,6 +427,23 @@ echo -e "${GREEN}✓${NC} Directory permissions set"
 # Summary
 # =============================================================================
 
+# CONST-034: verify the artifacts exist before claiming success — exiting 0
+# from the steps above does not prove the download dir is usable or that the
+# yt-dlp config was actually written.
+_init_fail=0
+if [ ! -d "$DOWNLOAD_DIR" ] || [ ! -w "$DOWNLOAD_DIR" ]; then
+    echo -e "${RED}ERROR: download directory missing or not writable: $DOWNLOAD_DIR${NC}"
+    _init_fail=1
+fi
+if [ ! -s ./yt-dlp/config/yt-dlp.conf ]; then
+    echo -e "${RED}ERROR: yt-dlp config was not created: ./yt-dlp/config/yt-dlp.conf${NC}"
+    _init_fail=1
+fi
+if [ "$_init_fail" -ne 0 ]; then
+    echo -e "${RED}Setup did NOT complete cleanly — see errors above.${NC}"
+    exit 1
+fi
+
 echo ""
 echo -e "${GREEN}============================================${NC}"
 echo -e "${GREEN}    Setup completed successfully! ✓${NC}"
