@@ -11,6 +11,19 @@
 > filesystems. They have been consolidated. `CONSTITUTION.md`
 > (this file) is canonical; `Constitution.md` is now a redirect stub.
 
+## Inheritance — Helix Universal Constitution
+
+This constitution **extends** the Helix Universal Constitution at
+`constitution/Constitution.md` (pinned git submodule). All clauses
+there apply unless explicitly overridden below with an explicit
+`Override §X.Y` section. The universal anti-bluff covenant (§11.4),
+no-guessing mandate (§11.4.6), credentials-handling mandate
+(§11.4.10), data safety (§9), host-session safety (§12), and
+mutation-paired-gate invariant (§1.1) are inherited verbatim and are
+not weakened by anything in this file. CONST-033 (host power ban) and
+CONST-034 (anti-bluff verification) below are the project-local
+instantiations of constitution §12 and §7.1/§11.4 respectively.
+
 ## Mission
 
 See `README.md`.

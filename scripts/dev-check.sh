@@ -125,6 +125,14 @@ else
     fail "Recognised-domain drift between landing/app.py and OpenAPI (see /tmp/domains-sync.log)"
 fi
 
+# ── Gate 5c: Constitution submodule inheritance ──────────────────────
+info "Gate 5c: Constitution inheritance"
+if bash ./tests/test-constitution-inheritance.sh > /tmp/constitution-inheritance.log 2>&1; then
+    pass "$(tail -n1 /tmp/constitution-inheritance.log)"
+else
+    fail "Constitution inheritance broken (see /tmp/constitution-inheritance.log)"
+fi
+
 # ── Gate 6: Git status check ─────────────────────────────────────────
 info "Gate 6: Git hygiene"
 if git diff --cached --quiet; then

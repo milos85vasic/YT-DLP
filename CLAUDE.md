@@ -2,6 +2,16 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## INHERITED FROM constitution/CLAUDE.md
+
+All rules in `constitution/CLAUDE.md` (and the
+`constitution/Constitution.md` it references) apply unconditionally.
+Project-specific rules below extend them — they do NOT weaken any
+universal clause. When this file disagrees with the constitution
+submodule, the constitution wins.
+
+@constitution/CLAUDE.md
+
 ## What this project is
 
 A Podman/Docker orchestration around `yt-dlp` for downloading video. It is **not** a single application — it is a set of bash scripts that compose 5 long-running services from `docker-compose.yml`. The unit of work is a service, not a module. There is no language manifest at the repo root (no `package.json`, no `pyproject.toml`); each buildable service has its own.

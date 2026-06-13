@@ -227,3 +227,6 @@ tests/e2e/test-results/
 # Claude Code harness state (per-machine, not project-shared)
 # -----------------------------------------------------------------------------
 .claude/
+
+# Local hardlinked .git safety backups (never commit)
+.git-backups/

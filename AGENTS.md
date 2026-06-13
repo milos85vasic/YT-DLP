@@ -2,6 +2,14 @@
 
 # AGENTS.md - Agentic Coding Guide for YT-DLP Container Project
 
+## INHERITED FROM constitution/AGENTS.md
+
+> Base agent rules: `constitution/AGENTS.md` — READ IT FIRST.
+> The base file is authoritative for any topic not covered here.
+> Project-specific rules below extend them; they never weaken them.
+> Locate the constitution submodule from any nested depth with its
+> `constitution/find_constitution.sh` helper.
+
 ## Project Overview
 
 This project is a **Docker/Podman-based orchestration system** for running [yt-dlp](https://github.com/yt-dlp/yt-dlp) (a YouTube/video downloader) with optional VPN support. It manages multiple services including:

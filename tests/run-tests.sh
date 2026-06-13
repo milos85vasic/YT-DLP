@@ -478,6 +478,10 @@ run_dashboard_tests() {
     log_warn "Dashboard tests not loaded"
 }
 
+run_constitution_tests() {
+    log_warn "Constitution inheritance tests not loaded"
+}
+
 # Source all test files (these will override the stubs above)
 source "$TEST_DIR/test-unit.sh" 2>/dev/null || true
 source "$TEST_DIR/test-integration.sh" 2>/dev/null || true
@@ -491,6 +495,7 @@ source "$TEST_DIR/test-add-download.sh" 2>/dev/null || true
 source "$TEST_DIR/test-add-all-platforms.sh" 2>/dev/null || true
 source "$TEST_DIR/test-bulk-operations.sh" 2>/dev/null || true
 source "$TEST_DIR/test-aborted-history.sh" 2>/dev/null || true
+source "$TEST_DIR/test-constitution-inheritance.sh" 2>/dev/null || true
 
 # =============================================================================
 # Main Test Runner
@@ -678,6 +683,10 @@ main() {
                 log_section "Running VPN Compose Tests"
                 run_vpn_compose_tests
             fi
+            if type run_constitution_tests &> /dev/null; then
+                log_section "Running Constitution Inheritance Tests"
+                run_constitution_tests
+            fi
             ;;
         integration)
             # Start containers if needed
@@ -748,6 +757,10 @@ main() {
             if type run_vpn_compose_tests &> /dev/null; then
                 log_section "Running VPN Compose Tests"
                 run_vpn_compose_tests
+            fi
+            if type run_constitution_tests &> /dev/null; then
+                log_section "Running Constitution Inheritance Tests"
+                run_constitution_tests
             fi
 
             # Start containers for integration and scenario tests
