@@ -241,7 +241,14 @@ test_update_images_execution() {
         echo "update-images script failed to execute"
         return 1
     fi
-    
+
+    # Anti-bluff: prove it actually RAN, not just exited 0. update-images prints
+    # a start banner and a per-image "Pulling:" line on every run.
+    if ! grep -qE 'Pulling:|Updating Container Images' "$TEST_LOGS_DIR/update-images.log"; then
+        echo "update-images exited 0 but produced no 'Pulling:'/banner output — did it run?"
+        return 1
+    fi
+
     return 0
 }
 
@@ -346,15 +353,25 @@ test_check_vpn_without_vpn() {
     # Create .env with VPN disabled
     cp "$TEST_CONFIG_DIR/.env.no-vpn" .env
     
-    # Run check-vpn - should exit gracefully
-    if ! ./check-vpn > "$TEST_LOGS_DIR/check-vpn-no-vpn.log" 2>&1; then
-        # This is actually expected when VPN is disabled
-        log_debug "check-vpn exited (expected when VPN is disabled)"
-    fi
-    
+    # check-vpn exits 0 with a clear "VPN is not enabled" message when USE_VPN
+    # != true (check-vpn lines 57-61). Assert that DOCUMENTED behavior by BODY,
+    # not just exit code (CONST-034) — a silent exit 0 would not prove anything.
+    ./check-vpn > "$TEST_LOGS_DIR/check-vpn-no-vpn.log" 2>&1
+    local rc=$?
+
     # Cleanup
     rm -f .env
-    
+
+    if [ "$rc" -ne 0 ]; then
+        echo "check-vpn should exit 0 when VPN is disabled, got rc=$rc"
+        return 1
+    fi
+    if ! grep -qiE 'VPN is not enabled|not enabled in configuration' "$TEST_LOGS_DIR/check-vpn-no-vpn.log"; then
+        echo "check-vpn did not print the expected 'VPN is not enabled' message:"
+        cat "$TEST_LOGS_DIR/check-vpn-no-vpn.log"
+        return 1
+    fi
+
     return 0
 }
 

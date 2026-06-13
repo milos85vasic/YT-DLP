@@ -379,6 +379,13 @@ EOF
         return 1
     fi
 
+    # Anti-bluff: prove init produced its artifacts, not just exited 0.
+    if [ ! -s "$PROJECT_DIR/yt-dlp/config/yt-dlp.conf" ] || [ ! -d "$_td" ]; then
+        echo "init (minimal) exited 0 but did not produce yt-dlp.conf and the download dir"
+        rm -f .env
+        return 1
+    fi
+
     rm -f .env
 
     # Combination 2: Full config (all optional vars)
@@ -396,6 +403,13 @@ EOF
 
     if ! ./init > "$TEST_LOGS_DIR/scenario-env-full.log" 2>&1; then
         echo "Full env configuration failed"
+        rm -f .env
+        return 1
+    fi
+
+    # Anti-bluff: prove init produced its artifacts, not just exited 0.
+    if [ ! -s "$PROJECT_DIR/yt-dlp/config/yt-dlp.conf" ] || [ ! -d "$_td" ]; then
+        echo "init (full) exited 0 but did not produce yt-dlp.conf and the download dir"
         rm -f .env
         return 1
     fi

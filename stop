@@ -71,17 +71,33 @@ echo -e "${BLUE}Stopping all services...${NC}"
 echo -e "Runtime: ${CONTAINER_RUNTIME}"
 echo ""
 
-if [ "$CONTAINER_RUNTIME" = "docker" ]; then
-    $COMPOSE_CMD --profile docker down 2>/dev/null || true
-else
-    $COMPOSE_CMD down 2>/dev/null || true
-fi
+# podman-compose/docker compose only act on services in the profiles passed.
+# Services here declare profiles (no-vpn/vpn/vpn-cli/docker), so `down` with NO
+# profile resolves to an empty service set and silently stops nothing. Pass all
+# profiles so `down` targets every service regardless of how it was started.
+$COMPOSE_CMD --profile no-vpn --profile vpn --profile vpn-cli --profile docker down 2>/dev/null || true
 
 # Clean up any remaining resources
 if [ "$CONTAINER_RUNTIME" = "podman" ]; then
-    podman pod ls --format "{{.Name}}" | grep -E "^pod_yt-dlp$" | xargs -r podman pod rm -f 2>/dev/null || true
-    podman network rm yt-dlp_default 2>/dev/null || true
+    podman pod ls --format "{{.Name}}" | grep -E "^pod_(yt-dlp|ytdlp)$" | xargs -r podman pod rm -f 2>/dev/null || true
+    podman network rm yt-dlp_default ytdlp_default 2>/dev/null || true
 fi
 
+# Belt-and-suspenders: force-remove any of OUR named services that survived the
+# compose down (e.g. started under a different compose project name). The list
+# is this project's exact container names — neighbour containers are untouched.
+for _c in metube-direct metube-landing yt-dlp-dashboard metube yt-dlp-cli openvpn-yt-dlp landing-vpn; do
+    $CONTAINER_RUNTIME rm -f "$_c" 2>/dev/null || true
+done
+
+# CONST-034: verify the real end-state — do not just claim success.
+_remaining=$($CONTAINER_RUNTIME ps --format '{{.Names}}' 2>/dev/null \
+    | grep -E '^(metube-direct|metube-landing|yt-dlp-dashboard|metube|yt-dlp-cli|openvpn-yt-dlp|landing-vpn)$' || true)
 echo ""
-echo -e "${GREEN}All services stopped.${NC}"
+if [ -z "$_remaining" ]; then
+    echo -e "${GREEN}All services stopped.${NC}"
+else
+    echo -e "${YELLOW}WARNING: these YT-DLP containers are STILL running:${NC}"
+    echo "$_remaining"
+    exit 1
+fi

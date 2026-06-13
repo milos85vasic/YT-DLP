@@ -165,9 +165,24 @@ echo ""
 log_info "=== Gate 6: Container Health ==="
 # Detect container runtime (CI may use docker while local uses podman)
 CONTAINER_RUNTIME=${CONTAINER_RUNTIME:-$(command -v podman &>/dev/null && echo podman || echo docker)}
+HOST_ARCH="$(uname -m)"
 for container in metube-direct yt-dlp-dashboard metube-landing yt-dlp-cli; do
     if $CONTAINER_RUNTIME ps --format "{{.Names}}" 2>/dev/null | grep -q "^${container}$"; then
         log_pass "Container '$container' is running"
+    elif [ "$container" = "yt-dlp-cli" ] && { [ "$HOST_ARCH" = "arm64" ] || [ "$HOST_ARCH" = "aarch64" ]; }; then
+        # CONST-034 documented-failure (NOT a silent skip): the PoT image
+        # ghcr.io/jim60105/yt-dlp:pot is published amd64-only, so yt-dlp-cli
+        # cannot be created on arm64 hosts (Apple Silicon). We PROVE the
+        # restriction is still real — if the upstream manifest EVER gains an
+        # arm64 variant, this FAILs, telling us the restriction is gone and
+        # yt-dlp-cli should now be running. On Linux x86_64 (the project's
+        # primary host) the strict `else` branch below still applies.
+        if $CONTAINER_RUNTIME manifest inspect ghcr.io/jim60105/yt-dlp:pot 2>/dev/null \
+             | grep -Eq '"architecture":[[:space:]]*"arm64"'; then
+            log_fail "yt-dlp-cli not running but PoT image NOW ships arm64 — restriction lifted, it should run"
+        else
+            log_pass "Container 'yt-dlp-cli' absent on ${HOST_ARCH} — documented: PoT image (jim60105/yt-dlp:pot) has no arm64 build"
+        fi
     else
         log_fail "Container '$container' is NOT running"
     fi
