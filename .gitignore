@@ -63,6 +63,9 @@ youtubedl-material/*.*
 # -----------------------------------------------------------------------------
 downloads/
 /Downloads/
+downloads-verify/
+/downloads-verify/
+tests/.test-downloads/
 *.mp4
 *.mkv
 *.webm
