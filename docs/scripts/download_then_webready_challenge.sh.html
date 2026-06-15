@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>download_then_webready_challenge.sh</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      white-space: pre-wrap;
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+</head>
+<body>
+<h1
+id="download_then_webready_challenge.sh">download_then_webready_challenge.sh</h1>
+<p>Companion user guide (§11.4.18) for
+<code>challenges/scripts/download_then_webready_challenge.sh</code>.</p>
+<h2 id="overview">Overview</h2>
+<p>This is the anti-bluff Challenge for the <strong>dual-version media
+pipeline</strong> (README “Dual-version media pipeline”). It goes one
+step further than <code>download_completes_challenge.sh</code> (the
+constitution §11.4.108 ARTIFACT rule): after the original download
+reaches <code>finished</code> via the MeTube <code>/add</code> API, it
+<strong>stat-verifies BOTH the original file AND the
+<code>media_postprocessor</code> derivative</strong>, then
+<code>ffprobe</code>-asserts the derivative is genuinely playable.</p>
+<ul>
+<li>In <code>video</code> mode it proves a
+<code>webready-&lt;base&gt;.mp4</code> appeared next to the original,
+with <strong>H.264 video + AAC audio + non-zero duration +
+faststart</strong> (<code>moov</code> atom before
+<code>mdat</code>).</li>
+<li>In <code>audio</code> mode it proves a <code>&lt;base&gt;.mp3</code>
+appeared, with an <strong>mp3 stream + non-zero duration</strong>.</li>
+</ul>
+<p>The guiding rule (from the script header): <em>“if I deleted the
+media_postprocessor implementation, would this test still pass?”</em> —
+the answer must be <strong>NO</strong>. The webready/ffprobe assertions
+FAIL when the artifact is absent, so a green run is real proof the
+feature works for the end user, not merely that <code>/add</code>
+returned <code>200</code>.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>A <strong>running stack</strong> in the <code>no-vpn</code> profile:
+MeTube (<code>metube-direct</code>) <strong>and</strong> the
+<code>media_postprocessor</code> sidecar must both be up
+(<code>make init</code> then <code>./start_no_vpn</code>).</li>
+<li><code>DOWNLOAD_DIR</code> must exist on the host and be the same
+directory MeTube and the postprocessor write into (the script reads
+files from the <strong>host’s</strong> point of view, not from inside a
+container).</li>
+<li>Host tools on <code>PATH</code>: <code>curl</code>,
+<code>python3</code>, <code>ffprobe</code>, <code>stat</code>.</li>
+<li>The script sources <code>.env</code> (when present) for
+<code>DOWNLOAD_DIR</code> and <code>METUBE_DIRECT_PORT</code>, and
+<code>lib/container-runtime.sh</code> for runtime detection (parity with
+peer challenges).</li>
+</ul>
+<h2 id="usage">Usage</h2>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Video (default): assert webready-&lt;base&gt;.mp4 with h264 + aac + faststart</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">bash</span> challenges/scripts/download_then_webready_challenge.sh</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Audio: assert &lt;base&gt;.mp3</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="va">MODE</span><span class="op">=</span>audio <span class="fu">bash</span> challenges/scripts/download_then_webready_challenge.sh</span></code></pre></div>
+<p>Environment overrides (all optional):</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DOWNLOAD_DIR</code></td>
+<td>from <code>.env</code>, else <code>/mnt/downloads</code></td>
+<td>Host library directory to scan</td>
+</tr>
+<tr>
+<td><code>API_URL</code></td>
+<td><code>http://localhost:${METUBE_DIRECT_PORT:-8088}</code></td>
+<td>MeTube Direct base URL</td>
+</tr>
+<tr>
+<td><code>MODE</code></td>
+<td><code>video</code></td>
+<td><code>video</code> or <code>audio</code> — which artifact to
+assert</td>
+</tr>
+<tr>
+<td><code>TEST_URL</code></td>
+<td>a Vimeo test clip</td>
+<td>Override the test media URL</td>
+</tr>
+<tr>
+<td><code>TIMEOUT</code></td>
+<td><code>180</code></td>
+<td>Seconds to wait for <code>/history</code>
+<code>status=finished</code></td>
+</tr>
+<tr>
+<td><code>WEBREADY_TIMEOUT</code></td>
+<td><code>120</code></td>
+<td>Seconds to wait for the postprocessor artifact</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Exit codes:</strong> <code>0</code> = PASS (every artifact
+proven playable), <code>1</code> = FAIL.</p>
+<h2 id="edge-cases">Edge cases</h2>
+<ul>
+<li><strong><code>/add</code> not accepted</strong> — if
+<code>/add</code> does not return <code>status:ok</code> the run FAILs
+immediately (asserts on the JSON body, not on the HTTP code — see
+CONST-034).</li>
+<li><strong>Download errors / times out</strong> — a
+<code>status=error</code> history entry FAILs with the MeTube
+<code>msg</code>; not reaching <code>finished</code> within
+<code>TIMEOUT</code> FAILs.</li>
+<li><strong>Original missing or <code>&lt; 1KB</code></strong> — the
+before/after <code>find</code> snapshot diff must surface a new,
+non-webready, non-transient
+(<code>*.part</code>/<code>*.ytdl</code>/<code>*.tmp</code>) file larger
+than 1 KB, or the run FAILs.</li>
+<li><strong>Derivative never appears</strong> — if the
+<code>webready-*.mp4</code> / <code>.mp3</code> does not show up within
+<code>WEBREADY_TIMEOUT</code>, the run FAILs. This FAIL
+<strong>is</strong> the anti-bluff signal: the postprocessor did not
+produce the artifact.</li>
+<li><strong>Degenerate derivative</strong> — an artifact smaller than 1
+KB, or with the wrong codec / a <code>&lt;= 0.5s</code> duration /
+(video) <code>moov</code> after <code>mdat</code>, FAILs the ffprobe
+assertions.</li>
+<li><strong>Cleanup</strong> — on success the test download is removed
+from MeTube history; the before/after temp files are removed via an
+<code>EXIT</code> trap.</li>
+</ul>
+<h2 id="internal-behaviour">Internal behaviour</h2>
+<p>Five-step pipeline (<code>set -e</code>; colourised PASS/FAIL
+output):</p>
+<ol type="1">
+<li><strong>[1/5] Submit</strong> the test URL via
+<code>POST /add</code>; require <code>status:ok</code> in the body.</li>
+<li><strong>[2/5] Wait</strong> up to <code>TIMEOUT</code> for the URL
+to reach <code>status=finished</code> in <code>/history</code> (parsing
+<code>queue</code>/<code>pending</code>/<code>done</code> with
+<code>python3</code>).</li>
+<li><strong>[3/5] Verify the original</strong> — diff a before/after
+<code>find -printf '%s %p'</code> snapshot, pick the new
+non-webready/non-transient file as the original, assert it is
+<code>&gt;= 1KB</code>, derive <code>&lt;base&gt;</code> (basename
+without extension).</li>
+<li><strong>[4/5] Wait</strong> up to <code>WEBREADY_TIMEOUT</code> for
+the postprocessor artifact next to the original:
+<code>webready-&lt;base&gt;.mp4</code> (video) or
+<code>&lt;base&gt;.mp3</code> (audio); assert it exists and is
+<code>&gt;= 1KB</code>.</li>
+<li><strong>[5/5] ffprobe-assert</strong> the artifact is genuinely
+playable:
+<ul>
+<li><strong>video:</strong> <code>v:0 codec_name == h264</code>,
+<code>a:0 codec_name == aac</code>,
+<code>format.duration &gt; 0.5s</code>, <strong>and faststart</strong> —
+an inline <code>python3</code> atom walker reads the top-level MP4 atom
+order and requires <code>moov</code> before <code>mdat</code> (the same
+check <code>transcoder.py::has_faststart</code> performs).</li>
+<li><strong>audio:</strong> <code>a:0 codec_name == mp3</code> and
+<code>format.duration &gt; 0.5s</code>.</li>
+</ul></li>
+</ol>
+<p>These assertions mirror the validator the pipeline itself runs
+(<code>media_postprocessor/transcoder.py::_validate_webready</code> /
+<code>_validate_mp3</code>), so a PASS confirms the produced derivative
+meets the same contract the service enforces.</p>
+<h2 id="related-scripts">Related scripts</h2>
+<ul>
+<li><code>challenges/scripts/download_completes_challenge.sh</code> —
+the ARTIFACT-rule reference template this Challenge extends
+(original-file proof only).</li>
+<li><code>challenges/scripts/run_all_challenges.sh</code> — runs the
+full Challenge bank.</li>
+<li><code>media_postprocessor/transcoder.py</code> — the derivation +
+ffprobe-validation engine whose output this Challenge proves.</li>
+</ul>
+<h2 id="last-verified">Last verified</h2>
+<p>2026-06-15 — behaviour documented against the in-tree script and the
+<code>media_postprocessor</code> implementation it exercises.</p>
+</body>
+</html>

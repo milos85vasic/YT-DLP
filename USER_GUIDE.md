@@ -272,6 +272,37 @@ progress bar.
 The progress bar disappears once the row leaves an active state
 (finished / error / pending).
 
+### Web-ready copies (and MP3s) appear automatically
+
+After a download **finishes**, you don't have to do anything to get a
+playable copy. A background service (`media_postprocessor`) watches
+the download folder and, alongside the original file, creates:
+
+- For a **video** download — a `webready-<name>.mp4` next to the
+  original. This copy is always **H.264 + AAC** and is built so it can
+  start playing before it has finished downloading (faststart), which
+  makes it reliable on devices like an Android TV.
+- For an **audio** download — a `<name>.mp3` (320 kbps) next to the
+  original.
+
+The **original file is kept untouched** — think of it as your
+zero-loss master. The web-ready `.mp4` is a re-encode for guaranteed
+playback, so it is not byte-for-byte identical to the source; the
+original is the lossless one.
+
+While this is happening the dashboard shows the derivation state for
+the item, for example:
+
+- **Creating web video** — the H.264/AAC `webready-*.mp4` is being built.
+- **Creating MP3** — the 320 kbps `.mp3` is being built.
+- **Ready (2 versions)** — both the original and its web-ready/MP3
+  copy are present.
+
+> **First time you start the stack:** the service also goes back over
+> everything already in your download folder and makes the missing
+> web-ready / MP3 copies for your existing library. That initial pass
+> can take a while — it's expected.
+
 ### Cancelling from the Queue
 
 Each Queue row has a **✕ Cancel** button. Clicking it does **NOT**

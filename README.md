@@ -651,6 +651,82 @@ This is caused by YouTube's bot detection. YouTube requires cookies from a brows
 | 5800 | JDownloader | Web UI (if using JDownloader) |
 | 5900 | JDownloader | VNC (if using JDownloader) |
 
+## Dual-version media pipeline (webready video + mp3)
+
+A dedicated `media_postprocessor` sidecar (Python, no-vpn profile) produces a
+**guaranteed-playable derivative alongside every download**, while keeping the
+**original file untouched as a zero-loss master**:
+
+- Every downloaded **video** → `webready-<base>.mp4`, transcoded to **H.264 + AAC
+  with faststart** (the `moov` atom is muxed before `mdat` so playback can start
+  before the whole file downloads) — built for Android-TV playback. Audio that is
+  already AAC ≤2ch is copied losslessly; otherwise it is re-encoded to AAC.
+  (`media_postprocessor/transcoder.py::transcode_video`)
+- Every downloaded **audio** file → `<base>.mp3` at **320 kbps CBR**.
+  (`media_postprocessor/transcoder.py::derive_mp3`)
+- The original download is never modified — it is the zero-loss master. The
+  webready `.mp4` is a re-encode and is **not** bit-exact (see the design spec's
+  honesty clause); the master is the lossless artifact.
+
+Each derivative is written atomically (ffmpeg writes a `<final>.partial` temp file
+and only `os.replace()`s it onto the final path on ffmpeg exit 0) and then
+**ffprobe-validated** (video: h264 + aac + non-zero duration + faststart; audio:
+mp3 + non-zero duration) before the job is marked done — a failed or interrupted
+run never leaves a half-written or invalid output.
+(`media_postprocessor/transcoder.py`)
+
+### How it runs
+
+The sidecar's `main()` orchestration
+(`media_postprocessor/service.py::main`) starts in this order:
+
+1. Init the SQLite (WAL) jobs DB and **re-queue any job a crashed worker left
+   `running`** so interrupted work resumes to a valid, complete output.
+2. **Backfill** — a one-time startup full-scan of the whole library
+   (`watcher.reconcile_scan`) enqueues every existing video/audio file that has no
+   derivative yet.
+3. **Watch** — a `watchdog` PollingObserver (polling is used because inotify is
+   unreliable on network mounts) enqueues new downloads as they land.
+4. A background **worker thread** drains the queue, deriving each output and marking
+   the job `done` (with its output path) or `failed` (with the error).
+5. A **periodic reconcile** thread re-scans the library every `MP_RECONCILE_INTERVAL`
+   seconds — the safety net for files the watcher deferred as still-being-written.
+6. A small stdlib **HTTP status server** on `MP_PORT`.
+
+> **First start backfills your existing library.** On the very first run the
+> postprocessor transcodes every video/audio file already in `${DOWNLOAD_DIR}` to
+> produce the missing `webready-*.mp4` / `.mp3` derivatives. Expect this initial
+> backfill pass — it can take a while on a large library and runs at
+> `MP_MAX_CONCURRENCY`.
+
+**Status & dashboard.** The dashboard proxies `/api/postprocess/*` to the sidecar
+(`dashboard/nginx.conf.template`); `GET /api/postprocess/status` returns per-state
+job counts (`queued`/`running`/`done`/`failed`/`canceled`) and
+`GET /api/postprocess/jobs` lists each job. The dashboard surfaces these states so
+you can see derivation progress (`media_postprocessor/service.py`).
+
+Mid-write protection: a freshly-written file whose mtime is younger than
+`MP_MIN_STABLE_AGE` seconds is deferred (it may still be growing as yt-dlp/ffmpeg
+finish merging); the periodic reconcile picks it up once it has settled
+(`media_postprocessor/watcher.py`). In-progress (`*.part`, `*.ytdl`, `*.partial`)
+files and the pipeline's own outputs (`webready-` prefix, any `.mp3`) are never
+re-processed (`media_postprocessor/media_probe.py::classify_target`).
+
+### Environment variables
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `DOWNLOAD_DIR` | `/downloads` (container) | Library directory the postprocessor watches, backfills, and writes derivatives into (`config.py`) |
+| `MP_PORT` | `8089` | Port for the status HTTP server (`config.py`); the dashboard proxies `/api/postprocess/*` here |
+| `MP_MAX_CONCURRENCY` | `1` (compose sets `2`) | Worker concurrency cap (`config.py`) |
+| `MP_MIN_STABLE_AGE` | `10` (seconds) | Mid-write guard — a file is enqueued only after its mtime has been stable this long (`watcher.py`) |
+| `MP_RECONCILE_INTERVAL` | `30` (seconds) | How often the periodic reconcile re-scans the library (`service.py`) |
+
+The `docker-compose.yml` `media_postprocessor` service runs under the `no-vpn`
+profile with `mem_limit: 1g` and `oom_score_adj: 1000` — it is intentionally the
+**first container sacrificed under memory pressure**, never the download/queue
+services.
+
 ## Documentation
 
 - **[USER_GUIDE.md](USER_GUIDE.md)** - Complete user manual with examples

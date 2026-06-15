@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>README</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      white-space: pre-wrap;
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+</head>
+<body>
+<h1 id="yt-dlp-container-project">YT-DLP Container Project</h1>
+<p><a href="https://podman.io"><img
+src="https://img.shields.io/badge/Podman-Supported-892CA0?logo=podman"
+alt="Podman" /></a> <a href="https://docker.com"><img
+src="https://img.shields.io/badge/Docker-Supported-2496ED?logo=docker"
+alt="Docker" /></a> <a href="LICENSE"><img
+src="https://img.shields.io/badge/License-GPL%20v3-blue.svg"
+alt="License" /></a></p>
+<p>Run <a href="https://github.com/yt-dlp/yt-dlp">yt-dlp</a> inside a
+container with optional VPN support. This project provides a complete
+Docker/Podman-based solution for downloading videos from YouTube and
+other supported sites, featuring:</p>
+<ul>
+<li><strong>Dual Runtime Support</strong>: Works with both Podman
+(preferred) and Docker</li>
+<li><strong>VPN Integration</strong>: Route downloads through OpenVPN
+for privacy</li>
+<li><strong>Landing Page</strong>: Seamless cookie authentication flow
+for YouTube</li>
+<li><strong>Web Interface</strong>: MeTube provides a clean, modern web
+UI</li>
+<li><strong>Angular Dashboard</strong>: Modern standalone dashboard on
+port 9090</li>
+<li><strong>Cookie Authentication</strong>: Built-in support for YouTube
+browser cookies</li>
+<li><strong>CLI Access</strong>: Direct yt-dlp command-line access</li>
+<li><strong>Batch Processing</strong>: Download from URL lists and
+channel subscriptions</li>
+<li><strong>Multi-Service</strong>: Designed to work alongside
+JDownloader</li>
+</ul>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#quick-start">Quick Start</a></li>
+<li><a href="#installation">Installation</a></li>
+<li><a href="#configuration">Configuration</a></li>
+<li><a href="#usage">Usage</a></li>
+<li><a href="#container-runtime">Container Runtime</a></li>
+<li><a href="#vpn-setup">VPN Setup</a></li>
+<li><a href="#advanced-usage">Advanced Usage</a></li>
+<li><a href="#testing">Testing</a></li>
+<li><a href="#troubleshooting">Troubleshooting</a></li>
+<li><a href="#contributing">Contributing</a></li>
+<li><a href="#documentation">Documentation</a></li>
+<li><a href="#license">License</a></li>
+</ul>
+<h2 id="quick-start">Quick Start</h2>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Clone the repository (with submodules: constitution/, Challenges/)</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clone <span class="at">--recursive</span> https://github.com/milos85vasic/YT-DLP.git</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> YT-DLP</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Already cloned without --recursive? Run: git submodule update --init --recursive</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># (./init also self-heals this automatically.)</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Copy and edit configuration</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> .env.example .env</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Edit .env with your settings</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Initialize and start</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="ex">./init</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="ex">./start</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. Access the web interface</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Open http://localhost:9090 for the Angular Dashboard</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Or http://localhost:8086 for the Landing Page</span></span></code></pre></div>
+<h2 id="installation">Installation</h2>
+<h3 id="prerequisites">Prerequisites</h3>
+<p><strong>Required:</strong> One of the following container runtimes: -
+<a href="https://podman.io/getting-started/installation">Podman</a>
+(recommended, rootless by default) - <a
+href="https://docs.docker.com/get-docker/">Docker</a></p>
+<p><strong>Optional:</strong> - <code>podman-compose</code> or
+<code>docker-compose</code> for compose operations - OpenVPN
+configuration file (for VPN support)</p>
+<h3 id="setup-steps">Setup Steps</h3>
+<ol type="1">
+<li><p><strong>Clone the repository (with submodules):</strong></p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clone <span class="at">--recursive</span> https://github.com/milos85vasic/YT-DLP.git</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> YT-DLP</span></code></pre></div>
+<blockquote>
+<p>This repo uses git submodules (<code>constitution/</code> — the Helix
+Universal Constitution this project inherits — and
+<code>Challenges/</code>). The <code>--recursive</code> flag populates
+them on clone. If you already cloned without it, run
+<code>git submodule update --init --recursive</code>.
+<code>./init</code> also self-heals this.</p>
+</blockquote></li>
+<li><p><strong>Create configuration:</strong></p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> .env.example .env</span></code></pre></div></li>
+<li><p><strong>Edit <code>.env</code> with your settings:</strong></p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Required settings</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="va">USE_VPN</span><span class="op">=</span>false                    <span class="co"># Set to true to enable VPN</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="va">DOWNLOAD_DIR</span><span class="op">=</span>/path/to/downloads  <span class="co"># Where videos will be saved</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co"># VPN settings (if USE_VPN=true)</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="va">VPN_USERNAME</span><span class="op">=</span>your_username</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="va">VPN_PASSWORD</span><span class="op">=</span>your_password</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="va">VPN_OVPN_PATH</span><span class="op">=</span>/path/to/config.ovpn</span></code></pre></div></li>
+<li><p><strong>Initialize the environment:</strong></p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./init</span></span></code></pre></div>
+<p>This creates necessary directories and validates your
+configuration.</p></li>
+<li><p><strong>Start the services:</strong></p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./start</span></span></code></pre></div></li>
+</ol>
+<h2 id="configuration">Configuration</h2>
+<h3 id="environment-variables">Environment Variables</h3>
+<table>
+<colgroup>
+<col style="width: 23%" />
+<col style="width: 23%" />
+<col style="width: 21%" />
+<col style="width: 30%" />
+</colgroup>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>USE_VPN</code></td>
+<td>Yes</td>
+<td><code>false</code></td>
+<td>Enable VPN routing (<code>true</code>/<code>false</code>)</td>
+</tr>
+<tr>
+<td><code>DOWNLOAD_DIR</code></td>
+<td>Yes</td>
+<td>-</td>
+<td>Absolute path to download directory</td>
+</tr>
+<tr>
+<td><code>VPN_USERNAME</code></td>
+<td>If VPN</td>
+<td>-</td>
+<td>VPN account username</td>
+</tr>
+<tr>
+<td><code>VPN_PASSWORD</code></td>
+<td>If VPN</td>
+<td>-</td>
+<td>VPN account password</td>
+</tr>
+<tr>
+<td><code>VPN_OVPN_PATH</code></td>
+<td>If VPN</td>
+<td>-</td>
+<td>Path to OpenVPN config file</td>
+</tr>
+<tr>
+<td><code>CONTAINER_RUNTIME</code></td>
+<td>No</td>
+<td><code>auto</code></td>
+<td>Force runtime: <code>podman</code>, <code>docker</code>, or
+<code>auto</code></td>
+</tr>
+<tr>
+<td><code>METUBE_PORT</code></td>
+<td>No</td>
+<td><code>8086</code></td>
+<td>Web interface port</td>
+</tr>
+<tr>
+<td><code>YTDLP_VPN_PORT</code></td>
+<td>No</td>
+<td><code>3130</code></td>
+<td>VPN proxy port</td>
+</tr>
+<tr>
+<td><code>TZ</code></td>
+<td>No</td>
+<td><code>Europe/Moscow</code></td>
+<td>Timezone for containers</td>
+</tr>
+<tr>
+<td><code>SERVICE_MODE</code></td>
+<td>No</td>
+<td><code>false</code></td>
+<td>Enable automatic processing</td>
+</tr>
+</tbody>
+</table>
+<h3 id="example-.env-no-vpn">Example <code>.env</code> (No VPN)</h3>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="va">USE_VPN</span><span class="op">=</span>false</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="va">DOWNLOAD_DIR</span><span class="op">=</span>/home/user/Downloads/Videos</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="va">METUBE_PORT</span><span class="op">=</span>8086</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="va">TZ</span><span class="op">=</span>America/New_York</span></code></pre></div>
+<h3 id="example-.env-with-vpn">Example <code>.env</code> (With VPN)</h3>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="va">USE_VPN</span><span class="op">=</span>true</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="va">DOWNLOAD_DIR</span><span class="op">=</span>/home/user/Downloads/Videos</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="va">VPN_USERNAME</span><span class="op">=</span>myvpnuser</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="va">VPN_PASSWORD</span><span class="op">=</span>myvpnpass</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="va">VPN_OVPN_PATH</span><span class="op">=</span>/home/user/vpn/config.ovpn</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="va">METUBE_PORT</span><span class="op">=</span>8086</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="va">TZ</span><span class="op">=</span>America/New_York</span></code></pre></div>
+<h2 id="usage">Usage</h2>
+<h3 id="management-scripts">Management Scripts</h3>
+<table>
+<thead>
+<tr>
+<th>Script</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>./init</code></td>
+<td>Initialize environment, validate config</td>
+</tr>
+<tr>
+<td><code>./start</code></td>
+<td>Start services (uses VPN setting from <code>.env</code>)</td>
+</tr>
+<tr>
+<td><code>./start_no_vpn</code></td>
+<td>Start services without VPN</td>
+</tr>
+<tr>
+<td><code>./stop</code></td>
+<td>Stop all services</td>
+</tr>
+<tr>
+<td><code>./restart</code></td>
+<td>Stop and restart services</td>
+</tr>
+<tr>
+<td><code>./update-images</code></td>
+<td>Pull latest container images</td>
+</tr>
+<tr>
+<td><code>./setup-auto-update</code></td>
+<td>Setup automatic updates (Podman cron)</td>
+</tr>
+<tr>
+<td><code>./status</code></td>
+<td>Show service status and container info</td>
+</tr>
+<tr>
+<td><code>./check-vpn</code></td>
+<td>Verify VPN connection status</td>
+</tr>
+<tr>
+<td><code>./cleanup [all\|ytdlp\|jdownloader]</code></td>
+<td>Remove containers</td>
+</tr>
+<tr>
+<td><code>./download &lt;URL&gt;</code></td>
+<td>Download a video</td>
+</tr>
+<tr>
+<td><code>./download --batch</code></td>
+<td>Download from <code>urls.txt</code></td>
+</tr>
+<tr>
+<td><code>./download --channels</code></td>
+<td>Download from <code>channels.txt</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="web-interface-metube">Web Interface (Metube)</h3>
+<p>Once running, access the services at:</p>
+<ul>
+<li><strong>YT-DLP Dashboard</strong> (new): http://localhost:9090 —
+Modern Angular UI with queue, history, and download management</li>
+<li><strong>Landing Page</strong>: http://localhost:8086 — Cookie
+authentication flow</li>
+<li><strong>MeTube UI</strong>: http://localhost:8088 — Original MeTube
+web interface</li>
+</ul>
+<p>The Landing Page handles cookie authentication and redirects to
+MeTube when ready.</p>
+<p><strong>Landing Page Features:</strong> - Automatic YouTube cookie
+status check - Step-by-step guide for cookie export - Drag-and-drop
+cookie upload - Auto-redirect to MeTube when authenticated</p>
+<p><strong>YT-DLP Dashboard (at http://localhost:9090):</strong> -
+Modern Angular standalone application - Add downloads with
+quality/format selection — <strong>form re-enables immediately after
+<code>/api/add</code> returns ok</strong>, so you can submit the next
+URL while the previous is still tracking - Real-time queue with
+per-state visuals: <code>pending</code> / <code>preparing</code> /
+<code>downloading</code> / <code>postprocessing</code> /
+<code>finished</code> / <code>error</code>, each with a distinct icon,
+badge colour, and live progress bar (with shimmer when active and
+indeterminate animation when no percent is yet reported) -
+<strong>Cancel-from-Queue confirmation dialog</strong> — destructive
+cancel always prompts before firing - <strong>Aborted-history
+visibility</strong> — cancelled queue items show up on the History page
+with status <code>aborted</code> (vendor MeTube would have silently
+dropped them; the dashboard records them via the new
+<code>/api/aborted-history</code> landing endpoint) - 16 supported
+platforms with per-platform status badges - VPN-state pill in the navbar
+- Cookie management page with per-platform freshness breakdown -
+<strong>Bulk operations on Queue and History</strong>: per-row
+checkboxes, Select-all in the toolbar, and dedicated <strong>Clear
+All</strong> / <strong>Delete All</strong> buttons (both with
+confirmation; <em>Delete</em> requires ticking an acknowledgement
+checkbox before it can fire) - Dark theme UI</p>
+<blockquote>
+<p>See <strong><a
+href="USER_GUIDE.md#managing-queue-and-history">USER_GUIDE → Managing
+Queue and History</a></strong> for the full bulk-action workflow
+including how the modal acknowledgement gating works.</p>
+</blockquote>
+<p><strong>MeTube UI (at http://localhost:8088):</strong> - Paste URLs
+to download - View download queue and progress - Select format/quality -
+Playlist and channel support - Download history</p>
+<h3 id="command-line-usage">Command Line Usage</h3>
+<p><strong>Download a single video:</strong></p>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./download</span> <span class="st">&#39;https://www.youtube.com/watch?v=VIDEO_ID&#39;</span></span></code></pre></div>
+<p><strong>Download with options:</strong></p>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># With Podman (auto-detected)</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./download</span> <span class="st">&#39;URL&#39;</span> <span class="at">-f</span> <span class="st">&#39;bestvideo[height&lt;=720]+bestaudio&#39;</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Or directly with container runtime</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="ex">podman</span> exec yt-dlp-cli yt-dlp <span class="st">&#39;URL&#39;</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> exec yt-dlp-cli yt-dlp <span class="st">&#39;URL&#39;</span></span></code></pre></div>
+<p><strong>Batch downloads:</strong></p>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Add URLs to ./yt-dlp/config/urls.txt</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&#39;https://youtube.com/watch?v=VIDEO1&#39;</span> <span class="op">&gt;&gt;</span> ./yt-dlp/config/urls.txt</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&#39;https://youtube.com/watch?v=VIDEO2&#39;</span> <span class="op">&gt;&gt;</span> ./yt-dlp/config/urls.txt</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Download all</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="ex">./download</span> <span class="at">--batch</span></span></code></pre></div>
+<p><strong>Channel subscriptions:</strong></p>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Add channel URLs to ./yt-dlp/config/channels.txt</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&#39;https://youtube.com/c/ChannelName&#39;</span> <span class="op">&gt;&gt;</span> ./yt-dlp/config/channels.txt</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Download recent videos (last 7 days)</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="ex">./download</span> <span class="at">--channels</span></span></code></pre></div>
+<h3 id="viewing-logs">Viewing Logs</h3>
+<div class="sourceCode" id="cb13"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># All services</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="ex">podman-compose</span> logs <span class="at">-f</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="co"># or</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="ex">docker-compose</span> logs <span class="at">-f</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Specific service</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="ex">podman-compose</span> logs <span class="at">-f</span> yt-dlp-cli</span></code></pre></div>
+<h2 id="container-runtime">Container Runtime</h2>
+<p>This project automatically detects and uses the available container
+runtime:</p>
+<h3 id="podman-recommended">Podman (Recommended)</h3>
+<div class="sourceCode" id="cb14"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check installation</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="ex">podman</span> <span class="at">--version</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="co"># The scripts will automatically use Podman if available</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="ex">./start</span>  <span class="co"># Uses Podman by default</span></span></code></pre></div>
+<p>Benefits of Podman: - <strong>Rootless by default</strong>: Runs
+without root privileges - <strong>Daemonless</strong>: No background
+service required - <strong>Docker-compatible</strong>: Drop-in
+replacement - <strong>Systemd integration</strong>: Native systemd
+support</p>
+<h3 id="docker">Docker</h3>
+<div class="sourceCode" id="cb15"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check installation</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> <span class="at">--version</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="co"># If Podman is not installed, scripts will use Docker</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="ex">./start</span>  <span class="co"># Uses Docker if Podman unavailable</span></span></code></pre></div>
+<h3 id="forcing-a-runtime">Forcing a Runtime</h3>
+<p>To force a specific runtime, edit <code>.env</code>:</p>
+<div class="sourceCode" id="cb16"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="va">CONTAINER_RUNTIME</span><span class="op">=</span>podman   <span class="co"># Force Podman</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="co"># or</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="va">CONTAINER_RUNTIME</span><span class="op">=</span>docker   <span class="co"># Force Docker</span></span></code></pre></div>
+<h3 id="compose-commands">Compose Commands</h3>
+<p><strong>With Podman:</strong></p>
+<div class="sourceCode" id="cb17"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Using podman-compose (standalone)</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="ex">podman-compose</span> <span class="at">--profile</span> vpn up <span class="at">-d</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="ex">podman-compose</span> <span class="at">--profile</span> no-vpn up <span class="at">-d</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Using podman compose (built-in)</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a><span class="ex">podman</span> compose <span class="at">--profile</span> vpn up <span class="at">-d</span></span></code></pre></div>
+<p><strong>With Docker:</strong></p>
+<div class="sourceCode" id="cb18"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Using docker-compose (standalone)</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="ex">docker-compose</span> <span class="at">--profile</span> vpn up <span class="at">-d</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Using docker compose (plugin)</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose <span class="at">--profile</span> vpn up <span class="at">-d</span></span></code></pre></div>
+<h2 id="vpn-setup">VPN Setup</h2>
+<h3 id="supported-vpn-providers">Supported VPN Providers</h3>
+<p>Any OpenVPN-compatible provider should work. Tested with: - Private
+Internet Access (PIA) - NordVPN - Mullvad - ProtonVPN</p>
+<h3 id="configuration-steps">Configuration Steps</h3>
+<ol type="1">
+<li><p><strong>Download OpenVPN config</strong> from your VPN
+provider</p></li>
+<li><p><strong>Place config file</strong> in a secure location (e.g.,
+<code>~/vpn/config.ovpn</code>)</p></li>
+<li><p><strong>Update <code>.env</code>:</strong></p>
+<div class="sourceCode" id="cb19"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="va">USE_VPN</span><span class="op">=</span>true</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="va">VPN_USERNAME</span><span class="op">=</span>your_username</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="va">VPN_PASSWORD</span><span class="op">=</span>your_password</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="va">VPN_OVPN_PATH</span><span class="op">=</span>/home/user/vpn/config.ovpn</span></code></pre></div></li>
+<li><p><strong>Initialize:</strong></p>
+<div class="sourceCode" id="cb20"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./init</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="co"># This creates vpn-auth.txt from your credentials</span></span></code></pre></div></li>
+<li><p><strong>Start with VPN:</strong></p>
+<div class="sourceCode" id="cb21"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./start</span></span></code></pre></div></li>
+<li><p><strong>Verify connection:</strong></p>
+<div class="sourceCode" id="cb22"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./check-vpn</span></span></code></pre></div></li>
+</ol>
+<h3 id="vpn-authentication">VPN Authentication</h3>
+<p>The <code>init</code> script will: - Create <code>vpn-auth.txt</code>
+with your credentials - Set permissions to <code>600</code> (readable
+only by owner) - Add <code>auth-user-pass</code> directive to OpenVPN
+config if missing</p>
+<p><strong>Important:</strong> Never commit <code>vpn-auth.txt</code> to
+git. It’s already in <code>.gitignore</code>.</p>
+<h2 id="automatic-updates">Automatic Updates</h2>
+<p>All container images are automatically kept up-to-date through two
+mechanisms:</p>
+<h3 id="on-every-start">1. On Every Start</h3>
+<p>Whenever you start the services, the latest images are pulled
+automatically:</p>
+<div class="sourceCode" id="cb23"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./start</span>         <span class="co"># Pulls latest images before starting</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./start_no_vpn</span>  <span class="co"># Also pulls latest images</span></span></code></pre></div>
+<h3 id="periodic-background-updates-every-3-4-hours">2. Periodic
+Background Updates (Every 3-4 Hours)</h3>
+<p><strong>Docker Users:</strong> Watchtower is included and configured
+to check for updates every 3 hours. It will automatically pull new
+images and restart containers when updates are available.</p>
+<p><strong>Podman Users:</strong> Since Watchtower requires Docker
+socket access, Podman users should set up a cron job:</p>
+<div class="sourceCode" id="cb24"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Setup automatic updates</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./setup-auto-update</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a><span class="co"># This creates a cron job that runs every 3 hours</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Logs are saved to ./logs/update.log</span></span></code></pre></div>
+<h3 id="manual-updates">Manual Updates</h3>
+<p>To manually check for and pull updates:</p>
+<div class="sourceCode" id="cb25"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./update-images</span></span></code></pre></div>
+<p>Or specify the runtime:</p>
+<div class="sourceCode" id="cb26"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="va">CONTAINER_RUNTIME</span><span class="op">=</span>docker <span class="ex">./update-images</span></span></code></pre></div>
+<h3 id="updated-images">Updated Images</h3>
+<p>The following images are automatically updated: -
+<strong>Metube</strong>: <code>ghcr.io/alexta69/metube:latest</code> -
+<strong>yt-dlp CLI</strong>: <code>th3a/yt-dlp:latest</code> -
+<strong>OpenVPN</strong>: <code>dperson/openvpn-client:latest</code> -
+<strong>Watchtower</strong>:
+<code>containrrr/watchtower:latest</code></p>
+<h2 id="advanced-usage">Advanced Usage</h2>
+<h3 id="custom-yt-dlp-options">Custom yt-dlp Options</h3>
+<p>Edit <code>./yt-dlp/config/yt-dlp.conf</code>:</p>
+<div class="sourceCode" id="cb27"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Video quality</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="ex">-f</span> <span class="st">&quot;bestvideo[height&lt;=720]+bestaudio/best&quot;</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Output template</span></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a><span class="ex">-o</span> <span class="st">&quot;/downloads/%(uploader)s/%(title)s.%(ext)s&quot;</span></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Subtitles</span></span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a><span class="ex">--write-sub</span></span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a><span class="ex">--sub-langs</span> en,es</span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a><span class="ex">--embed-subs</span></span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Metadata</span></span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a><span class="ex">--add-metadata</span></span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a><span class="ex">--embed-thumbnail</span></span></code></pre></div>
+<h3 id="using-cookies">Using Cookies</h3>
+<p>YouTube requires browser cookies to download videos. The easiest
+method is using the Landing Page:</p>
+<ol type="1">
+<li><strong>Open http://localhost:8086</strong> - The Landing Page will
+guide you</li>
+<li><strong>Export cookies</strong> from your browser using “Get
+cookies.txt LOCALLY” extension</li>
+<li><strong>Upload cookies</strong> via drag-and-drop on the Landing
+Page</li>
+<li><strong>Auto-redirect</strong> to MeTube when authenticated</li>
+</ol>
+<p>Alternatively, to access age-restricted or subscriber-only
+content:</p>
+<ol type="1">
+<li><strong>Export cookies</strong> from your browser using an
+extension</li>
+<li><strong>Place cookies file</strong> at
+<code>./yt-dlp/cookies/youtube_cookies.txt</code></li>
+<li>Restart: <code>./stop &amp;&amp; ./start</code></li>
+</ol>
+<p><strong>Cookie Helper Scripts:</strong></p>
+<div class="sourceCode" id="cb28"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Interactive cookie setup</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./yt-dlp/cookies/setup-cookies.sh</span></span></code></pre></div>
+<h3 id="service-mode">Service Mode</h3>
+<p>Enable automatic processing of URLs and channels:</p>
+<div class="sourceCode" id="cb29"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="co"># In .env</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="va">SERVICE_MODE</span><span class="op">=</span>true</span></code></pre></div>
+<p>When enabled, containers will automatically process: -
+<code>./yt-dlp/config/urls.txt</code> (batch downloads) -
+<code>./yt-dlp/config/channels.txt</code> (channel subscriptions)</p>
+<h3 id="integration-with-jdownloader">Integration with JDownloader</h3>
+<p>This project is designed to work alongside <a
+href="https://github.com/milos85vasic/jDownloader">JDownloader</a>:</p>
+<ul>
+<li>Separate VPN containers for each service</li>
+<li>Different external IP addresses (if VPN enabled)</li>
+<li>Non-conflicting ports</li>
+</ul>
+<p>To use together:</p>
+<div class="sourceCode" id="cb30"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Start both services</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./start</span>                    <span class="co"># Starts YT-DLP</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="co"># (Start JDownloader separately in its directory)</span></span></code></pre></div>
+<h2 id="testing-verification">Testing &amp; Verification</h2>
+<p>This project uses a <strong>4-Gate verification system</strong> to
+prevent the universal “green tests, broken product” problem.</p>
+<h3 id="quick-validation">Quick Validation</h3>
+<div class="sourceCode" id="cb31"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co"># One command — run everything before pushing</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> dev-check</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Or individual gates:</span></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> smoke         <span class="co"># E2E smoke tests against real services</span></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> audit         <span class="co"># Test suite quality audit (score: 70/70)</span></span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> test          <span class="co"># Full test suite (121 tests)</span></span></code></pre></div>
+<h3 id="the-4-gates">The 4 Gates</h3>
+<p>No task is complete until all gates pass:</p>
+<table>
+<colgroup>
+<col style="width: 28%" />
+<col style="width: 28%" />
+<col style="width: 42%" />
+</colgroup>
+<thead>
+<tr>
+<th>Gate</th>
+<th>What</th>
+<th>Command</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>1. Contract</strong></td>
+<td>API matches OpenAPI spec</td>
+<td><code>contracts/metube-api.openapi.yaml</code></td>
+</tr>
+<tr>
+<td><strong>2. Integration</strong></td>
+<td>Real HTTP calls, no mocks</td>
+<td><code>./tests/test-integration-realhttp.sh</code></td>
+</tr>
+<tr>
+<td><strong>3. Smoke</strong></td>
+<td>E2E against running containers</td>
+<td><code>./scripts/smoke-test.sh</code></td>
+</tr>
+<tr>
+<td><strong>4. Manual</strong></td>
+<td>Human verifies in dashboard at <code>:9090</code></td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h3 id="test-suites">Test Suites</h3>
+<div class="sourceCode" id="cb32"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Run all tests</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./tests/run-comprehensive-tests.sh</span></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Run specific categories</span></span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a><span class="ex">./tests/run-tests.sh</span> <span class="at">-p</span> unit          <span class="co"># Unit tests (pure logic only)</span></span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a><span class="ex">./tests/run-tests.sh</span> <span class="at">-p</span> integration   <span class="co"># Integration tests</span></span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a><span class="ex">./tests/run-tests.sh</span> <span class="at">-p</span> scenario      <span class="co"># Scenario tests</span></span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a><span class="ex">./tests/run-tests.sh</span> <span class="at">-p</span> error         <span class="co"># Error tests</span></span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Real HTTP integration tests (no mocks — hits actual services)</span></span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a><span class="ex">./tests/test-integration-realhttp.sh</span></span>
+<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-13"><a href="#cb32-13" aria-hidden="true" tabindex="-1"></a><span class="co"># E2E smoke tests (requires running containers)</span></span>
+<span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a><span class="ex">./scripts/smoke-test.sh</span></span>
+<span id="cb32-15"><a href="#cb32-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-16"><a href="#cb32-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Test quality audit (0-70 score)</span></span>
+<span id="cb32-17"><a href="#cb32-17" aria-hidden="true" tabindex="-1"></a><span class="ex">./scripts/test-audit.sh</span></span></code></pre></div>
+<p><strong>Current Results:</strong> - <strong>121 tests
+passing</strong> (0 failures) - <strong>22/22 smoke tests
+passing</strong> - <strong>22/22 real HTTP integration tests
+passing</strong> - <strong>Test audit score: 70/70</strong> - 11 tests
+skipped (known platform restrictions)</p>
+<p>See <a href="TEST_RESULTS.md">TEST_RESULTS.md</a> for detailed
+results. See <a href="docs/VERIFICATION.md">docs/VERIFICATION.md</a> for
+the full verification philosophy.</p>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="container-runtime-not-found">Container Runtime Not Found</h3>
+<div class="sourceCode" id="cb33"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check if Podman is installed</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="fu">which</span> podman</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a><span class="ex">podman</span> <span class="at">--version</span></span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Or Docker</span></span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a><span class="fu">which</span> docker</span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> <span class="at">--version</span></span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Install Podman (recommended)</span></span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Fedora/RHEL: sudo dnf install podman podman-compose</span></span>
+<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Ubuntu/Debian: sudo apt-get install podman podman-compose</span></span>
+<span id="cb33-12"><a href="#cb33-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Arch: sudo pacman -S podman podman-compose</span></span></code></pre></div>
+<h3 id="vpn-connection-issues">VPN Connection Issues</h3>
+<div class="sourceCode" id="cb34"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check VPN status</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./check-vpn</span></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a><span class="co"># View VPN logs</span></span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a><span class="ex">podman-compose</span> logs <span class="at">-f</span> openvpn-yt-dlp</span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Common fixes:</span></span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Verify VPN credentials in .env</span></span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Check OpenVPN config path</span></span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Ensure auth-user-pass directive in .ovpn file</span></span></code></pre></div>
+<h3 id="permission-denied-errors">Permission Denied Errors</h3>
+<div class="sourceCode" id="cb35"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Fix directory permissions</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="fu">chmod</span> <span class="at">-R</span> 755 ./yt-dlp ./metube</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a><span class="co"># For rootless Podman, ensure your user owns the download directory</span></span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> chown <span class="at">-R</span> <span class="va">$USER</span>:<span class="va">$USER</span> /path/to/downloads</span></code></pre></div>
+<h3 id="download-directory-not-found">Download Directory Not Found</h3>
+<p>The <code>init</code> script will prompt to create the directory. To
+create manually:</p>
+<div class="sourceCode" id="cb36"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> /path/to/downloads</span></code></pre></div>
+<h3 id="port-already-in-use">Port Already in Use</h3>
+<p>Change the port in <code>.env</code>:</p>
+<div class="sourceCode" id="cb37"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="va">METUBE_PORT</span><span class="op">=</span>8087  <span class="co"># Use different port</span></span></code></pre></div>
+<h3
+id="youtube-downloads-failing---no-video-formats-found-or-bot-detection">YouTube
+Downloads Failing - “No video formats found” or Bot Detection</h3>
+<p>This is caused by YouTube’s bot detection. YouTube requires cookies
+from a browser session to download videos.</p>
+<p><strong>Quick Fix:</strong></p>
+<div class="sourceCode" id="cb38"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Run the cookie setup helper</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./yt-dlp/cookies/setup-cookies.sh</span></span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Or manually:</span></span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Install &quot;Get cookies.txt LOCALLY&quot; extension for Firefox/Chrome</span></span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Go to youtube.com (logged in)</span></span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Export cookies as youtube_cookies.txt in ./yt-dlp/cookies/</span></span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. Restart: ./stop &amp;&amp; ./start_no_vpn</span></span></code></pre></div>
+<p><strong>Detailed instructions:</strong> See <a
+href="docs/YOUTUBE_DOWNLOAD_FIX.md">docs/YOUTUBE_DOWNLOAD_FIX.md</a></p>
+<p><strong>Troubleshooting:</strong> - Ensure cookies file exists:
+<code>cat ./yt-dlp/cookies/youtube_cookies.txt</code> - Check container
+logs: <code>podman logs metube-direct | grep -i error</code> - Cookies
+may expire - re-export periodically</p>
+<h2 id="port-reference">Port Reference</h2>
+<table>
+<thead>
+<tr>
+<th>Port</th>
+<th>Service</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>8086</td>
+<td>Landing Page</td>
+<td>Cookie authentication &amp; redirect (No VPN)</td>
+</tr>
+<tr>
+<td>8087</td>
+<td>Landing Page</td>
+<td>Cookie authentication &amp; redirect (VPN)</td>
+</tr>
+<tr>
+<td>8088</td>
+<td>Metube</td>
+<td>Web interface for yt-dlp (No VPN)</td>
+</tr>
+<tr>
+<td>9090</td>
+<td>Dashboard</td>
+<td>Angular dashboard for yt-dlp (No VPN)</td>
+</tr>
+<tr>
+<td>8081</td>
+<td>Metube API</td>
+<td>Internal API (container)</td>
+</tr>
+<tr>
+<td>3130</td>
+<td>yt-dlp VPN</td>
+<td>VPN proxy port</td>
+</tr>
+<tr>
+<td>3129</td>
+<td>JDownloader VPN</td>
+<td>VPN proxy (if using JDownloader)</td>
+</tr>
+<tr>
+<td>5800</td>
+<td>JDownloader</td>
+<td>Web UI (if using JDownloader)</td>
+</tr>
+<tr>
+<td>5900</td>
+<td>JDownloader</td>
+<td>VNC (if using JDownloader)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="dual-version-media-pipeline-webready-video-mp3">Dual-version
+media pipeline (webready video + mp3)</h2>
+<p>A dedicated <code>media_postprocessor</code> sidecar (Python, no-vpn
+profile) produces a <strong>guaranteed-playable derivative alongside
+every download</strong>, while keeping the <strong>original file
+untouched as a zero-loss master</strong>:</p>
+<ul>
+<li>Every downloaded <strong>video</strong> →
+<code>webready-&lt;base&gt;.mp4</code>, transcoded to <strong>H.264 +
+AAC with faststart</strong> (the <code>moov</code> atom is muxed before
+<code>mdat</code> so playback can start before the whole file downloads)
+— built for Android-TV playback. Audio that is already AAC ≤2ch is
+copied losslessly; otherwise it is re-encoded to AAC.
+(<code>media_postprocessor/transcoder.py::transcode_video</code>)</li>
+<li>Every downloaded <strong>audio</strong> file →
+<code>&lt;base&gt;.mp3</code> at <strong>320 kbps CBR</strong>.
+(<code>media_postprocessor/transcoder.py::derive_mp3</code>)</li>
+<li>The original download is never modified — it is the zero-loss
+master. The webready <code>.mp4</code> is a re-encode and is
+<strong>not</strong> bit-exact (see the design spec’s honesty clause);
+the master is the lossless artifact.</li>
+</ul>
+<p>Each derivative is written atomically (ffmpeg writes a
+<code>&lt;final&gt;.partial</code> temp file and only
+<code>os.replace()</code>s it onto the final path on ffmpeg exit 0) and
+then <strong>ffprobe-validated</strong> (video: h264 + aac + non-zero
+duration + faststart; audio: mp3 + non-zero duration) before the job is
+marked done — a failed or interrupted run never leaves a half-written or
+invalid output. (<code>media_postprocessor/transcoder.py</code>)</p>
+<h3 id="how-it-runs">How it runs</h3>
+<p>The sidecar’s <code>main()</code> orchestration
+(<code>media_postprocessor/service.py::main</code>) starts in this
+order:</p>
+<ol type="1">
+<li>Init the SQLite (WAL) jobs DB and <strong>re-queue any job a crashed
+worker left <code>running</code></strong> so interrupted work resumes to
+a valid, complete output.</li>
+<li><strong>Backfill</strong> — a one-time startup full-scan of the
+whole library (<code>watcher.reconcile_scan</code>) enqueues every
+existing video/audio file that has no derivative yet.</li>
+<li><strong>Watch</strong> — a <code>watchdog</code> PollingObserver
+(polling is used because inotify is unreliable on network mounts)
+enqueues new downloads as they land.</li>
+<li>A background <strong>worker thread</strong> drains the queue,
+deriving each output and marking the job <code>done</code> (with its
+output path) or <code>failed</code> (with the error).</li>
+<li>A <strong>periodic reconcile</strong> thread re-scans the library
+every <code>MP_RECONCILE_INTERVAL</code> seconds — the safety net for
+files the watcher deferred as still-being-written.</li>
+<li>A small stdlib <strong>HTTP status server</strong> on
+<code>MP_PORT</code>.</li>
+</ol>
+<blockquote>
+<p><strong>First start backfills your existing library.</strong> On the
+very first run the postprocessor transcodes every video/audio file
+already in <code>${DOWNLOAD_DIR}</code> to produce the missing
+<code>webready-*.mp4</code> / <code>.mp3</code> derivatives. Expect this
+initial backfill pass — it can take a while on a large library and runs
+at <code>MP_MAX_CONCURRENCY</code>.</p>
+</blockquote>
+<p><strong>Status &amp; dashboard.</strong> The dashboard proxies
+<code>/api/postprocess/*</code> to the sidecar
+(<code>dashboard/nginx.conf.template</code>);
+<code>GET /api/postprocess/status</code> returns per-state job counts
+(<code>queued</code>/<code>running</code>/<code>done</code>/<code>failed</code>/<code>canceled</code>)
+and <code>GET /api/postprocess/jobs</code> lists each job. The dashboard
+surfaces these states so you can see derivation progress
+(<code>media_postprocessor/service.py</code>).</p>
+<p>Mid-write protection: a freshly-written file whose mtime is younger
+than <code>MP_MIN_STABLE_AGE</code> seconds is deferred (it may still be
+growing as yt-dlp/ffmpeg finish merging); the periodic reconcile picks
+it up once it has settled (<code>media_postprocessor/watcher.py</code>).
+In-progress (<code>*.part</code>, <code>*.ytdl</code>,
+<code>*.partial</code>) files and the pipeline’s own outputs
+(<code>webready-</code> prefix, any <code>.mp3</code>) are never
+re-processed
+(<code>media_postprocessor/media_probe.py::classify_target</code>).</p>
+<h3 id="environment-variables-1">Environment variables</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DOWNLOAD_DIR</code></td>
+<td><code>/downloads</code> (container)</td>
+<td>Library directory the postprocessor watches, backfills, and writes
+derivatives into (<code>config.py</code>)</td>
+</tr>
+<tr>
+<td><code>MP_PORT</code></td>
+<td><code>8089</code></td>
+<td>Port for the status HTTP server (<code>config.py</code>); the
+dashboard proxies <code>/api/postprocess/*</code> here</td>
+</tr>
+<tr>
+<td><code>MP_MAX_CONCURRENCY</code></td>
+<td><code>1</code> (compose sets <code>2</code>)</td>
+<td>Worker concurrency cap (<code>config.py</code>)</td>
+</tr>
+<tr>
+<td><code>MP_MIN_STABLE_AGE</code></td>
+<td><code>10</code> (seconds)</td>
+<td>Mid-write guard — a file is enqueued only after its mtime has been
+stable this long (<code>watcher.py</code>)</td>
+</tr>
+<tr>
+<td><code>MP_RECONCILE_INTERVAL</code></td>
+<td><code>30</code> (seconds)</td>
+<td>How often the periodic reconcile re-scans the library
+(<code>service.py</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>The <code>docker-compose.yml</code> <code>media_postprocessor</code>
+service runs under the <code>no-vpn</code> profile with
+<code>mem_limit: 1g</code> and <code>oom_score_adj: 1000</code> — it is
+intentionally the <strong>first container sacrificed under memory
+pressure</strong>, never the download/queue services.</p>
+<h2 id="documentation">Documentation</h2>
+<ul>
+<li><strong><a href="USER_GUIDE.md">USER_GUIDE.md</a></strong> -
+Complete user manual with examples</li>
+<li><strong><a href="TEST_RESULTS.md">TEST_RESULTS.md</a></strong> -
+Comprehensive test results report</li>
+<li><strong><a href="AGENTS.md">AGENTS.md</a></strong> - Development
+guide and coding standards</li>
+<li><strong><a href="CONTRIBUTING.md">CONTRIBUTING.md</a></strong> -
+Contribution guidelines</li>
+<li><strong><a
+href="docs/YOUTUBE_DOWNLOAD_FIX.md">docs/YOUTUBE_DOWNLOAD_FIX.md</a></strong>
+- YouTube cookie authentication guide</li>
+<li><strong><a href="tests/README.md">tests/README.md</a></strong> -
+Testing documentation</li>
+</ul>
+<h2 id="contributing">Contributing</h2>
+<p>We welcome contributions! Please see <a
+href="CONTRIBUTING.md">CONTRIBUTING.md</a> for guidelines.</p>
+<h2 id="license">License</h2>
+<p>This project is licensed under the GNU General Public License v3.0 -
+see the <a href="LICENSE">LICENSE</a> file for details.</p>
+<h2 id="acknowledgments">Acknowledgments</h2>
+<ul>
+<li><a href="https://github.com/yt-dlp/yt-dlp">yt-dlp</a> - The video
+downloader</li>
+<li><a href="https://github.com/alexta69/metube">Metube</a> - Web UI for
+yt-dlp</li>
+<li><a href="https://podman.io/">Podman</a> - Container engine</li>
+<li><a href="https://openvpn.net/">OpenVPN</a> - VPN solution</li>
+</ul>
+<h2 id="support">Support</h2>
+<ul>
+<li><strong>Issues:</strong> <a
+href="https://github.com/milos85vasic/YT-DLP/issues">GitHub
+Issues</a></li>
+<li><strong>Discussions:</strong> <a
+href="https://github.com/milos85vasic/YT-DLP/discussions">GitHub
+Discussions</a></li>
+</ul>
+<hr />
+<p><strong>Disclaimer:</strong> This tool is for personal use only.
+Respect copyright laws and terms of service of content providers.</p>
+</body>
+</html>
