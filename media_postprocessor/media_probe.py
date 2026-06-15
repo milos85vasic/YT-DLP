@@ -7,10 +7,19 @@ later phases to refine the decision.
 
 import json
 import os
+import re
 import subprocess
 
 VIDEO_EXTS = {".mp4", ".mkv", ".webm", ".avi", ".mov", ".m4v", ".flv", ".wmv", ".ts"}
 AUDIO_EXTS = {".m4a", ".opus", ".flac", ".wav", ".aac", ".ogg", ".oga", ".wma"}
+
+# yt-dlp intermediate per-format files: "<title>.f<format_id>.<ext>" where the
+# format_id is digits (.f399) or protocol-prefixed (.fdash-video-5240, .fhls-…).
+# yt-dlp MERGES these per-stream files then DELETES them before the final
+# "<title>.<ext>" appears, so transcoding one races a vanishing/partial file
+# (ffmpeg exit 254). Matches the trailing ".f<id>" of the name stem only — it
+# does NOT match innocent names like "clip.final.mp4".
+_YTDLP_INTERMEDIATE = re.compile(r"\.f(\d+|dash|hls|http|mhtml)[-_a-z0-9]*$")
 
 
 def classify_target(path: str) -> str:
@@ -25,6 +34,9 @@ def classify_target(path: str) -> str:
         return "skip"
     ext = os.path.splitext(lower)[1]
     if ext == ".mp3":
+        return "skip"
+    # Skip yt-dlp intermediate per-format files (merged then deleted upstream).
+    if _YTDLP_INTERMEDIATE.search(os.path.splitext(lower)[0]):
         return "skip"
     if ext in VIDEO_EXTS:
         return "webready_video"

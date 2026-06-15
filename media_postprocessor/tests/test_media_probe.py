@@ -99,3 +99,18 @@ class TestProbeMediaKindCommittedFixtures(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_classify_skips_ytdlp_intermediate_files():
+    """yt-dlp '<title>.f<id>.<ext>' / '.fdash-*' intermediates are merged+deleted
+    upstream -> classify as skip so the worker never races a vanishing file
+    (observed live: ffmpeg exit 254 on .f399.mp4 / .fdash-video-5240.mp4)."""
+    from media_postprocessor import media_probe as mp
+    assert mp.classify_target("Watchtower of Turkey.fdash-video-5240.mp4") == "skip"
+    assert mp.classify_target("Spinoza's God.f399.mp4") == "skip"
+    assert mp.classify_target("song.f140.m4a") == "skip"
+    assert mp.classify_target("/downloads/x.fhls-1080.webm") == "skip"
+    # final merged files + innocent names must NOT be skipped
+    assert mp.classify_target("Watchtower of Turkey.mp4") == "webready_video"
+    assert mp.classify_target("clip.final.mp4") == "webready_video"
+    assert mp.classify_target("track.m4a") == "mp3_audio"
