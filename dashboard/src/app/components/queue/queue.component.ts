@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
-import { MetubeService, DownloadInfo } from '../../services/metube.service';
+import { MetubeService, DownloadInfo, PostprocessJob } from '../../services/metube.service';
 
 @Component({
   selector: 'app-queue',
@@ -49,6 +49,12 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
             🧹 Clear {{ selectedCount }}
           </button>
         </div>
+      </div>
+
+      <!-- Non-blocking postprocess-status notice (spec §8) — never blanks the
+           queue; surfaces a postprocess API outage so it isn't a silent error. -->
+      <div *ngIf="postprocessError" class="pp-notice" data-testid="queue-pp-error">
+        <span class="pp-notice-icon">⚠️</span> {{ postprocessError }}
       </div>
 
       <div *ngIf="loading" class="loading">
@@ -119,6 +125,18 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
             <div class="meta">
               <span class="status-badge" [class]="'status-badge ' + stateClass(item)">
                 {{ stateLabel(item) }}
+              </span>
+              <!-- Live media_postprocessor pipeline state (spec §8) — fed from
+                   the postprocess API and matched to this item by source_path
+                   basename. Renders only when a matching job exists. -->
+              <span
+                *ngIf="postprocessState(item) as pp"
+                class="status-badge pp-badge"
+                [class]="'status-badge pp-badge ' + ppStateClass(pp)"
+                [attr.data-testid]="'queue-pp-badge-' + item.id"
+                [attr.data-pp-state]="pp"
+              >
+                {{ ppStateLabel(pp) }}
               </span>
               <span *ngIf="item.speed">• {{ item.speed }}</span>
               <span *ngIf="item.eta">• ETA {{ item.eta }}</span>
@@ -303,6 +321,19 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
     .status-badge.state-error         { background: rgba(157,0,30,0.20);    color: #cc7832; }
     .status-badge.state-aborted       { background: rgba(204,120,50,0.20);  color: #cc7832; }
     .status-badge.state-unknown       { background: rgba(169,183,198,0.10); color: #808080; }
+    /* Postprocess pipeline indicator — reuses the dual-version state palette
+       (deriving_webready / deriving_mp3 / webready_ready) already defined above. */
+    .pp-badge { display: inline-flex; align-items: center; gap: 4px; }
+    .pp-notice {
+      margin-bottom: 14px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      color: #cc7832;
+      background: rgba(204,120,50,0.08);
+      border: 1px solid rgba(204,120,50,0.25);
+    }
+    .pp-notice-icon { margin-right: 4px; }
     .msg {
       margin-top: 8px;
       padding: 8px 12px;
@@ -520,6 +551,17 @@ export class QueueComponent implements OnInit, OnDestroy {
   loading = true;
   error: string | null = null;
   private sub?: Subscription;
+  private ppSub?: Subscription;
+
+  /**
+   * Latest postprocess jobs snapshot, indexed by the source-file basename so
+   * we can match a download item to its derivation job in O(1). Fed by the
+   * live media_postprocessor status API (spec §8).
+   */
+  private postprocessByBasename = new Map<string, PostprocessJob>();
+  /** Non-fatal postprocess fetch error surfaced to the user (separate from the
+   *  main queue error so a postprocess outage never blanks the queue). */
+  postprocessError: string | null = null;
 
   /** Local optimistic items: items we've just retried/submitted but server hasn't confirmed yet */
   private optimisticItems: DownloadInfo[] = [];
@@ -561,6 +603,60 @@ export class QueueComponent implements OnInit, OnDestroy {
   stateLabel(item: DownloadInfo): string { return this.stateMeta(item).label; }
   stateClass(item: DownloadInfo): string { return this.stateMeta(item).klass; }
   isActive(item: DownloadInfo): boolean  { return this.stateMeta(item).active; }
+
+  /** Basename of a path, normalised for matching (last path segment). */
+  private basename(path: string): string {
+    const trimmed = (path || '').replace(/[/\\]+$/, '');
+    const idx = Math.max(trimmed.lastIndexOf('/'), trimmed.lastIndexOf('\\'));
+    return idx >= 0 ? trimmed.slice(idx + 1) : trimmed;
+  }
+
+  /**
+   * Map a postprocess job to a dual-version pipeline display state (spec §8.1):
+   *   media_type=webready_video & status=running → 'deriving_webready'
+   *   media_type=mp3_audio      & status=running → 'deriving_mp3'
+   *   status=done                                → 'webready_ready'
+   * Returns null for states we don't surface (queued / failed / canceled /
+   * running-of-an-unrecognised-media-type) so the badge stays hidden.
+   */
+  private mapJobToState(job: PostprocessJob): string | null {
+    const status = (job.status || '').toLowerCase();
+    if (status === 'done') return 'webready_ready';
+    if (status === 'running') {
+      const media = (job.media_type || '').toLowerCase();
+      if (media === 'webready_video') return 'deriving_webready';
+      if (media === 'mp3_audio') return 'deriving_mp3';
+    }
+    return null;
+  }
+
+  /**
+   * Resolve the live postprocess display-state for a download item by matching
+   * its filename basename against the postprocess job source_path basename.
+   * Returns null when there is no matching job or its state isn't surfaced.
+   */
+  postprocessState(item: DownloadInfo): string | null {
+    const key = item.filename ? this.basename(item.filename) : '';
+    if (!key) return null;
+    const job = this.postprocessByBasename.get(key);
+    return job ? this.mapJobToState(job) : null;
+  }
+
+  ppStateLabel(state: string): string { return QueueComponent.STATE_META[state]?.label ?? state; }
+  ppStateClass(state: string): string { return QueueComponent.STATE_META[state]?.klass ?? 'state-unknown'; }
+
+  /**
+   * Rebuild the basename→job index from a postprocess jobs snapshot. Later
+   * jobs win on basename collision (newest-id-last ordering per the contract).
+   */
+  private indexPostprocessJobs(jobs: PostprocessJob[]): void {
+    const map = new Map<string, PostprocessJob>();
+    for (const job of jobs) {
+      if (!job.source_path) continue;
+      map.set(this.basename(job.source_path), job);
+    }
+    this.postprocessByBasename = map;
+  }
 
   trackById(_index: number, item: DownloadInfo): string {
     return item.id;
@@ -668,10 +764,26 @@ export class QueueComponent implements OnInit, OnDestroy {
         console.error('Queue poll error', err);
       },
     });
+
+    // Live media_postprocessor pipeline state (spec §8) — polled independently
+    // so a postprocess outage never blanks the queue. Every subscribe carries
+    // an error handler that clears state + surfaces a message (no silent error).
+    this.ppSub = this.metube.getPostprocessJobsPolling(2000).subscribe({
+      next: (data) => {
+        this.postprocessError = null;
+        this.indexPostprocessJobs(data.jobs || []);
+      },
+      error: (err) => {
+        this.postprocessByBasename = new Map();
+        this.postprocessError = 'Failed to load media post-processing status.';
+        console.error('Postprocess poll error', err);
+      },
+    });
   }
 
   ngOnDestroy(): void {
     this.sub?.unsubscribe();
+    this.ppSub?.unsubscribe();
   }
 
   get allItems(): DownloadInfo[] {

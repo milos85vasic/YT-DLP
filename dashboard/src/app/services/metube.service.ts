@@ -107,6 +107,47 @@ export interface AbortedHistoryResponse {
   aborted: AbortedHistoryEntry[];
 }
 
+/**
+ * A single media_postprocessor job, mirroring the §5.2 jobs-table row
+ * (contract: contracts/media-postprocessor.openapi.yaml). Status is kept
+ * as an open `string` — the value comes off the wire and MUST never be
+ * `any` per project rules — but the full set of valid values is enumerated
+ * here: 'queued' | 'running' | 'done' | 'failed' | 'canceled'. media_type
+ * carries the classified derivative kind the postprocessor produces
+ * (e.g. 'webready_video' | 'mp3_audio'), used by the dual-version pipeline
+ * mapping in QueueComponent.
+ */
+export interface PostprocessJob {
+  id: number;
+  source_path: string;
+  media_type: string | null;
+  status: string;
+  output_path?: string | null;
+  attempts: number;
+  error?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  started_at?: string | null;
+  finished_at?: string | null;
+}
+
+export interface PostprocessJobsResponse {
+  jobs: PostprocessJob[];
+}
+
+export interface PostprocessStatusCounts {
+  queued: number;
+  running: number;
+  done: number;
+  failed: number;
+  canceled: number;
+}
+
+export interface PostprocessStatusResponse {
+  healthy: boolean;
+  counts: PostprocessStatusCounts;
+}
+
 @Injectable({ providedIn: 'root' })
 export class MetubeService {
   private readonly base = '/api';
@@ -399,6 +440,39 @@ export class MetubeService {
 
   getVersion(): Observable<{ version: string; 'yt-dlp': string }> {
     return this.http.get<{ version: string; 'yt-dlp': string }>(`${this.base}/version`);
+  }
+
+  /**
+   * media_postprocessor job list — proxied via dashboard nginx to the
+   * postprocess sidecar (contract: contracts/media-postprocessor.openapi.yaml).
+   * Feeds the dual-version pipeline display states (spec §8) in QueueComponent.
+   */
+  getPostprocessJobs(): Observable<PostprocessJobsResponse> {
+    return this.http.get<PostprocessJobsResponse>(`${this.base}/postprocess/jobs`);
+  }
+
+  /** media_postprocessor aggregate status (health flag + per-state counts). */
+  getPostprocessStatus(): Observable<PostprocessStatusResponse> {
+    return this.http.get<PostprocessStatusResponse>(`${this.base}/postprocess/status`);
+  }
+
+  /**
+   * Poll the postprocess job list on an interval, mirroring getHistoryPolling:
+   * failed polls are caught + skipped (the stream stays alive) and the latest
+   * snapshot is shared via shareReplay(refCount) so the timer stops when the
+   * last subscriber leaves.
+   */
+  getPostprocessJobsPolling(intervalMs = 2000): Observable<PostprocessJobsResponse> {
+    return timer(0, intervalMs).pipe(
+      switchMap(() => this.getPostprocessJobs().pipe(
+        catchError((err) => {
+          console.error('Postprocess jobs poll failed, retrying...', err);
+          return of(null);
+        })
+      )),
+      filter((data): data is PostprocessJobsResponse => data !== null),
+      shareReplay({ bufferSize: 1, refCount: true })
+    );
   }
 
   /**
