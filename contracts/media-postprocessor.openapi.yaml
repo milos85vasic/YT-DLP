@@ -1,0 +1,130 @@
+openapi: 3.0.3
+info:
+  title: Media Postprocessor API
+  description: |
+    Contract for the media_postprocessor sidecar status API, exposed both
+    directly on the service port and through the dashboard nginx proxy at
+    /api/postprocess/*. All endpoints return JSON. Read-only in Phase 1:
+    GET /postprocess/status (aggregate counts) and GET /postprocess/jobs
+    (per-job state). No transcoding or mutation endpoints exist yet.
+  version: 1.0.0
+  contact:
+    name: YT-DLP Project
+servers:
+  - url: http://localhost:9090/api/postprocess
+    description: Dashboard proxy (no-VPN)
+  - url: http://localhost:8089/postprocess
+    description: media_postprocessor direct (no-VPN)
+
+paths:
+  /postprocess/status:
+    get:
+      summary: Overall postprocessor status
+      description: |
+        Returns an aggregate summary of job counts per state plus a health
+        flag. The counts object always carries every state in the §5.2
+        status enum (queued/running/done/failed/canceled), zero-filled.
+      responses:
+        '200':
+          description: Status response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+
+  /postprocess/jobs:
+    get:
+      summary: List jobs with state
+      description: Returns all jobs with their derived state, ordered by id.
+      responses:
+        '200':
+          description: Jobs list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobsResponse'
+
+components:
+  schemas:
+    StatusResponse:
+      type: object
+      required: [healthy, counts]
+      properties:
+        healthy:
+          type: boolean
+          description: Liveness flag for the postprocessor service.
+        counts:
+          $ref: '#/components/schemas/StatusCounts'
+
+    StatusCounts:
+      type: object
+      description: Per-state job counts. Every state is always present.
+      required: [queued, running, done, failed, canceled]
+      properties:
+        queued:
+          type: integer
+        running:
+          type: integer
+        done:
+          type: integer
+        failed:
+          type: integer
+        canceled:
+          type: integer
+
+    JobsResponse:
+      type: object
+      required: [jobs]
+      properties:
+        jobs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Job'
+
+    Job:
+      type: object
+      description: |
+        A single media-postprocessing job, mirroring the §5.2 jobs-table row.
+      required: [id, source_path, media_type, status, attempts]
+      properties:
+        id:
+          type: integer
+          description: Job id (jobs.id primary key).
+        source_path:
+          type: string
+          description: Absolute path of the source media file (UNIQUE).
+        media_type:
+          type: string
+          description: Classified media kind (e.g. video / audio).
+          nullable: true
+        status:
+          type: string
+          description: Current job lifecycle state.
+          enum: [queued, running, done, failed, canceled]
+        output_path:
+          type: string
+          description: Path of the produced derivative once done.
+          nullable: true
+        attempts:
+          type: integer
+          description: Number of times the job has been claimed/attempted.
+        error:
+          type: string
+          description: Last failure message, set when status is failed.
+          nullable: true
+        created_at:
+          type: string
+          description: ISO-8601 UTC timestamp when the job was enqueued.
+          nullable: true
+        updated_at:
+          type: string
+          description: ISO-8601 UTC timestamp of the last state change.
+          nullable: true
+        started_at:
+          type: string
+          description: ISO-8601 UTC timestamp when the job was claimed.
+          nullable: true
+        finished_at:
+          type: string
+          description: ISO-8601 UTC timestamp when the job reached a terminal state.
+          nullable: true
