@@ -1,0 +1,74 @@
+<h1
+id="scriptsvideo_confirm.sh"><code>scripts/video_confirm.sh</code></h1>
+<p><strong>Last verified:</strong> 2026-06-16</p>
+<h2 id="overview">Overview</h2>
+<p>§11.4.153 feature visual-confirmation helper. Captures a
+<strong>window-scoped</strong> frame (§11.4.154) of a running feature
+surface (default: the dashboard at <code>http://localhost:9090</code>),
+names it with the project prefix
+<code>ytdlp---&lt;scope&gt;---&lt;ts&gt;.png</code> (§11.4.155), sends
+it to a <strong>vision-capable LLM ensemble</strong> for a PASS/FAIL
+verdict, and records the <strong>real</strong> model response (no bluff)
+under <code>docs/qa/</code>.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>A running feature surface (default dashboard
+<code>:9090</code>).</li>
+<li>Node/<code>npx</code> + Playwright (the repo ships
+<code>tests/e2e/</code>); chromium is auto-installed on first run.</li>
+<li><code>curl</code>, <code>python3</code>, <code>base64</code>,
+<code>ffmpeg</code>.</li>
+<li><strong>A vision-capable model</strong> reachable for the analysis
+step. Set <code>HELIXAGENT_URL</code> (default
+<code>http://localhost:7061</code>) and optionally
+<code>HELIXAGENT_API_KEY</code>.</li>
+</ul>
+<h2 id="known-prerequisite-gap-verified-2026-06-16">⚠️ Known
+prerequisite gap (verified 2026-06-16)</h2>
+<p>The analysis step needs a model that accepts <strong>image
+input</strong>. As verified on this host <strong>neither available model
+can</strong>: - The running <strong>HelixAgent</strong> build is
+<strong>text-only</strong> — its <code>/v1/chat/completions</code>
+rejects the OpenAI multimodal <code>content</code> array
+(<code>400: cannot unmarshal array into   ... content of type string</code>)
+and its <code>/v1/vision/*</code> endpoints are stubbed. - The local
+<strong><code>helix_ollama_video</code></strong> Ollama has only
+<code>qwen2.5:3b</code> (text, no vision).</p>
+<p>So the <strong>capture</strong> half works end-to-end, but the
+<strong>ensemble-analysis</strong> half is <strong>operator-blocked
+(§11.4.21)</strong> until a vision model is deployed — e.g.
+<code>podman exec helix_ollama_video ollama pull llava</code> (then
+point the harness at the Ollama vision endpoint), or configure a vision
+provider in HelixAgent. The harness does <strong>not</strong> deploy a
+model itself (that would modify operator infrastructure unprompted,
+§11.4.122) and does <strong>not</strong> fake a verdict when analysis is
+unavailable.</p>
+<h2 id="usage">Usage</h2>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">scripts/video_confirm.sh</span> <span class="pp">[</span><span class="ss">scope</span><span class="pp">]</span> <span class="pp">[</span><span class="ss">url</span><span class="pp">]</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co"># default: scripts/video_confirm.sh dashboard http://localhost:9090</span></span></code></pre></div>
+<h2 id="outputs">Outputs</h2>
+<ul>
+<li>Recording:
+<code>/Volumes/T7/Downloads/Recordings/ytdlp---&lt;scope&gt;---&lt;ts&gt;.png</code>.</li>
+<li><code>docs/qa/video-confirm-&lt;date&gt;/VERDICT.md</code> — capture
+result, HelixAgent health, the raw model response, and the parsed
+verdict (or the honest blocker).</li>
+</ul>
+<h2 id="side-effects">Side-effects</h2>
+<ul>
+<li>Writes one <code>ytdlp---&lt;scope&gt;---*.png</code> to the
+recordings path; <strong>fresh-corpus rotation</strong> (§11.4.154)
+deletes ONLY this project’s own prior
+<code>ytdlp---&lt;scope&gt;---*</code> files — never foreign
+(<code>helixcode-*</code>/<code>helixtranslate-*</code>) or operator
+files (§11.4.122).</li>
+</ul>
+<h2 id="related-scripts">Related scripts</h2>
+<ul>
+<li><code>scripts/full_run_leave_up.sh</code>,
+<code>challenges/scripts/download_then_webready_challenge.sh</code></li>
+<li>Research:
+<code>docs/research/helixagent-video-analysis/RECIPE.md</code>,
+<code>docs/research/recording-mechanism/MECHANISM.md</code></li>
+</ul>
