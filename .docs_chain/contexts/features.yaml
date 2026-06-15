@@ -1,0 +1,28 @@
+context: features
+description: >-
+  docs/features Status set (§11.4.153) — Status.md + Status_Summary.md are the
+  authoritative Markdown sources; their .html/.pdf/.docx exports are DERIVED via
+  the docs_chain builtin pandoc/weasyprint transforms and kept always-in-sync
+  (§11.4.106 / §11.4.60 / §11.4.65 + DOCX per §11.4.153).
+nodes:
+  status_md:           { kind: markdown, path: docs/features/Status.md }
+  status_html:         { kind: html,     path: docs/features/Status.html }
+  status_pdf:          { kind: pdf,      path: docs/features/Status.pdf }
+  status_docx:         { kind: docx,     path: docs/features/Status.docx }
+  status_summary_md:   { kind: markdown, path: docs/features/Status_Summary.md }
+  status_summary_html: { kind: html,     path: docs/features/Status_Summary.html }
+  status_summary_pdf:  { kind: pdf,      path: docs/features/Status_Summary.pdf }
+  status_summary_docx: { kind: docx,     path: docs/features/Status_Summary.docx }
+edges:
+  # Status.md (authority) -> html -> pdf, plus md -> docx
+  - { type: derive-from, from: status_md,           to: status_html,         transform: md2html }
+  - { type: derive-from, from: status_html,         to: status_pdf,          transform: html2pdf }
+  - { type: derive-from, from: status_md,           to: status_docx,         transform: md2docx }
+  # Status_Summary.md (authority) -> html -> pdf, plus md -> docx
+  - { type: derive-from, from: status_summary_md,   to: status_summary_html, transform: md2html }
+  - { type: derive-from, from: status_summary_html, to: status_summary_pdf,  transform: html2pdf }
+  - { type: derive-from, from: status_summary_md,   to: status_summary_docx, transform: md2docx }
+transforms:
+  md2html:  { builtin: pandoc-html }
+  html2pdf: { builtin: weasyprint-pdf }
+  md2docx:  { builtin: pandoc-docx }

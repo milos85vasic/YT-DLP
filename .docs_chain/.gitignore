@@ -1,0 +1,6 @@
+# Docs Chain runtime state — regenerable per §11.4.77, never committed (§11.4.106(B)).
+# The per-context YAML under contexts/ IS tracked; only the generated hash
+# baseline + transient sidecars are ignored. Re-obtain via:
+#   docs_chain sync --root <project-root> --all   (regenerates state.json)
+state.json
+*.docs_chain.tmp
