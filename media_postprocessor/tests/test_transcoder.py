@@ -68,6 +68,36 @@ class TestTranscodeVideo(unittest.TestCase):
         self.assertTrue(transcoder.has_faststart(out),
                         "moov must precede mdat (+faststart)")
 
+    def test_video_only_source_produces_valid_webready_no_audio(self):
+        # Regression (real-stack 2026-06-15): a video-only download (no audio
+        # stream — common for silent clips / screen recordings) was wrongly
+        # marked failed because _validate_webready unconditionally required an
+        # aac stream. ffmpeg's `-map 0:a:0?` correctly produces a video-only
+        # mp4; validation must NOT require audio when the source had none.
+        src = os.path.join(self.tmp.name, "video_only.mp4")
+        subprocess.run(
+            ["ffmpeg", "-y", "-f", "lavfi", "-i", "testsrc=duration=1:size=320x240:rate=15",
+             "-c:v", "libx264", "-pix_fmt", "yuv420p", src],
+            capture_output=True, text=True, check=True,
+        )
+        # Sanity: the source genuinely has no audio stream.
+        sinfo = _ffprobe_streams(src)
+        self.assertFalse(
+            [s for s in sinfo["streams"] if s["codec_type"] == "audio"],
+            "test setup error: source should have no audio",
+        )
+
+        out = transcoder.transcode_video(src, dest_dir=self.tmp.name)
+
+        info = _ffprobe_streams(out)
+        streams = info["streams"]
+        video = [s for s in streams if s["codec_type"] == "video"]
+        self.assertTrue(video, "no video stream")
+        self.assertEqual(video[0]["codec_name"], "h264")
+        self.assertGreater(float(info["format"]["duration"]), 0)
+        self.assertTrue(transcoder.has_faststart(out),
+                        "moov must precede mdat (+faststart)")
+
     def test_no_partial_left_after_success(self):
         out = transcoder.transcode_video(_SAMPLE_VIDEO, dest_dir=self.tmp.name)
         self.assertFalse(os.path.exists(out + ".partial"))

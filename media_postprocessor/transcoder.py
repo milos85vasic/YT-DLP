@@ -38,6 +38,20 @@ def _ffprobe_json(path: str) -> dict:
         raise TranscodeError(f"ffprobe emitted invalid JSON for {path}: {exc}") from exc
 
 
+def _source_has_audio(src_path: str) -> bool:
+    """True if the source has at least one audio stream.
+
+    A video-only source (silent clip, screen recording) produces a valid
+    video-only webready — the §5.5 validation must NOT demand an aac track
+    when the source had no audio at all.
+    """
+    try:
+        info = _ffprobe_json(src_path)
+    except TranscodeError:
+        return False
+    return any(s.get("codec_type") == "audio" for s in info.get("streams", []))
+
+
 def _source_audio_is_aac_le2ch(src_path: str) -> bool:
     """True if the source's first audio stream is AAC with <=2 channels (§4.1).
 
@@ -97,9 +111,15 @@ def has_faststart(path: str) -> bool:
     return moov_off >= 0 and mdat_off >= 0 and moov_off < mdat_off
 
 
-def _validate_webready(path: str) -> None:
-    """Assert the webready output is H.264 video + AAC audio + non-zero
-    duration + faststart, or raise TranscodeError (§5.5)."""
+def _validate_webready(path: str, require_audio: bool = True) -> None:
+    """Assert the webready output is H.264 video + (when the source had audio)
+    AAC audio + non-zero duration + faststart, or raise TranscodeError (§5.5).
+
+    A video-only source (no audio stream) yields a valid video-only webready;
+    `require_audio=False` skips the aac assertion for that case. When the
+    source DID have audio, an aac track is still mandatory (a dropped track
+    is a real defect).
+    """
     info = _ffprobe_json(path)
     streams = info.get("streams", [])
     has_h264 = any(
@@ -112,7 +132,7 @@ def _validate_webready(path: str) -> None:
     )
     if not has_h264:
         raise TranscodeError(f"webready output {path} has no h264 video stream")
-    if not has_aac:
+    if require_audio and not has_aac:
         raise TranscodeError(f"webready output {path} has no aac audio stream")
     duration = float(info.get("format", {}).get("duration", 0) or 0)
     if duration <= 0:
@@ -195,6 +215,7 @@ def transcode_video(src_path: str, dest_dir=None) -> str:
     base = os.path.splitext(os.path.basename(src_path))[0]
     final_path = _dest_path(src_path, dest_dir, f"webready-{base}.mp4")
 
+    source_has_audio = _source_has_audio(src_path)
     if _source_audio_is_aac_le2ch(src_path):
         audio_args = ["-c:a", "copy"]
     else:
@@ -216,7 +237,10 @@ def transcode_video(src_path: str, dest_dir=None) -> str:
             partial_path,
         ]
 
-    return _run_atomic(build, final_path, _validate_webready)
+    return _run_atomic(
+        build, final_path,
+        lambda p: _validate_webready(p, require_audio=source_has_audio),
+    )
 
 
 def derive_mp3(src_path: str, dest_dir=None) -> str:
