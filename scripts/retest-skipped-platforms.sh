@@ -1,4 +1,18 @@
 #!/bin/bash
+
+# §11.4.67 (target-shell-parseability): uses bash-4 'declare -A'; macOS /bin/bash is 3.2.
+# Re-exec under a bash >= 4 if the current shell is too old.
+if [ -z "${BASH_VERSINFO:-}" ] || [ "${BASH_VERSINFO[0]:-0}" -lt 4 ]; then
+    for _nb in /opt/homebrew/bin/bash /usr/local/bin/bash "$(command -v bash 2>/dev/null)"; do
+        [ -n "${_nb:-}" ] && [ -x "$_nb" ] || continue
+        _v="$("$_nb" -c 'echo "${BASH_VERSINFO[0]:-0}"' 2>/dev/null)"
+        case "$_v" in ''|*[!0-9]*) continue;; esac
+        [ "$_v" -ge 4 ] && exec "$_nb" "$0" "$@"
+    done
+    echo "ERROR: $0 requires bash >= 4 (current: ${BASH_VERSION:-unknown}); install a newer bash." >&2
+    exit 1
+fi
+
 #
 # retest-skipped-platforms.sh
 #
