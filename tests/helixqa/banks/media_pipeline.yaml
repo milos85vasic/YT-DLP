@@ -1,0 +1,162 @@
+# SPDX-FileCopyrightText: 2026 Milos Vasic
+# SPDX-License-Identifier: Apache-2.0
+#
+# HelixQA Test Bank — Dual-version media pipeline (media_postprocessor)
+#
+# PURPOSE: §11.4.27 layer-4 (HelixQA Challenge) coverage for the dual-version
+#   media pipeline that derives a web-ready MP4 (H.264 + AAC + faststart) and a
+#   playable MP3 alongside every downloaded original, recovers interrupted
+#   transcode jobs on restart, and surfaces the pipeline state through the
+#   dashboard queue UI.
+#
+# ANTI-BLUFF (§11.4.5 / §11.4.6 / §11.4.69 / §11.4.107 / CONST-035): every
+#   test_case scores PASS only on a VERIFIABLE artifact / ffprobe / HTTP / DB
+#   assertion — never "it works". "Download succeeded" != "/add returned 200"
+#   (CONST-034 ARTIFACT rule): the produced file is stat'd + ffprobe-validated
+#   from the host's point of view. Crash recovery is proven by an actual
+#   mid-transcode kill + restart producing a valid, partial-free output.
+#
+# SCHEMA: modeled EXACTLY on helixqa/banks/atmosphere_video_4k.yaml — the
+#   test_cases[] fields (id, name, category, priority, platforms,
+#   steps[{name, action, expected}], tags, documentation_refs[{type, section,
+#   path}]) match the submodule's format; no invented top-level fields.
+
+test_cases:
+
+  - id: media.pipeline.download-produces-webready
+    name: "A downloaded video yields a webready-*.mp4 (H.264 + AAC + faststart) alongside the original"
+    category: functional
+    priority: critical
+    platforms: [api]
+    steps:
+      - name: "Submit a real download through MeTube and wait for it to finish"
+        action: "curl -s -X POST http://localhost:8088/add -H 'Content-Type: application/json' -d '{\"url\":\"<short test video url>\",\"quality\":\"best\"}'; then poll http://localhost:8088/history until the entry status == 'finished'"
+        expected: "MeTube /history shows the entry with status finished and a non-empty filename; the original media file exists on disk in $DOWNLOAD_DIR (size > 1KB, stat'd from the host, not from inside the container)"
+      - name: "Wait for the postprocessor to derive the web-ready MP4"
+        action: "Poll GET http://localhost:<media_postprocessor_port>/api/postprocess/jobs until the job for this source_path has status == 'done' and a non-null output_path; OR poll the jobs DB row directly"
+        expected: "The job reaches status=done with output_path ending in webready-<base>.mp4; the original is NOT modified or deleted — the derivative sits ALONGSIDE it in the same directory"
+      - name: "Stat the produced webready file from the host"
+        action: "ls -l \"$(dirname <original>)/webready-<base>.mp4\""
+        expected: "webready-<base>.mp4 exists, size > 1KB, name prefix is literally 'webready-' per transcoder.transcode_video() (§4.1). The original file still exists unchanged in the same directory"
+      - name: "ffprobe-assert H.264 video stream + AAC audio stream"
+        action: "ffprobe -v error -show_streams -of json \"webready-<base>.mp4\" | jq -r '[.streams[] | {t:.codec_type, c:.codec_name}]'"
+        expected: "Exactly one video stream with codec_name == 'h264' AND one audio stream with codec_name == 'aac'. A non-h264 video or missing aac audio == FAIL (transcoder._validate_webready raises)"
+      - name: "ffprobe-assert non-zero duration"
+        action: "ffprobe -v error -show_format -of json \"webready-<base>.mp4\" | jq -r '.format.duration'"
+        expected: "format.duration is a positive number (> 0). A zero/absent duration == a degenerate 0-frame mp4 PASS-bluff == FAIL"
+      - name: "Assert faststart (moov atom before mdat)"
+        action: "python3 -c \"from media_postprocessor.transcoder import has_faststart; import sys; sys.exit(0 if has_faststart('webready-<base>.mp4') else 1)\"  # reads the raw atom order, not a status string"
+        expected: "has_faststart() returns True — the moov (index) atom precedes the mdat (payload) atom, proving the +faststart mux landed so playback can begin before full download"
+    tags: [media-pipeline, postprocessor, webready, h264, aac, faststart, transcode, artifact, "§11.4.5", "§11.4.69", "§11.4.107", video_display, mediacodec_encode]
+    documentation_refs:
+      - type: design
+        section: "§4.1 webready derivation (H.264 + AAC + faststart)"
+        path: "docs/superpowers/specs/2026-06-15-dual-version-media-pipeline-design.md"
+      - type: source
+        section: "transcode_video() + _validate_webready() + has_faststart()"
+        path: "media_postprocessor/transcoder.py"
+      - type: source
+        section: "ffprobe stream/format probe used by the assertions"
+        path: "media_postprocessor/media_probe.py"
+
+  - id: media.pipeline.audio-produces-mp3
+    name: "An obtained audio download yields a playable .mp3 alongside the original"
+    category: functional
+    priority: critical
+    platforms: [api]
+    steps:
+      - name: "Submit an audio-format download through MeTube and wait for finish"
+        action: "curl -s -X POST http://localhost:8088/add -H 'Content-Type: application/json' -d '{\"url\":\"<short test audio/video url>\",\"format\":\"audio\"}'; poll http://localhost:8088/history until status == 'finished'"
+        expected: "MeTube /history shows status finished; the original audio file exists on disk in $DOWNLOAD_DIR (size > 1KB, host-side stat)"
+      - name: "Wait for the postprocessor to derive the MP3"
+        action: "Poll GET http://localhost:<media_postprocessor_port>/api/postprocess/jobs until the job for this source_path has status == 'done' with output_path ending in <base>.mp3"
+        expected: "Job reaches status=done; output_path ends in <base>.mp3 per transcoder.derive_mp3() (§4.2); the original remains in place ALONGSIDE the derivative"
+      - name: "Stat the produced .mp3 from the host"
+        action: "ls -l \"$(dirname <original>)/<base>.mp3\""
+        expected: "<base>.mp3 exists, size > 1KB; the original file still exists unchanged in the same directory"
+      - name: "ffprobe-assert a real mp3 audio stream + non-zero duration"
+        action: "ffprobe -v error -show_streams -show_format -of json \"<base>.mp3\" | jq -r '{codec:(.streams[]|select(.codec_type==\"audio\").codec_name), dur:.format.duration}'"
+        expected: "An audio stream with codec_name == 'mp3' AND format.duration > 0 (transcoder._validate_mp3 raises otherwise). A 0-duration or non-mp3 file == FAIL"
+      - name: "Prove playability by full decode to null (not just header read)"
+        action: "ffmpeg -v error -i \"<base>.mp3\" -f null - ; echo exit=$?"
+        expected: "ffmpeg decodes the entire stream to null with exit 0 and no error lines on stderr — the file is genuinely playable end-to-end, not a truncated/corrupt stub"
+    tags: [media-pipeline, postprocessor, mp3, audio, transcode, artifact, "§11.4.5", "§11.4.69", "§11.4.107", audio_output, mediacodec_encode]
+    documentation_refs:
+      - type: design
+        section: "§4.2 MP3 derivation (320 kbps CBR)"
+        path: "docs/superpowers/specs/2026-06-15-dual-version-media-pipeline-design.md"
+      - type: source
+        section: "derive_mp3() + _validate_mp3()"
+        path: "media_postprocessor/transcoder.py"
+
+  - id: media.pipeline.resume-after-crash
+    name: "A job interrupted mid-transcode is re-queued on restart and completes to a valid output (no half-file)"
+    category: regression
+    priority: critical
+    platforms: [api]
+    steps:
+      - name: "Enqueue a job and let a worker claim it (status -> running)"
+        action: "Enqueue a known source via jobs_db.enqueue(), start a worker so jobs_db.claim_next_job() flips the row to status='running' and started_at is set; confirm via SELECT status FROM jobs WHERE id=<id>"
+        expected: "The job row shows status='running' with attempts >= 1 and a non-null started_at — the transcode is genuinely in flight"
+      - name: "Kill the worker / ffmpeg mid-transcode (crash injection)"
+        action: "kill -9 the worker process (and its ffmpeg child) while the transcode is running; do NOT let it finish gracefully"
+        expected: "The process dies mid-write; the destination holds at most a '<final>.partial' temp file and NO final webready-*.mp4 / *.mp3 (transcoder._run_atomic writes to .partial and only os.replace()s on ffmpeg exit 0)"
+      - name: "Assert no half-written FINAL file exists after the crash"
+        action: "ls -l \"$(dirname <original>)\" | grep -E 'webready-<base>\\.mp4$|<base>\\.mp3$' || echo NONE"
+        expected: "NONE — no final output file was published; a crash never leaves a half-file at the final path (atomic-rename invariant, §5.4)"
+      - name: "Restart the service and run crash recovery"
+        action: "Restart the media_postprocessor service so jobs_db.requeue_running_on_startup() runs; capture its return value (rows re-queued)"
+        expected: "requeue_running_on_startup() returns >= 1 and the job row flips back to status='queued' with started_at=NULL (§5.3 crash recovery) — the interrupted job is owed again, not silently lost"
+      - name: "Let the re-queued job complete and ffprobe-validate the output"
+        action: "Wait for the job to reach status='done'; then ffprobe -v error -show_streams -show_format -of json on output_path"
+        expected: "Job reaches status=done with a non-null output_path; ffprobe confirms the expected codecs (h264+aac for webready / mp3 for audio) and format.duration > 0 — a complete, valid, partial-free output. No leftover '<final>.partial' remains on disk"
+    tags: [media-pipeline, postprocessor, crash-recovery, resume, atomic, jobs-db, regression, "§11.4.5", "§11.4.69", "§11.4.115", storage_write]
+    documentation_refs:
+      - type: design
+        section: "§5.3 crash recovery + §5.4 atomic .partial -> os.replace"
+        path: "docs/superpowers/specs/2026-06-15-dual-version-media-pipeline-design.md"
+      - type: source
+        section: "requeue_running_on_startup() + claim_next_job()"
+        path: "media_postprocessor/jobs_db.py"
+      - type: source
+        section: "_run_atomic() .partial write + os.replace on exit 0"
+        path: "media_postprocessor/transcoder.py"
+      - type: source
+        section: "worker loop that claims + transcodes + marks done/failed"
+        path: "media_postprocessor/worker.py"
+
+  - id: media.pipeline.dashboard-shows-pipeline-states
+    name: "Dashboard surfaces Creating web video / Creating MP3 / Ready pipeline states"
+    category: functional
+    priority: high
+    platforms: [web]
+    steps:
+      - name: "Confirm the typed states exist in the dashboard service contract"
+        action: "grep -nE 'deriving_webready|deriving_mp3|webready_ready' dashboard/src/app/services/metube.service.ts"
+        expected: "DownloadInfo.status enumerates 'deriving_webready', 'deriving_mp3', and 'webready_ready' as concrete string literals (no 'any') — the contract the UI renders against"
+      - name: "Confirm the queue component maps each state to its human label"
+        action: "grep -nE \"label: 'Creating web video'|label: 'Creating MP3'|label: 'Ready\" dashboard/src/app/components/queue/queue.component.ts"
+        expected: "STATE_META maps deriving_webready -> 'Creating web video', deriving_mp3 -> 'Creating MP3', webready_ready -> 'Ready (2 versions)' (queue.component.ts STATE_META)"
+      - name: "Verify the labels are present in the BUILT artifact, not just source (§11.4.108 ARTIFACT layer)"
+        action: "podman exec yt-dlp-dashboard sh -c \"grep -o 'Creating web video' /usr/share/nginx/html/chunk-*.js && grep -o 'Creating MP3' /usr/share/nginx/html/chunk-*.js && grep -o 'Ready (2 versions)' /usr/share/nginx/html/chunk-*.js\""
+        expected: "All three label strings are found inside the served nginx chunk-*.js — proving the rebuilt image actually ships them (a source-only match without this is a §11.4.108 source-vs-artifact bluff)"
+      - name: "Drive a real job through the states and assert each surfaces via the API the UI consumes"
+        action: "Submit a download; poll GET http://localhost:9090/api/postprocess/jobs (nginx-proxied to media_postprocessor) and record the observed status sequence for the job"
+        expected: "The job's API status transitions through the deriving states (deriving_webready / running web stage) and ends at the terminal webready_ready/done state — the exact states the dashboard renders, observed on the wire the browser uses (:9090)"
+      - name: "Assert the rendered queue DOM shows the live state badge for an in-flight job"
+        action: "With a job mid-derivation, load http://localhost:9090 and inspect the queue item's status badge text (rendered DOM / Playwright text query)"
+        expected: "The queue item renders one of 'Creating web video' / 'Creating MP3' / 'Ready (2 versions)' as a visible status badge matching the job's current API state — end-to-end UI proof, not a component-instance unit assertion"
+    tags: [media-pipeline, dashboard, ui, states, queue, angular, "§11.4.5", "§11.4.107", "§11.4.108", display_topology]
+    documentation_refs:
+      - type: design
+        section: "§8.1 Dashboard states (deriving_webready / deriving_mp3 / webready_ready) + four-state render"
+        path: "docs/superpowers/specs/2026-06-15-dual-version-media-pipeline-design.md"
+      - type: source
+        section: "DownloadInfo.status new-state typing"
+        path: "dashboard/src/app/services/metube.service.ts"
+      - type: source
+        section: "STATE_META label/klass mapping for the pipeline states"
+        path: "dashboard/src/app/components/queue/queue.component.ts"
+      - type: source
+        section: "service exposing /api/postprocess/jobs status the UI consumes"
+        path: "media_postprocessor/service.py"
