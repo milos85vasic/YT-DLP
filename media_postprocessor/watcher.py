@@ -19,6 +19,7 @@ source_path (§5.2).
 
 import os
 import sqlite3
+import time
 
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers.polling import PollingObserver
@@ -28,6 +29,20 @@ from media_postprocessor import jobs_db, media_probe
 # Files that are still being written by metube, or are mid-rename, MUST NOT be
 # picked up before they finish (§10 mid-write protection).
 IN_PROGRESS_EXTS = (".part", ".ytdl", ".partial")
+
+# §10 min-age / stable-size guard: yt-dlp renames <name>.part -> <name> and then
+# ffmpeg writes/merges into the final file, so a file that has *just* been
+# touched may still be growing. We defer any file whose mtime is younger than
+# MIN_STABLE_AGE_SECONDS — once it stops changing for this long it is considered
+# stable. Overridable via the MP_MIN_STABLE_AGE env var (seconds).
+def _default_min_stable_age() -> float:
+    try:
+        return float(os.environ.get("MP_MIN_STABLE_AGE", "10"))
+    except ValueError:
+        return 10.0
+
+
+MIN_STABLE_AGE_SECONDS = _default_min_stable_age()
 
 
 def _db_path(conn) -> str:
@@ -51,6 +66,22 @@ def _is_in_progress(path: str) -> bool:
     return lower.endswith(IN_PROGRESS_EXTS)
 
 
+def _is_stable(path: str, min_age: float) -> bool:
+    """True iff `path` has not been modified for at least `min_age` seconds.
+
+    This is the §10 min-age / stable-size filter: a file whose mtime is younger
+    than `min_age` may still be growing (yt-dlp finished the .part rename but
+    ffmpeg is still merging into the final file), so it is NOT yet safe to
+    enqueue. A min_age <= 0 disables the guard.
+    """
+    if min_age <= 0:
+        return True
+    try:
+        return time.time() - os.stat(path).st_mtime >= min_age
+    except OSError:
+        return False
+
+
 def _already_enqueued(db_path: str, source_path: str) -> bool:
     """True iff a row for source_path already exists (enqueue is a no-op)."""
     conn = jobs_db.connect(db_path)
@@ -63,13 +94,21 @@ def _already_enqueued(db_path: str, source_path: str) -> bool:
         conn.close()
 
 
-def _enqueue_if_target(path: str, db_path: str) -> bool:
+def _enqueue_if_target(
+    path: str, db_path: str, min_age: float = MIN_STABLE_AGE_SECONDS
+) -> bool:
     """classify + idempotent-enqueue one path. Returns True iff NEWLY enqueued.
 
     Ignores in-progress files and anything media_probe.classify_target marks
     'skip' (webready- prefix, .mp3 outputs, non-media extensions). Returns False
     when the file is a target but its row already exists, so callers can count
     genuinely-new rows (enqueue itself is INSERT OR IGNORE on UNIQUE source_path).
+
+    §10 mid-write protection: after classify + stat, a file that is NOT yet
+    stable (mtime younger than `min_age` — still being written/merged by
+    yt-dlp+ffmpeg) returns False and is NOT enqueued. The real-time watchdog
+    handler therefore defers fresh files; the periodic reconcile full-scan is
+    the safety net that picks them up once they have settled (spec §10).
     """
     if _is_in_progress(path):
         return False
@@ -79,6 +118,8 @@ def _enqueue_if_target(path: str, db_path: str) -> bool:
     try:
         st = os.stat(path)
     except OSError:
+        return False
+    if not _is_stable(path, min_age):
         return False
     if _already_enqueued(db_path, path):
         return False

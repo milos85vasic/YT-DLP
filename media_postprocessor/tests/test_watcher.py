@@ -14,10 +14,23 @@ import unittest
 from media_postprocessor import jobs_db, watcher
 
 
-def _touch(path: str, content: bytes = b"\x00\x00fake-media-bytes\x00\x00") -> str:
-    """Create a real, non-empty file on disk and return its path."""
+def _touch(
+    path: str,
+    content: bytes = b"\x00\x00fake-media-bytes\x00\x00",
+    stable: bool = True,
+) -> str:
+    """Create a real, non-empty file on disk and return its path.
+
+    By default the file is given an OLD mtime so it passes the §10 min-age /
+    stable-size guard (it represents a download that finished writing long ago).
+    Pass stable=False to leave the just-written (fresh) mtime in place for tests
+    that exercise the mid-write-deferral behaviour.
+    """
     with open(path, "wb") as fh:
         fh.write(content)
+    if stable:
+        old = time.time() - 3600.0
+        os.utime(path, (old, old))
     return path
 
 
@@ -118,8 +131,27 @@ class TestReconcileScan(WatcherTestBase):
 
 
 class TestEventHandler(WatcherTestBase):
+    def test_on_created_defers_freshly_written_file(self):
+        """§10 mid-write protection: a file with a FRESH mtime (still being
+        written by metube/ffmpeg) MUST NOT be enqueued by the real-time handler.
+        The periodic reconcile scan picks it up once it is stable.
+        """
+        handler = watcher.DownloadFinishedHandler(self.db_path)
+        # stable=False → just-written (fresh) mtime == now.
+        mp4 = _touch(os.path.join(self.download_dir, "new.mp4"), stable=False)
+
+        class _Evt:
+            is_directory = False
+            src_path = mp4
+
+        handler.on_created(_Evt())
+
+        # Fresh file is deferred, not enqueued.
+        self.assertEqual(_enqueued_source_paths(self.db_path), set())
+
     def test_on_created_enqueues_real_mp4(self):
         handler = watcher.DownloadFinishedHandler(self.db_path)
+        # Default stable=True → old mtime → finished writing → enqueued.
         mp4 = _touch(os.path.join(self.download_dir, "new.mp4"))
 
         # Drive the handler directly with a real created-file event.
