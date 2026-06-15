@@ -1,0 +1,15 @@
+helixcode-autoboot-postgres	Up 2 days (healthy)
+helixcode-autoboot-redis	Up 2 days (healthy)
+helixagent-postgres	Up 28 hours (healthy)
+helixagent-redis	Up 28 hours (healthy)
+helixagent-chromadb	Up 28 hours
+helixagent-cognee	Up 1 second (starting)
+helix_ollama_video	Up 11 hours
+qbittorrent	Up 2 hours (healthy)
+jackett	Up 2 hours (healthy)
+boba-jackett	Up 2 hours (healthy)
+qbittorrent-proxy	Up 2 hours (healthy)
+metube-direct	Up 6 seconds
+metube-landing	Up 8 seconds
+media-postprocessor	Up 6 seconds
+yt-dlp-dashboard	Up 6 seconds
