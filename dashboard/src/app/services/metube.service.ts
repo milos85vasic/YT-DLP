@@ -20,6 +20,17 @@ export interface DownloadInfo {
   quality: string;
   format: string;
   folder: string;
+  /**
+   * Download lifecycle status. Kept as an open `string` (the value comes off
+   * the wire and MUST never be `any` per project rules), but the full set of
+   * valid values is enumerated here and rendered by QueueComponent.STATE_META:
+   *   MeTube-native: 'pending' | 'preparing' | 'downloading' | 'postprocessing'
+   *                  | 'finished' | 'error' | 'aborted'
+   *   Dual-version post-processing pipeline (spec §8.1):
+   *     'deriving_webready'  — creating the web-ready video
+   *     'deriving_mp3'       — creating the MP3 audio version
+   *     'webready_ready'     — both versions ready
+   */
   status: string;
   msg?: string;
   error?: string | null;

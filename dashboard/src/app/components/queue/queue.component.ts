@@ -258,6 +258,9 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
     .item.state-preparing     { border-color: rgba(104,151,187,0.30); background: rgba(104,151,187,0.04); }
     .item.state-downloading   { border-color: rgba(106,135,89,0.30);  background: rgba(106,135,89,0.04); }
     .item.state-postprocessing { border-color: rgba(152,118,170,0.30); background: rgba(152,118,170,0.04); }
+    .item.state-deriving_webready { border-color: rgba(86,156,214,0.30); background: rgba(86,156,214,0.04); }
+    .item.state-deriving_mp3      { border-color: rgba(78,201,176,0.30); background: rgba(78,201,176,0.04); }
+    .item.state-webready_ready    { border-color: rgba(106,135,89,0.55); background: rgba(106,135,89,0.07); }
     .item.state-finished      { border-color: rgba(106,135,89,0.50);  background: rgba(106,135,89,0.06); }
     .item.state-error         { border-color: rgba(157,0,30,0.40);    background: rgba(157,0,30,0.05); }
     .item.state-aborted       { border-color: rgba(204,120,50,0.30);  background: rgba(204,120,50,0.04); }
@@ -293,6 +296,9 @@ import { MetubeService, DownloadInfo } from '../../services/metube.service';
     .status-badge.state-preparing     { background: rgba(104,151,187,0.18); color: #6897bb; }
     .status-badge.state-downloading   { background: rgba(106,135,89,0.18);  color: #6a8759; }
     .status-badge.state-postprocessing { background: rgba(152,118,170,0.18); color: #9876aa; }
+    .status-badge.state-deriving_webready { background: rgba(86,156,214,0.18); color: #569cd6; }
+    .status-badge.state-deriving_mp3      { background: rgba(78,201,176,0.18); color: #4ec9b0; }
+    .status-badge.state-webready_ready    { background: rgba(106,135,89,0.28); color: #a5c178; }
     .status-badge.state-finished      { background: rgba(106,135,89,0.25);  color: #a5c178; }
     .status-badge.state-error         { background: rgba(157,0,30,0.20);    color: #cc7832; }
     .status-badge.state-aborted       { background: rgba(204,120,50,0.20);  color: #cc7832; }
@@ -533,6 +539,12 @@ export class QueueComponent implements OnInit, OnDestroy {
     preparing:      { icon: '⚙️', label: 'preparing',      klass: 'state-preparing',      active: true  },
     downloading:    { icon: '⬇️', label: 'downloading',    klass: 'state-downloading',    active: true  },
     postprocessing: { icon: '🛠️', label: 'postprocessing', klass: 'state-postprocessing', active: true  },
+    // Dual-version post-processing pipeline states (spec §8.1) — emitted by the
+    // service after MeTube's own 'finished', while landing derives a web-ready
+    // video + an MP3 from the original download.
+    deriving_webready: { icon: '🎞️', label: 'Creating web video', klass: 'state-deriving_webready', active: true  },
+    deriving_mp3:      { icon: '🎵', label: 'Creating MP3',       klass: 'state-deriving_mp3',      active: true  },
+    webready_ready:    { icon: '🎉', label: 'Ready (2 versions)', klass: 'state-webready_ready',    active: false },
     finished:       { icon: '✅', label: 'finished',       klass: 'state-finished',       active: false },
     error:          { icon: '❌', label: 'error',          klass: 'state-error',          active: false },
     aborted:        { icon: '🛑', label: 'aborted',        klass: 'state-aborted',        active: false },
