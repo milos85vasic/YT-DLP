@@ -1,0 +1,74 @@
+<h1
+id="scriptsfull_run_leave_up.sh"><code>scripts/full_run_leave_up.sh</code></h1>
+<p><strong>Last verified:</strong> 2026-06-16</p>
+<h2 id="overview">Overview</h2>
+<p>One-shot operator helper that <strong>rebuilds</strong> the project’s
+own container images (<code>dashboard</code>,
+<code>media_postprocessor</code>) with <code>--no-cache</code>,
+<strong>boots</strong> the no-vpn stack, <strong>runs</strong> the full
+test + challenge suite, writes a results summary, and <strong>leaves the
+stack running</strong> for manual testing. Built for the request
+“rebuild everything, boot everything, run all tests + challenges, leave
+it up.”</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li><code>podman</code> + <code>podman-compose</code> (auto-detected;
+falls back to <code>podman compose</code>).</li>
+<li>A valid <code>.env</code> (with <code>DOWNLOAD_DIR</code> pointing
+at an existing host directory).</li>
+<li><code>ffmpeg</code>, <code>python3</code>, and the
+<code>/tmp/mpp_venv</code> pytest venv (auto-created if absent).</li>
+<li>Network access for vendor image pulls.</li>
+</ul>
+<h2 id="usage">Usage</h2>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># run detached (it is long — 30-60 min for the --no-cache rebuild + full suite):</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">nohup</span> scripts/full_run_leave_up.sh <span class="op">&gt;</span>/dev/null <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span> <span class="kw">&amp;</span></span></code></pre></div>
+<h2 id="outputs">Outputs</h2>
+<ul>
+<li><code>docs/qa/full-run-&lt;date&gt;/RESULTS.md</code> — curated
+per-suite PASS/FAIL summary + the failed-test names + manual-test
+URLs.</li>
+<li><code>docs/qa/full-run-&lt;date&gt;/runtests.log</code> — full
+<code>run-tests.sh</code> output (gitignored).</li>
+<li><code>docs/qa/full-run-&lt;date&gt;/run.log</code> — full run log
+(gitignored).</li>
+</ul>
+<h2 id="side-effects-important">Side-effects (important)</h2>
+<ul>
+<li>Rebuilds the <code>dashboard</code> +
+<code>media_postprocessor</code> images (<code>--no-cache</code>).</li>
+<li>Boots the no-vpn stack and <strong>LEAVES IT RUNNING</strong> (does
+not <code>./stop</code>).</li>
+<li>The <code>media_postprocessor</code> service <strong>backfills
+(transcodes) the existing library</strong> on first start — expect
+CPU/disk activity and <code>webready-*.mp4</code> / <code>*.mp3</code>
+files to appear alongside originals in <code>DOWNLOAD_DIR</code>.</li>
+</ul>
+<h2 id="internal-behaviour">Internal behaviour</h2>
+<ol type="1">
+<li><code>--no-cache</code> rebuild of our images (avoids the “restart
+illusion”: stale code in an old container being served).</li>
+<li>Boot +
+<code>up -d --force-recreate dashboard media_postprocessor</code>.</li>
+<li><strong>MeTube-readiness wait</strong> — polls
+<code>:8088/history</code> and <code>:9090/api/history</code> until both
+serve valid JSON before running ANY test/challenge. This is the fix for
+the first run, where the suite ran before MeTube stabilized and reported
+false failures (contract showed 0/11 but was actually 18/0 once
+ready).</li>
+<li>Runs <code>media_postprocessor</code> pytest,
+<code>run-tests.sh</code> (output <strong>tee’d</strong> so failure
+names are preserved), smoke, contract, then the challenge scripts.</li>
+<li>Writes <code>RESULTS.md</code> with the manual-test URLs and leaves
+the stack up.</li>
+</ol>
+<h2 id="related-scripts">Related scripts</h2>
+<ul>
+<li><code>scripts/smoke-test.sh</code>,
+<code>scripts/validate-contract.sh</code>,
+<code>tests/run-tests.sh</code></li>
+<li><code>challenges/scripts/download_then_webready_challenge.sh</code></li>
+<li><code>scripts/video_confirm.sh</code> (§11.4.153 feature
+video-confirmation via HelixAgent)</li>
+</ul>
