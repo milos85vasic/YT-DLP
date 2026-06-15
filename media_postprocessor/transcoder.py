@@ -14,6 +14,7 @@ leaves a final file: any partial is removed on every failure path.
 
 import json
 import os
+import shutil
 import subprocess
 
 
@@ -158,6 +159,24 @@ def _validate_mp3(path: str) -> None:
 
 # --- internal runner -------------------------------------------------------
 
+_FFMPEG_NICE = os.environ.get("MP_FFMPEG_NICE", "19")
+
+
+def _ffmpeg_cmd(cmd):
+    """§12.6/§9 host-safety: run ffmpeg under `nice` so transcoding yields to other
+    work under contention, and (if MP_FFMPEG_THREADS is a positive value) cap the
+    encoder threads. The transcoded OUTPUT is byte-for-byte unaffected — only the
+    process scheduling priority / thread count changes.
+    """
+    out = list(cmd)
+    threads = os.environ.get("MP_FFMPEG_THREADS", "0")
+    if threads and threads != "0" and out and out[0] == "ffmpeg":
+        out[1:1] = ["-threads", threads]
+    if shutil.which("nice"):
+        out = ["nice", "-n", _FFMPEG_NICE] + out
+    return out
+
+
 def _run_atomic(cmd_for_partial, final_path: str, validate) -> str:
     """Run ffmpeg writing to `<final>.partial`, os.replace on exit 0, validate.
 
@@ -170,7 +189,7 @@ def _run_atomic(cmd_for_partial, final_path: str, validate) -> str:
     if os.path.exists(partial_path):
         os.remove(partial_path)
 
-    proc = subprocess.run(cmd_for_partial(partial_path), capture_output=True, text=True)
+    proc = subprocess.run(_ffmpeg_cmd(cmd_for_partial(partial_path)), capture_output=True, text=True)
     if proc.returncode != 0:
         if os.path.exists(partial_path):
             os.remove(partial_path)
