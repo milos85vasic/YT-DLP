@@ -234,6 +234,32 @@ services:
         condition: service_started
     restart: unless-stopped
 
+  media_postprocessor:
+    build:
+      context: ./media_postprocessor
+      dockerfile: Dockerfile
+    container_name: media-postprocessor
+    profiles:
+      - no-vpn
+    user: "${PUID}:${PGID}"
+    # OOM-cascade lesson (§9): postprocessor is the FIRST sacrificed — never
+    # the download/queue services. Keep oom_score_adj highest here.
+    mem_limit: 1g
+    memswap_limit: 1g
+    pids_limit: 256
+    oom_score_adj: 1000
+    environment:
+      - DOWNLOAD_DIR=/downloads
+      - MP_DB_PATH=/downloads/.media_postprocessor/jobs.db
+      - MP_PORT=8089
+      - MP_MAX_CONCURRENCY=2
+      - TZ=Europe/Moscow
+    volumes:
+      - ${DOWNLOAD_DIR}:/downloads:rw
+    restart: unless-stopped
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
   watchtower:
     image: containrrr/watchtower:latest
     container_name: watchtower
