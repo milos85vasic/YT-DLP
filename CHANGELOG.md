@@ -3,6 +3,38 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [ytdlp-1.4.0] — 2026-06-15
+
+### Added — Dual-version media pipeline (webready video + MP3)
+- New **`media_postprocessor`** sidecar: every downloaded video gets a
+  `webready-<base>.mp4` (H.264 High@4.1 / CRF18 / yuv420p / `+faststart`, AAC —
+  stream-copied when already AAC) for guaranteed Android-TV playback; every
+  audio gets a `<base>.mp3` (320 kbps). The original is kept untouched as the
+  zero-loss master. On first start the service backfills (transcodes) the
+  existing library, then watches for new downloads.
+- SQLite-WAL job queue with crash-safe claim/resume, atomic `.partial`→rename
+  output, ffprobe validation before completion, filesystem watcher + periodic
+  reconcile (= one-time backfill), bounded-concurrency worker, and a
+  `/api/postprocess/*` status API surfaced in the dashboard (Creating web video
+  / Creating MP3 / Ready states).
+- OpenAPI contract, Podman Dockerfile (system ffmpeg), compose service
+  (`media-postprocessor:8089`, `oom_score_adj 1000`), nginx proxy.
+- Coverage: 57 pytest (unit + integration + real-subprocess e2e + SIGKILL-resume
+  chaos), anti-bluff Challenge `download_then_webready_challenge.sh`, HelixQA
+  bank, docs_chain-wired feature Status ledger.
+
+### Fixed — caught by real-stack validation (`docs/qa/fullstack-20260615/`)
+- Watcher enqueued files still being written by yt-dlp (no min-age guard) →
+  added `MIN_STABLE_AGE` mid-write protection (spec §10), RED-first.
+- `webready` validation rejected video-only sources (no audio stream) → audio
+  validation now conditional on the source actually having audio. Proven on a
+  real download (Big Buck Bunny).
+
+### Governance
+- Constitution **§11.4.155** (project-name-prefixed recordings) authored;
+  §11.4.153/154 applied; remote CI disabled (§11.4.75); 5 dependency submodules
+  added (helixqa, containers, docs_chain, HelixAgent, Media).
+
 ## [ytdlp-1.3.0] — 2026-06-14
 
 First tagged release under the §11.4.151 project-prefixed scheme, and the first
