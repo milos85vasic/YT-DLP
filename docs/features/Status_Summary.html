@@ -1,0 +1,176 @@
+<h1 id="feature-status-summary">Feature Status Summary</h1>
+<p><strong>Revision:</strong> 1 <strong>Last modified:</strong>
+2026-06-15T15:27:34Z <strong>Authority:</strong> constitution §11.4.56
+(Status_Summary two-audience companion to §11.4.153
+<code>Status.md</code>), §11.4.44 (revision header), §11.4.65 +
+§11.4.153 (HTML+PDF+DOCX export). <strong>Companion of:</strong>
+<code>docs/features/Status.md</code>.</p>
+<hr />
+<h2 id="page-1-for-the-team-non-developer-plain-language">Page 1 — For
+the team (non-developer, plain language)</h2>
+<h3 id="what-this-project-is">What this project is</h3>
+<p>A self-hosted toolkit that downloads videos from YouTube and many
+other sites (Instagram, Facebook, X, TikTok, Bilibili, and more). It
+runs as a small set of containers you start with simple commands. There
+are three ways to use it:</p>
+<ul>
+<li><strong>Боба landing page</strong> — a friendly welcome page that
+walks you through signing in to your sites and uploading your cookies so
+login-protected videos can be downloaded.</li>
+<li><strong>Dashboard</strong> — a modern web app where you paste a
+link, pick quality, and watch your downloads progress, see history, and
+manage cookies.</li>
+<li><strong>Command line</strong> (<code>./download</code>) — for power
+users who prefer the terminal.</li>
+</ul>
+<p>An optional VPN tunnel can route all downloads privately, and an
+auto-update service keeps the container images fresh.</p>
+<h3 id="what-works-today">What works today</h3>
+<ul>
+<li>Downloading videos through the dashboard, the classic MeTube
+interface, or the command line.</li>
+<li>The cookie sign-in flow (upload your <code>cookies.txt</code>, see
+how fresh it is per site).</li>
+<li>The download queue with live status (waiting, preparing,
+downloading, finishing, done, error, cancelled) and a history list that
+even remembers cancelled items.</li>
+<li>Starting, stopping, restarting, and checking the health of the whole
+system with one command each.</li>
+<li>An optional VPN mode and automatic image updates.</li>
+</ul>
+<h3 id="what-is-pending">What is pending</h3>
+<ul>
+<li><strong>No video recordings exist yet.</strong> Every feature still
+needs a recorded “real use” video showing it genuinely working for an
+end user. Until those recordings are made and reviewed, NO feature is
+marked “video-confirmed” — every single one reads <strong>“PENDING — not
+yet recorded.”</strong> This is the honest status, not a
+placeholder.</li>
+<li>A planned <strong>media post-processing</strong> capability — making
+web-ready video versions, pulling out MP3 audio, showing pipeline
+progress in the dashboard, and resuming interrupted downloads — is
+<strong>not built yet</strong>.</li>
+<li>The automated tests and challenges exist and cover the features, but
+a full, clean, evidence-captured test run is not yet on record in this
+document, so verdicts read “PENDING_FORENSICS” rather than a confirmed
+PASS.</li>
+</ul>
+<h3 id="team-actions">Team actions</h3>
+<ul>
+<li>None blocking. The VPN mode needs the operator’s own VPN credentials
+to run live, but the code path is in place.</li>
+<li>Next milestone: record the per-feature real-use videos so features
+can move from “pending” to genuinely “confirmed.”</li>
+</ul>
+<hr />
+<h2 id="page-2-for-software-engineers">Page 2 — For software
+engineers</h2>
+<h3 id="file-path-anchors">File-path anchors</h3>
+<ul>
+<li><strong>Services:</strong> <code>docker-compose.yml</code> —
+<code>openvpn-yt-dlp</code>, <code>metube</code> /
+<code>metube-direct</code>, <code>landing-vpn</code> /
+<code>landing-no-vpn</code>, <code>yt-dlp-cli</code> /
+<code>yt-dlp-cli-vpn</code>, <code>dashboard</code>,
+<code>watchtower</code>. Profiles: <code>vpn</code>,
+<code>no-vpn</code>, <code>vpn-cli</code>, <code>docker</code>.</li>
+<li><strong>Landing (Flask ‘Боба’):</strong> <code>landing/app.py</code>
+— routes <code>/</code>, <code>/app</code>,
+<code>/api/upload-cookies</code>, <code>/api/delete-cookies</code>,
+<code>/api/cookie-status</code>, <code>/api/aborted-history</code>
+(GET/POST/DELETE), <code>/api/profile-status</code>,
+<code>/health</code>, <code>/logo.png</code>, <code>/favicon.ico</code>,
+<code>/api/delete-download</code>. Helpers
+<code>_validate_cookie_file</code>,
+<code>_summarize_cookies_by_platform</code>,
+<code>_aborted_history_lock</code> (flock at
+<code>/config/aborted.json.lock</code>).</li>
+<li><strong>Dashboard (Angular 17 + nginx):</strong>
+<code>dashboard/src/app/</code> — <code>app.routes.ts</code>
+(<code>''</code> download-form, <code>queue</code>,
+<code>history</code>, <code>cookies</code>, <code>**</code> not-found);
+components <code>download-form/</code>, <code>queue/</code> (STATE_META:
+pending, preparing, downloading, postprocessing, finished, error,
+aborted), <code>history/</code> (aborted-history merge via
+<code>abortedToDownloadInfo</code>), <code>cookies/</code>,
+<code>navbar/</code> (profile badge), <code>error-boundary/</code>,
+<code>not-found/</code>; services <code>metube.service.ts</code> (typed
+API, no <code>any</code>), <code>error-interceptor.service.ts</code>.
+nginx template <code>dashboard/nginx.conf.template</code> +
+<code>dashboard/entrypoint.sh</code>.</li>
+<li><strong>CLI scripts (repo root, no <code>.sh</code>
+suffix):</strong> <code>init</code>, <code>start</code>,
+<code>start_no_vpn</code>, <code>stop</code>, <code>status</code>,
+<code>download</code>, <code>check-vpn</code>, <code>restart</code>,
+<code>cleanup</code>; <code>prepare-release.sh</code>,
+<code>setup-auto-update</code>, <code>update-images</code>. Runtime
+detection via <code>lib/container-runtime.sh</code>.</li>
+<li><strong>Tests:</strong> <code>tests/test-*.sh</code> (unit,
+integration, integration-realhttp, scenarios, errors, dashboard,
+dashboard-operations, aborted-history, cookie-validator, media-services,
+bulk-operations, add-all-platforms, add-download, vpn-compose,
+vpn-smoke, chaos, constitution-inheritance); orchestrators
+<code>run-tests.sh</code>, <code>run-full-suite.sh</code>,
+<code>run-comprehensive-tests.sh</code>; <code>tests/e2e/</code>
+(Playwright: dashboard, landing, cross-service, clear-history,
+delete-retry-cancel, cleanup-and-start); <code>tests/benchmark/</code>,
+<code>tests/cookies/</code>, <code>tests/challenges/</code>
+(<code>metube-challenges.json</code> +
+<code>run-metube-challenges.sh</code>).</li>
+<li><strong>Challenges (HelixQA):</strong>
+<code>challenges/scripts/</code> (api-contract,
+container-restart-resilience, download-completes, form-reenables,
+host/user OOM+suspend, landing-cookie-upload, memory-limits,
+no-vpn-direct, queue-lifecycle, queue-polling-survives-error,
+retry-immediately-visible, <code>run_all_challenges.sh</code>);
+<code>Challenges/</code> submodule (framework + p1-f06..f18 CLI-agent
+feature dirs).</li>
+</ul>
+<h3 id="status-vocabulary-11.4.45-closed-set">Status vocabulary
+(§11.4.45 closed set)</h3>
+<p><code>PASS</code> / <code>FAIL</code> / <code>SKIP</code> /
+<code>PENDING_FORENSICS</code> / <code>OPERATOR-BLOCKED</code>.</p>
+<ul>
+<li>Implemented-and-wired features:
+<strong><code>PENDING_FORENSICS</code></strong> — code present + test
+files exist, but no clean-baseline full-suite run with captured runtime
+evidence is on record in this revision (per §11.4.6 an unproven PASS is
+forbidden).</li>
+<li>Planned features (§7 of <code>Status.md</code>):
+<strong><code>SKIP</code></strong> — nothing to validate.</li>
+<li><code>OPERATOR-BLOCKED</code>: none. VPN live path needs operator
+<code>.ovpn</code> credentials but the code path is implemented and
+compose-config-testable, so it is <code>PENDING_FORENSICS</code>, not
+blocked.</li>
+</ul>
+<h3 id="anchors">§-anchors</h3>
+<ul>
+<li><strong>§11.4.153</strong> — per-feature Status + Status_Summary set
+with mandatory real-use video confirmation; adds DOCX to the export set
+for this class.</li>
+<li><strong>§11.4.107</strong> — no frozen/stale-frame video proof;
+videos (once recorded) must show live, advancing real-use content.</li>
+<li><strong>§11.4.6</strong> — no-guessing: every row reconciled against
+real code; no unproven PASS; no faked confirmation.</li>
+<li><strong>§11.4.45 / §11.4.56 / §11.4.44 / §11.4.65</strong> —
+status-doc maintenance, two-audience summary, revision header,
+multi-format export.</li>
+</ul>
+<h3
+id="video-confirmation-status-load-bearing-honest-fact">Video-confirmation
+status (load-bearing honest fact)</h3>
+<p>Per §11.4.153, EVERY user-visible confirmed claim must be backed by a
+recorded real-use video. <strong>No such video exists for any feature in
+this project at Revision 1.</strong> Therefore every row in
+<code>Status.md</code> carries
+<code>Video-Confirmation = PENDING — not yet recorded</code> — there are
+zero “confirmed” cells. This is the truthful state (§11.4.2 / §11.4.5 /
+§11.4.6), not a stub.</p>
+<h3 id="planned-feature-absence-proof">Planned-feature absence
+proof</h3>
+<p><code>media_postprocessor</code>, web-ready transcode, MP3
+derivation, post-process status API, dashboard pipeline-status UI, and
+resume mechanism were confirmed absent by grep over
+<code>docker-compose.yml</code>, <code>dashboard/src</code>, and
+<code>landing/app.py</code> (no matches). They are the only
+<code>Planned</code> / <code>SKIP</code> rows.</p>

@@ -1,0 +1,1080 @@
+<h1 id="feature-status-ledger">Feature Status Ledger</h1>
+<p><strong>Revision:</strong> 1 <strong>Last modified:</strong>
+2026-06-15T15:27:34Z <strong>Authority:</strong> constitution §11.4.153
+(per-feature Status + video-recording confirmation), composes §11.4.44
+(revision header), §11.4.45 (integration-status-doc + closed status
+vocabulary), §11.4.56 (Status_Summary two-audience companion), §11.4.65
+(HTML+PDF export) + §11.4.153 DOCX, §11.4.107 (no frozen-frame video
+proof), §11.4.6 (no-guessing — every row reconciled against real code).
+<strong>Scope:</strong> Full feature surface of the <code>ytdlp</code>
+Podman/Docker orchestration around <code>yt-dlp</code> — every service,
+client surface, CLI script, landing route, dashboard component,
+test/challenge suite, and every PLANNED-but-unbuilt feature.
+<strong>Maintainer:</strong> project conductor.</p>
+<hr />
+<h2 id="how-to-read-this-ledger">How to read this ledger</h2>
+<ul>
+<li><strong>Implementation</strong> — <code>Implemented</code> (code
+present + wired), <code>Partial</code> (code present,
+incomplete/edge-gaps), <code>Planned</code> (not yet built).</li>
+<li><strong>Validation/Verification</strong> — closed status vocabulary
+per §11.4.45: <code>PASS</code> / <code>FAIL</code> / <code>SKIP</code>
+/ <code>PENDING_FORENSICS</code> / <code>OPERATOR-BLOCKED</code>.
+Because no clean-baseline full-suite run with captured evidence was
+executed in the session that produced this ledger, verdicts that would
+require live captured runtime evidence are recorded
+<code>PENDING_FORENSICS</code> (per §11.4.6 — an unproven PASS is
+forbidden; the code is present and test files exist, but a
+green-with-captured-evidence run is not yet on record here).
+<code>Planned</code> rows carry <code>SKIP</code> (no feature to
+validate yet).</li>
+<li><strong>Video-Confirmation</strong> — per §11.4.153 every
+user-visible confirmed claim MUST be backed by a recorded real-use
+video. <strong>NO feature has a video recording yet.</strong> Therefore
+<strong>EVERY</strong> row’s Video-Confirmation cell is
+<strong><code>PENDING — not yet recorded</code></strong>, without
+exception. None is “confirmed”.</li>
+</ul>
+<blockquote>
+<p><strong>HONEST FACT (§11.4.6 / §11.4.153):</strong> Not a single
+feature in this project has a real-use video recording at the time of
+this revision. Every Video-Confirmation cell below reads
+<code>PENDING — not yet recorded</code>. No row claims video
+confirmation.</p>
+</blockquote>
+<hr />
+<h2 id="operator-blocked-rows-top-per-11.4.45">OPERATOR-BLOCKED rows
+(top per §11.4.45)</h2>
+<p>No feature in this project is currently
+<code>OPERATOR-BLOCKED</code>. (The VPN profile requires
+operator-supplied <code>.ovpn</code> credentials and
+<code>vpn-auth.txt</code>, but the VPN <em>code path</em> is implemented
+and testable in compose-config form without live credentials, so it is
+classified <code>PENDING_FORENSICS</code>, not
+<code>OPERATOR-BLOCKED</code>.)</p>
+<hr />
+<h2 id="services-docker-compose.yml">1. SERVICES
+(docker-compose.yml)</h2>
+<table>
+<colgroup>
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+</colgroup>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Component</th>
+<th>Category</th>
+<th>Implementation</th>
+<th>Wiring</th>
+<th>Tests Coverage</th>
+<th>Validation/Verification</th>
+<th>Video-Confirmation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>VPN tunnel (<code>dperson/openvpn-client</code>, NET_ADMIN,
+<code>/dev/net/tun</code>, port 3130, healthcheck ping 8.8.8.8)</td>
+<td>openvpn-yt-dlp</td>
+<td>Networking / Service</td>
+<td>Implemented (<code>vpn</code> profile)</td>
+<td>Reachable: <code>metube</code> + <code>yt-dlp-cli-vpn</code> join
+its netns via <code>network_mode: service:openvpn-yt-dlp</code></td>
+<td><code>tests/test-vpn-compose.sh</code>,
+<code>tests/test-vpn-smoke.sh</code>,
+<code>challenges/scripts/container_restart_resilience_challenge.sh</code></td>
+<td>PENDING_FORENSICS (compose config valid; live tunnel needs operator
+<code>.ovpn</code>)</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Download queue/history API + minimal UI
+(<code>ghcr.io/alexta69/metube:latest</code>, port 8088 direct / netns
+under VPN)</td>
+<td>metube / metube-direct</td>
+<td>Backend API / Service</td>
+<td>Implemented</td>
+<td>Reachable: dashboard nginx + landing proxy to <code>:8081</code>;
+<code>${DOWNLOAD_DIR}</code> + <code>./metube/config</code> volumes</td>
+<td><code>tests/test-media-services.sh</code>,
+<code>tests/test-integration-realhttp.sh</code>,
+<code>tests/test-add-download.sh</code>,
+<code>tests/challenges/run-metube-challenges.sh</code>,
+<code>challenges/scripts/download_completes_challenge.sh</code></td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Flask ‘Боба’ cookie-auth onboarding + aborted-history ledger + proxy
+endpoints (<code>landing/</code>, ports 8087 vpn / 8086 no-vpn)</td>
+<td>landing-vpn / landing-no-vpn</td>
+<td>Web UI + API / Service</td>
+<td>Implemented</td>
+<td>Reachable: published port; proxies cookie + delete-download to
+MeTube; writes <code>/config/aborted.json</code></td>
+<td><code>tests/test-dashboard.sh</code>,
+<code>tests/test-aborted-history.sh</code>,
+<code>tests/test-cookie-validator.sh</code>,
+<code>challenges/scripts/landing_cookie_upload_challenge.sh</code></td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Sleeping CLI container for <code>./download</code>
+(<code>ghcr.io/jim60105/yt-dlp:pot</code>,
+<code>while true; do sleep 3600; done</code>, cookie copy at
+startup)</td>
+<td>yt-dlp-cli / yt-dlp-cli-vpn</td>
+<td>CLI backend / Service</td>
+<td>Implemented</td>
+<td>Reachable: <code>./download</code> execs <code>yt-dlp</code> inside
+it; <code>yt-dlp/config</code>, <code>cookies</code>,
+<code>archive</code> + downloads volumes</td>
+<td><code>tests/test-media-services.sh</code>,
+<code>challenges/scripts/download_completes_challenge.sh</code></td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Angular 17 + nginx dashboard (<code>dashboard/</code>, port 9090,
+<code>/api/*</code> proxied to MeTube + landing)</td>
+<td>dashboard</td>
+<td>Web UI / Service</td>
+<td>Implemented (<code>no-vpn</code> profile only)</td>
+<td>Reachable: nginx <code>resolver</code> + variable
+<code>proxy_pass</code> from <code>entrypoint.sh</code> template</td>
+<td><code>tests/test-dashboard.sh</code>,
+<code>tests/test-dashboard-operations.sh</code>,
+<code>tests/e2e/tests/dashboard.spec.ts</code>, Angular
+<code>*.spec.ts</code></td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Image auto-update (<code>containrrr/watchtower:latest</code>,
+schedule <code>0 0 */3 * * *</code>, cleanup)</td>
+<td>watchtower</td>
+<td>Infra / Service</td>
+<td>Implemented (<code>docker</code> profile)</td>
+<td>Reachable: docker.sock mount; gated by
+<code>com.centurylinklabs.watchtower.enable</code> labels</td>
+<td>bash compose-config gate (<code>make ci</code>)</td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="client-surfaces">2. CLIENT SURFACES</h2>
+<table>
+<colgroup>
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+</colgroup>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Component</th>
+<th>Category</th>
+<th>Implementation</th>
+<th>Wiring</th>
+<th>Tests Coverage</th>
+<th>Validation/Verification</th>
+<th>Video-Confirmation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Dashboard web UI (download-form / queue / history / cookies /
+navbar, error-boundary, not-found)</td>
+<td>dashboard</td>
+<td>Web client</td>
+<td>Implemented</td>
+<td>Routed via <code>app.routes.ts</code>; calls <code>/api/*</code>
+through nginx</td>
+<td><code>tests/test-dashboard.sh</code>,
+<code>tests/e2e/tests/dashboard.spec.ts</code>, component
+<code>*.spec.ts</code></td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Landing Flask ‘Боба’ UI (3-step cookie onboarding, drag-drop upload,
+freshness banner, services grid)</td>
+<td>landing</td>
+<td>Web client</td>
+<td>Implemented</td>
+<td><code>INDEX_TEMPLATE</code> in <code>landing/app.py</code>;
+auto-redirect to dashboard</td>
+<td><code>tests/e2e/tests/landing.spec.ts</code>,
+<code>tests/test-dashboard.sh</code></td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>MeTube minimal UI (vendor original interface, dark theme)</td>
+<td>metube</td>
+<td>Web client</td>
+<td>Implemented (vendor)</td>
+<td>Served on <code>:8088</code>; linked as “Classic UI” from
+landing</td>
+<td><code>tests/test-media-services.sh</code></td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td><code>./download</code> CLI (host script execs yt-dlp in sleeping
+container)</td>
+<td>download</td>
+<td>CLI client</td>
+<td>Implemented</td>
+<td><code>./download</code> → <code>exec</code> into
+<code>yt-dlp-cli</code>; runtime auto-detect</td>
+<td><code>tests/test-media-services.sh</code>,
+<code>challenges/scripts/download_completes_challenge.sh</code></td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="root-cli-scripts">3. ROOT CLI SCRIPTS</h2>
+<table>
+<colgroup>
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+</colgroup>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Component</th>
+<th>Category</th>
+<th>Implementation</th>
+<th>Wiring</th>
+<th>Tests Coverage</th>
+<th>Validation/Verification</th>
+<th>Video-Confirmation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Init environment (create dirs, validate <code>.env</code>, generate
+<code>yt-dlp.conf</code>, write <code>vpn-auth.txt</code> chmod
+600)</td>
+<td>./init</td>
+<td>CLI script</td>
+<td>Implemented</td>
+<td>Runtime auto-detect via <code>lib/container-runtime.sh</code></td>
+<td><code>tests/test-unit.sh</code>,
+<code>tests/test-integration.sh</code>,
+<code>tests/test-scenarios.sh</code></td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Start services (reads <code>USE_VPN</code>, pulls images, brings up
+profile)</td>
+<td>./start</td>
+<td>CLI script</td>
+<td>Implemented</td>
+<td>compose up via detected runtime</td>
+<td><code>tests/test-scenarios.sh</code>,
+<code>tests/test-integration.sh</code></td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Start no-vpn (force no-vpn profile)</td>
+<td>./start_no_vpn</td>
+<td>CLI script</td>
+<td>Implemented</td>
+<td>compose <code>--profile no-vpn</code></td>
+<td><code>tests/test-scenarios.sh</code>,
+<code>challenges/scripts/no_vpn_profile_direct_access_challenge.sh</code></td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Stop services (all profiles, clean pods/networks)</td>
+<td>./stop</td>
+<td>CLI script</td>
+<td>Implemented</td>
+<td>compose down + cleanup</td>
+<td><code>tests/test-scenarios.sh</code></td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Status summary (service + HTTP health)</td>
+<td>./status</td>
+<td>CLI script</td>
+<td>Implemented</td>
+<td>queries running containers + HTTP endpoints</td>
+<td><code>tests/test-integration-realhttp.sh</code></td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Download helper (yt-dlp via exec)</td>
+<td>./download</td>
+<td>CLI script</td>
+<td>Implemented</td>
+<td>exec into <code>yt-dlp-cli</code></td>
+<td><code>tests/test-media-services.sh</code>,
+<code>challenges/scripts/download_completes_challenge.sh</code></td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Check VPN (query ipinfo.io inside VPN container)</td>
+<td>./check-vpn</td>
+<td>CLI script</td>
+<td>Implemented</td>
+<td>exec into <code>openvpn-yt-dlp</code></td>
+<td><code>tests/test-vpn-smoke.sh</code></td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Restart services</td>
+<td>./restart</td>
+<td>CLI script</td>
+<td>Implemented</td>
+<td>stop + start sequence</td>
+<td><code>tests/test-scenarios.sh</code></td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Cleanup containers/pods/networks</td>
+<td>./cleanup</td>
+<td>CLI script</td>
+<td>Implemented</td>
+<td>compose down + prune</td>
+<td><code>tests/test-scenarios.sh</code>,
+<code>challenges/scripts/container_restart_resilience_challenge.sh</code></td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Release preparation (commit + push)</td>
+<td>./prepare-release.sh</td>
+<td>CLI script</td>
+<td>Implemented</td>
+<td>git operations</td>
+<td>bash <code>-n</code> syntax gate (<code>make ci</code>)</td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Auto-update setup (cron for Podman; Watchtower alt for Docker)</td>
+<td>./setup-auto-update</td>
+<td>CLI script</td>
+<td>Implemented</td>
+<td>writes cron entry / documents Watchtower</td>
+<td>bash <code>-n</code> syntax gate</td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Update images (pull latest before start)</td>
+<td>./update-images</td>
+<td>CLI script</td>
+<td>Implemented</td>
+<td>compose pull via detected runtime</td>
+<td>bash <code>-n</code> syntax gate</td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="landing-routes-landingapp.py">4. LANDING ROUTES
+(landing/app.py)</h2>
+<table>
+<colgroup>
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+</colgroup>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Component</th>
+<th>Category</th>
+<th>Implementation</th>
+<th>Wiring</th>
+<th>Tests Coverage</th>
+<th>Validation/Verification</th>
+<th>Video-Confirmation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/</code> — Боба onboarding page (3-step cookie flow, session
+id, dynamic service URLs)</td>
+<td>landing</td>
+<td>HTTP route</td>
+<td>Implemented</td>
+<td><code>render_template_string(INDEX_TEMPLATE)</code></td>
+<td><code>tests/e2e/tests/landing.spec.ts</code></td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td><code>/app</code> — proxy GET to MeTube backend</td>
+<td>landing</td>
+<td>HTTP proxy route</td>
+<td>Implemented</td>
+<td><code>requests.get(METUBE_URL)</code> streamed back</td>
+<td><code>tests/test-dashboard.sh</code></td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td><code>/api/upload-cookies</code> (POST) — validate Netscape file
+(UTF-8 + recognised-domain gate) → forward to MeTube</td>
+<td>landing</td>
+<td>HTTP API route</td>
+<td>Implemented</td>
+<td><code>_validate_cookie_file</code> + POST to
+<code>${METUBE_URL}/upload-cookies</code></td>
+<td><code>tests/test-cookie-validator.sh</code>,
+<code>challenges/scripts/landing_cookie_upload_challenge.sh</code></td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td><code>/api/delete-cookies</code> (POST) — remove
+<code>/config/cookies.txt</code></td>
+<td>landing</td>
+<td>HTTP API route</td>
+<td>Implemented</td>
+<td><code>os.remove</code></td>
+<td><code>tests/test-dashboard.sh</code></td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td><code>/api/cookie-status</code> (GET) — has_cookies + age +
+per-platform breakdown + MeTube reachability</td>
+<td>landing</td>
+<td>HTTP API route</td>
+<td>Implemented</td>
+<td><code>_summarize_cookies_by_platform</code> + MeTube fallback</td>
+<td><code>tests/test-cookie-validator.sh</code>,
+<code>tests/test-dashboard.sh</code></td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td><code>/api/aborted-history</code> (GET) — return persisted aborted
+list</td>
+<td>landing</td>
+<td>HTTP API route</td>
+<td>Implemented</td>
+<td><code>_read_aborted_history</code> (lock-free read)</td>
+<td><code>tests/test-aborted-history.sh</code></td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td><code>/api/aborted-history</code> (POST) — append entry,
+flock-guarded, 60s idempotency</td>
+<td>landing</td>
+<td>HTTP API route</td>
+<td>Implemented</td>
+<td><code>_aborted_history_lock</code> +
+<code>_write_aborted_history</code></td>
+<td><code>tests/test-aborted-history.sh</code> (incl. concurrent-posts
+case)</td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td><code>/api/aborted-history</code> (DELETE) — remove specific urls or
+<code>*</code></td>
+<td>landing</td>
+<td>HTTP API route</td>
+<td>Implemented</td>
+<td>locked read-modify-write</td>
+<td><code>tests/test-aborted-history.sh</code></td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td><code>/api/profile-status</code> (GET) — active compose profile +
+vpn_active + MeTube reachability</td>
+<td>landing</td>
+<td>HTTP API route</td>
+<td>Implemented</td>
+<td>reads <code>ACTIVE_PROFILE</code> env</td>
+<td><code>tests/test-dashboard.sh</code></td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td><code>/health</code> (GET) — service + MeTube reachability +
+timestamp</td>
+<td>landing</td>
+<td>HTTP API route</td>
+<td>Implemented</td>
+<td><code>requests.get(${METUBE_URL}/history)</code></td>
+<td><code>tests/test-integration-realhttp.sh</code>,
+<code>tests/test-vpn-smoke.sh</code></td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td><code>/logo.png</code> (GET) — serve branding asset</td>
+<td>landing</td>
+<td>HTTP static route</td>
+<td>Implemented</td>
+<td><code>send_from_directory</code></td>
+<td><code>tests/e2e/tests/landing.spec.ts</code></td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td><code>/favicon.ico</code> (GET) — 204 stub</td>
+<td>landing</td>
+<td>HTTP static route</td>
+<td>Implemented</td>
+<td>returns <code>"", 204</code></td>
+<td>— (trivial; covered by landing smoke)</td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td><code>/api/delete-download</code> (POST) — remove from history +
+optional file delete (path-traversal guarded)</td>
+<td>landing</td>
+<td>HTTP API route</td>
+<td>Implemented</td>
+<td>POST <code>${METUBE_URL}/delete</code> +
+<code>os.walk</code>/<code>os.remove</code> within
+<code>DOWNLOAD_DIR</code></td>
+<td><code>tests/test-dashboard.sh</code>,
+<code>tests/e2e/tests/delete-retry-cancel.spec.ts</code></td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="dashboard-components-dashboardsrcapp">5. DASHBOARD COMPONENTS
+(dashboard/src/app)</h2>
+<table>
+<colgroup>
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+</colgroup>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Component</th>
+<th>Category</th>
+<th>Implementation</th>
+<th>Wiring</th>
+<th>Tests Coverage</th>
+<th>Validation/Verification</th>
+<th>Video-Confirmation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Download form (url, quality select, format select, folder, add via
+<code>/api/add</code>, inline tracker + error state, re-enable after
+failure)</td>
+<td>download-form</td>
+<td>Angular component</td>
+<td>Implemented</td>
+<td><code>MeTubeService.addDownload</code></td>
+<td><code>download-form.component.spec.ts</code>,
+<code>challenges/scripts/form_reenables_after_failure_challenge.sh</code></td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Queue (STATE_META: pending / preparing / downloading /
+postprocessing / finished / error / aborted; cancel-all;
+record-and-close aborted)</td>
+<td>queue</td>
+<td>Angular component</td>
+<td>Implemented</td>
+<td><code>getHistoryPolling</code> + <code>recordAbortedItem</code></td>
+<td><code>queue.component.spec.ts</code>,
+<code>challenges/scripts/queue_lifecycle_challenge.sh</code>,
+<code>challenges/scripts/queue_polling_survives_error_challenge.sh</code></td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>History (+ aborted-history merge via
+<code>abortedToDownloadInfo</code>, retry, delete-with-file, batch +
+delete-all, refresh)</td>
+<td>history</td>
+<td>Angular component</td>
+<td>Implemented</td>
+<td><code>getHistory</code> + <code>getAbortedHistory</code> +
+<code>deleteDownloadWithFile</code></td>
+<td><code>history.component.spec.ts</code>,
+<code>tests/e2e/tests/clear-history.spec.ts</code>,
+<code>tests/e2e/tests/delete-retry-cancel.spec.ts</code></td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Cookies (status badge fresh/expiring/expired, age, MeTube
+online/offline, per-platform breakdown, upload, delete)</td>
+<td>cookies</td>
+<td>Angular component</td>
+<td>Implemented</td>
+<td><code>getCookieStatus</code> + <code>uploadCookies</code> +
+<code>deleteCookies</code></td>
+<td><code>cookies.component.spec.ts</code></td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Navbar (routerLinks Download/Queue/History/Cookies; VPN / No-VPN /
+unknown profile badge; MeTube-unreachable badge)</td>
+<td>navbar</td>
+<td>Angular component</td>
+<td>Implemented</td>
+<td><code>getProfileStatus</code></td>
+<td>covered via dashboard E2E + Angular harness</td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Error boundary (renders loading / error+retry / empty / content
+states)</td>
+<td>error-boundary</td>
+<td>Angular component</td>
+<td>Implemented</td>
+<td>wrapped around list components</td>
+<td>covered via component specs</td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Not-found (404 catch-all route)</td>
+<td>not-found</td>
+<td>Angular component</td>
+<td>Implemented</td>
+<td><code>**</code> route in <code>app.routes.ts</code></td>
+<td>covered via routing smoke</td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Error interceptor (RxJS error surfacing, clears loading)</td>
+<td>error-interceptor.service</td>
+<td>Angular service</td>
+<td>Implemented</td>
+<td><code>app.config.ts</code> provider</td>
+<td><code>metube.service.spec.ts</code></td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>MeTube service (typed API:
+add/start/history/delete/clear/retry/cookies/profile/aborted/version/poll;
+no <code>any</code>)</td>
+<td>metube.service</td>
+<td>Angular service</td>
+<td>Implemented</td>
+<td><code>HttpClient</code> to <code>/api/*</code></td>
+<td><code>metube.service.spec.ts</code>,
+<code>metube.service.bulk.spec.ts</code></td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="tests-challenges-real-test-files-reconciled">6. TESTS /
+CHALLENGES (real test files reconciled)</h2>
+<table>
+<colgroup>
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+</colgroup>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Component</th>
+<th>Category</th>
+<th>Implementation</th>
+<th>Wiring</th>
+<th>Tests Coverage</th>
+<th>Validation/Verification</th>
+<th>Video-Confirmation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Unit tests (pure-shell logic)</td>
+<td>tests/test-unit.sh</td>
+<td>Test suite</td>
+<td>Implemented</td>
+<td><code>run-tests.sh -p unit</code></td>
+<td>self</td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Integration tests (containers up)</td>
+<td>tests/test-integration.sh</td>
+<td>Test suite</td>
+<td>Implemented</td>
+<td><code>run-tests.sh -p integration</code></td>
+<td>self</td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Real-HTTP integration (no mocks, hits
+<code>:9090</code>/<code>:8086</code>/<code>:8088</code>)</td>
+<td>tests/test-integration-realhttp.sh</td>
+<td>Test suite</td>
+<td>Implemented</td>
+<td>services must be up</td>
+<td>self</td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Scenario tests (lifecycle phases)</td>
+<td>tests/test-scenarios.sh</td>
+<td>Test suite</td>
+<td>Implemented</td>
+<td><code>run-tests.sh -p scenario</code></td>
+<td>self</td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Error-phase tests</td>
+<td>tests/test-errors.sh</td>
+<td>Test suite</td>
+<td>Implemented</td>
+<td><code>run-tests.sh -p error</code></td>
+<td>self</td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Dashboard + landing integration</td>
+<td>tests/test-dashboard.sh</td>
+<td>Test suite</td>
+<td>Implemented</td>
+<td>services up</td>
+<td>self</td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Dashboard operations (post-fix full automation)</td>
+<td>tests/test-dashboard-operations.sh</td>
+<td>Test suite</td>
+<td>Implemented</td>
+<td>services up</td>
+<td>self</td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Aborted-history (incl. concurrent-posts no-500)</td>
+<td>tests/test-aborted-history.sh</td>
+<td>Test suite</td>
+<td>Implemented</td>
+<td>landing up</td>
+<td>self</td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Cookie validator (<code>_validate_cookie_file</code>)</td>
+<td>tests/test-cookie-validator.sh</td>
+<td>Test suite</td>
+<td>Implemented</td>
+<td>landing app.py</td>
+<td>self</td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Media-services compatibility (anti-bluff documented-failure)</td>
+<td>tests/test-media-services.sh</td>
+<td>Test suite</td>
+<td>Implemented</td>
+<td>yt-dlp-cli / metube up</td>
+<td>self</td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Bulk operations</td>
+<td>tests/test-bulk-operations.sh</td>
+<td>Test suite</td>
+<td>Implemented</td>
+<td>services up</td>
+<td>self</td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Add-all-platforms / add-download</td>
+<td>tests/test-add-all-platforms.sh, tests/test-add-download.sh</td>
+<td>Test suite</td>
+<td>Implemented</td>
+<td>metube up</td>
+<td>self</td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>VPN compose + smoke</td>
+<td>tests/test-vpn-compose.sh, tests/test-vpn-smoke.sh</td>
+<td>Test suite</td>
+<td>Implemented</td>
+<td>vpn profile</td>
+<td>self</td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Chaos / resilience</td>
+<td>tests/test-chaos.sh</td>
+<td>Test suite</td>
+<td>Implemented</td>
+<td>services up</td>
+<td>self</td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Constitution inheritance + meta-test</td>
+<td>tests/test-constitution-inheritance.sh,
+tests/meta-test-constitution-inheritance.sh</td>
+<td>Test suite</td>
+<td>Implemented</td>
+<td>repo tree</td>
+<td>self</td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>E2E (Playwright): dashboard, landing, cross-service, clear-history,
+delete-retry-cancel, cleanup-and-start</td>
+<td>tests/e2e/</td>
+<td>E2E suite</td>
+<td>Implemented</td>
+<td><code>run-e2e.sh</code> + <code>playwright.config.ts</code></td>
+<td>self</td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Benchmark suite</td>
+<td>tests/benchmark/run-benchmarks.sh</td>
+<td>Benchmark suite</td>
+<td>Implemented</td>
+<td>services up</td>
+<td>self</td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Cookie auth + youtube-download + validate-fix</td>
+<td>tests/cookies/</td>
+<td>Test suite</td>
+<td>Implemented</td>
+<td>metube + cookies</td>
+<td>self</td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>MeTube anti-bluff challenge bank (download-completes,
+queue-realtime, form-reenables)</td>
+<td>tests/challenges/</td>
+<td>Challenge bank</td>
+<td>Implemented</td>
+<td><code>run-metube-challenges.sh</code> +
+<code>metube-challenges.json</code></td>
+<td>self</td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Root HelixQA challenge scripts (api-contract,
+container-restart-resilience, download-completes, form-reenables,
+host/user OOM+suspend, landing-cookie-upload, memory-limits,
+no-vpn-direct, queue-lifecycle, queue-polling, retry-visible)</td>
+<td>challenges/scripts/</td>
+<td>Challenge bank</td>
+<td>Implemented</td>
+<td><code>run_all_challenges.sh</code></td>
+<td>self</td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Challenges submodule (HelixQA challenge framework, p1-f06..f18
+CLI-agent feature dirs)</td>
+<td>Challenges/</td>
+<td>Challenge framework (submodule)</td>
+<td>Implemented (submodule)</td>
+<td><code>Challenges/</code> catalogue</td>
+<td>submodule self-tests</td>
+<td>PENDING_FORENSICS</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="planned-not-yet-built-implementation-planned">7. PLANNED — not
+yet built (Implementation = Planned)</h2>
+<p>Confirmed ABSENT from the codebase (grep over
+<code>docker-compose.yml</code>, <code>dashboard/src</code>,
+<code>landing/app.py</code> returned no matches — §11.4.6).</p>
+<table>
+<colgroup>
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+</colgroup>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Component</th>
+<th>Category</th>
+<th>Implementation</th>
+<th>Wiring</th>
+<th>Tests Coverage</th>
+<th>Validation/Verification</th>
+<th>Video-Confirmation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Media post-processor service (new container orchestrating
+transcode/derive pipeline)</td>
+<td>media_postprocessor</td>
+<td>Service (planned)</td>
+<td>Planned</td>
+<td>Not wired — no compose service exists</td>
+<td>None yet</td>
+<td>SKIP (no feature to validate)</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Web-ready video transcode (browser-playable derivative output)</td>
+<td>media_postprocessor</td>
+<td>Pipeline feature (planned)</td>
+<td>Planned</td>
+<td>Not wired</td>
+<td>None yet</td>
+<td>SKIP</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>MP3 audio derivation (extract/encode audio track)</td>
+<td>media_postprocessor</td>
+<td>Pipeline feature (planned)</td>
+<td>Planned</td>
+<td>Not wired</td>
+<td>None yet</td>
+<td>SKIP</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Post-process status API (report pipeline progress per item)</td>
+<td>media_postprocessor / landing</td>
+<td>API feature (planned)</td>
+<td>Planned</td>
+<td>Not wired — no route exists in <code>landing/app.py</code></td>
+<td>None yet</td>
+<td>SKIP</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Dashboard pipeline-status UI (surface transcode/derive
+progress)</td>
+<td>dashboard</td>
+<td>Web UI feature (planned)</td>
+<td>Planned</td>
+<td>Not wired — no component exists</td>
+<td>None yet</td>
+<td>SKIP</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+<tr>
+<td>Resume mechanism (resume interrupted/aborted downloads)</td>
+<td>metube / media_postprocessor</td>
+<td>Pipeline feature (planned)</td>
+<td>Planned</td>
+<td>Not wired</td>
+<td>None yet</td>
+<td>SKIP</td>
+<td>PENDING — not yet recorded</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="reconciliation-note-11.4.153-11.4.118">Reconciliation note
+(§11.4.153 / §11.4.118)</h2>
+<p>Every row above maps to real code (a named compose service, a Flask
+route in <code>landing/app.py</code>, an Angular component/service file
+under <code>dashboard/src/app/</code>, a root CLI script, or a
+test/challenge file) — except the §7 PLANNED rows, which are explicitly
+marked <code>Planned</code>/<code>SKIP</code> because the codebase
+contains no matching implementation. No code-present feature is omitted;
+no row lacks corresponding code. Per §11.4.6, no verdict claims a PASS
+without captured evidence, and per §11.4.153 no Video-Confirmation cell
+claims “confirmed” — all read
+<code>PENDING — not yet recorded</code>.</p>
