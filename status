@@ -4,6 +4,20 @@
 # Supports both Podman and Docker
 #
 
+# §11.4.67 (target-shell-parseability): this script uses bash-4 associative arrays
+# (declare -A, below); macOS /bin/bash is 3.2 and lacks them. Re-exec under a
+# bash >= 4 if the current shell is too old, so the script runs on macOS too.
+if [ -z "${BASH_VERSINFO:-}" ] || [ "${BASH_VERSINFO[0]:-0}" -lt 4 ]; then
+    for _nb in /opt/homebrew/bin/bash /usr/local/bin/bash "$(command -v bash 2>/dev/null)"; do
+        [ -n "${_nb:-}" ] && [ -x "$_nb" ] || continue
+        _v="$("$_nb" -c 'echo "${BASH_VERSINFO[0]:-0}"' 2>/dev/null)"
+        case "$_v" in ''|*[!0-9]*) continue;; esac
+        [ "$_v" -ge 4 ] && exec "$_nb" "$0" "$@"
+    done
+    echo "ERROR: $0 requires bash >= 4 (current: ${BASH_VERSION:-unknown}); install a newer bash (e.g. 'brew install bash')." >&2
+    exit 1
+fi
+
 set -e
 
 # Colors
