@@ -176,8 +176,8 @@
 <h1 class="title">Status</h1>
 </header>
 <h1 id="feature-status-ledger">Feature Status Ledger</h1>
-<p><strong>Revision:</strong> 12 <strong>Last modified:</strong>
-2026-06-16T10:00:00Z <strong>Authority:</strong> constitution §11.4.153
+<p><strong>Revision:</strong> 13 <strong>Last modified:</strong>
+2026-06-16T14:05:00Z <strong>Authority:</strong> constitution §11.4.153
 (per-feature Status + video-recording confirmation), composes §11.4.44
 (revision header), §11.4.45 (integration-status-doc + closed status
 vocabulary), §11.4.56 (Status_Summary two-audience companion), §11.4.65
@@ -322,6 +322,36 @@ Vision (§11.4.150) was EMPIRICALLY VALIDATED on this host —
 grounded UI description (good-not-flawless; native-multimodal stays
 primary) — see
 <code>docs/research/vision-path/CPU_VISION_RESEARCH.md</code>.</p>
+<p><strong>Rev 13 — PRIMARY DEPLOYMENT MOVED TO <code>nezha.local</code>
+(§11.4.76 distributed booting; local Mac stack stopped):</strong> the
+full no-vpn System was distributed to nezha (amd64, Podman 5.7.1) via
+<code>scripts/deploy-remote.sh</code> +
+<code>deploy/remote-hosts.env.example</code>, and HEAVY-TESTED against
+real running production services — <strong>captured evidence in
+<code>qa-results/nezha-heavytest-20260616/</code></strong> (+
+SUMMARY.md): run-tests scenario <strong>17/0</strong> + integration
+<strong>123/0</strong> + error <strong>24/0</strong>, container-restart
+PASS, chaos <strong>27/0</strong>/1skip(DNS), memory-limits PASS, smoke
+<strong>22/0</strong>, contract <strong>18/0</strong>,
+integration-realhttp <strong>22/0</strong>, 7/7 challenges (incl.
+<code>download_completes</code> → a real <strong>111 MB
+webready</strong> file on disk), postprocessor pytest
+<strong>46p/23skip/0fail</strong>, dashboard 34/1(env), media-services
+16/0, aborted-history 9/0, bulk 9/0. <strong>Zero product bugs</strong>;
+6 deploy/test issues root-caused + fixed (§11.4.102, commits
+5d15a64/f10c727/acbed76/b96dc8f). The 4 user surfaces were
+<strong>re-recorded on nezha + re-read natively (4/4 PASS):</strong>
+<code>ytdlp---nezha-dashboard---20260616T135945Z.png</code> (full
+Add-Download UI + 16-platform grid),
+<code>ytdlp---nezha-metube---20260616T140007Z.png</code> (real fresh
+downloads "M5 Ultra Mac Studio Leaks…" 62.62 MB etc.),
+<code>ytdlp---nezha-postprocess---20260616T140014Z.png</code>
+(<code>{"healthy":true,...,"done":7,"failed":0}</code> — clean
+pipeline), <code>ytdlp---nezha-landing---20260616T140001Z.png</code>
+(the :8086→:9090 auto-redirect fired, as designed). The §1 services + §3
+CLI scripts + §6 test/challenge suites are therefore now backed by
+captured green runs on a REAL Linux+Podman production host (the heavy
+container-lifecycle suites that could NOT run on the Mac).</p>
 </blockquote>
 <hr />
 <h2 id="1-services-docker-composeyml">1. SERVICES
