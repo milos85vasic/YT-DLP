@@ -20,7 +20,15 @@ _CUC_RT="$(command -v podman || command -v docker || echo podman)"
 _cuc_unshare_cp() { "$_CUC_RT" unshare cp "$1" "$2" 2>/dev/null || cp "$1" "$2" 2>/dev/null || true; }
 _cuc_restore() { [ -f "$_CUC_BACKUP" ] && { _cuc_unshare_cp "$_CUC_BACKUP" "$_CUC_COOKIES"; rm -f "$_CUC_BACKUP"; }; }
 trap _cuc_restore EXIT
-[ -f "$_CUC_COOKIES" ] && _cuc_unshare_cp "$_CUC_COOKIES" "$_CUC_BACKUP"
+if [ -f "$_CUC_COOKIES" ]; then
+    _cuc_unshare_cp "$_CUC_COOKIES" "$_CUC_BACKUP"
+    # Don't let a silent backup failure leave the operator's real cookies as the test
+    # stub after this challenge clobbers them (§11.4.6 — surface it loudly, don't swallow).
+    if [ ! -s "$_CUC_BACKUP" ]; then
+        echo -e "${RED}FAIL: could not back up the existing real cookies — refusing to clobber them.${NC}"
+        exit 1
+    fi
+fi
 
 echo "[1/3] Preparing test cookies file..."
 COOKIES_FILE="/tmp/test_cookies_$$.txt"
