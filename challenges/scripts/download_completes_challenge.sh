@@ -10,7 +10,18 @@ YELLOW='\033[1;33m'
 NC='\033[0m'
 
 API_URL="http://localhost:8088"
-DOWNLOAD_DIR="/run/media/milosvasic/DATA4TB/Projects/MeTube/downloads"
+# Resolve the download dir the running stack ACTUALLY mounts, from the project's
+# .env (single source of truth — compose mounts ${DOWNLOAD_DIR}). Hardcoding it is a
+# §11.4 bluff: it produces a false FAIL when the download lands in the configured dir
+# (fixed 2026-06-16 — nezha used DOWNLOAD_DIR=$HOME/ytdlp-data/downloads, but this
+# script checked an unrelated hardcoded path). Legacy path kept only as last resort.
+_DCC_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+DOWNLOAD_DIR="$(grep -E '^DOWNLOAD_DIR=' "$_DCC_ROOT/.env" 2>/dev/null | tail -1 | cut -d= -f2-)"
+DOWNLOAD_DIR="${DOWNLOAD_DIR%\"}"; DOWNLOAD_DIR="${DOWNLOAD_DIR#\"}"
+DOWNLOAD_DIR="${DOWNLOAD_DIR%\'}"; DOWNLOAD_DIR="${DOWNLOAD_DIR#\'}"
+DOWNLOAD_DIR="${DOWNLOAD_DIR/#\$HOME/$HOME}"
+DOWNLOAD_DIR="${DOWNLOAD_DIR/#\~/$HOME}"
+DOWNLOAD_DIR="${DOWNLOAD_DIR:-/run/media/milosvasic/DATA4TB/Projects/MeTube/downloads}"
 # Use a reliable Vimeo URL that has completed successfully before
 TEST_URL="https://vimeo.com/108018156"
 QUALITY="best"
