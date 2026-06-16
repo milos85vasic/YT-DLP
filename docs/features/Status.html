@@ -176,8 +176,8 @@
 <h1 class="title">Status</h1>
 </header>
 <h1 id="feature-status-ledger">Feature Status Ledger</h1>
-<p><strong>Revision:</strong> 8 <strong>Last modified:</strong>
-2026-06-16T08:38:00Z <strong>Authority:</strong> constitution §11.4.153
+<p><strong>Revision:</strong> 9 <strong>Last modified:</strong>
+2026-06-16T08:42:00Z <strong>Authority:</strong> constitution §11.4.153
 (per-feature Status + video-recording confirmation), composes §11.4.44
 (revision header), §11.4.45 (integration-status-doc + closed status
 vocabulary), §11.4.56 (Status_Summary two-audience companion), §11.4.65
@@ -226,11 +226,17 @@ live-pipeline counter + ffprobe-validated just-produced
 artifact).</strong> Every OTHER row remains
 <code>PENDING — not yet recorded</code> until its window-scoped,
 <code>ytdlp---</code>-prefixed real-use capture (§11.4.154/.155) is
-recorded + analyzed. The remaining PENDING rows are dominated by
-<strong>mutating</strong> routes/flows (POST/DELETE cookie-upload,
+recorded + analyzed. The four running §1 services (metube, landing,
+dashboard, yt-dlp-cli) are also marked service-serving-confirmed, each
+citing its surface capture(s). The remaining PENDING rows are dominated
+by <strong>mutating</strong> routes/flows (POST/DELETE cookie-upload,
 delete-download, aborted-history write) which are NOT auto-captured
-because they would alter operator state (§9.2/§11.4.122), and the
-MP3-derivation flow (no audio artifact yet).</li>
+because they would alter operator state (§9.2/§11.4.122), the
+MP3-derivation flow (no audio artifact yet), the not-running services
+(VPN profile — operator <code>.ovpn</code>; watchtower — docker
+profile), and the state-changing root CLI scripts
+(<code>./start</code>/<code>./stop</code>/<code>./restart</code>/<code>./cleanup</code>/<code>./init</code>
+— running them would destabilize the live stack).</li>
 </ul>
 <blockquote>
 <p><strong>HONEST FACT (§11.4.6 / §11.4.153):</strong> As of this
@@ -327,7 +333,13 @@ under VPN)</td>
 <code>tests/challenges/run-metube-challenges.sh</code>,
 <code>challenges/scripts/download_completes_challenge.sh</code></td>
 <td>PENDING_FORENSICS</td>
-<td>PENDING — not yet recorded</td>
+<td>PASS (service serving — render+API) —
+<code>ytdlp---metube---20260616T075608Z.png</code> (minimal UI, real
+Completed table) + <code>ytdlp---status---20260616T075901Z.txt</code>
+("MeTube Direct API responds, body matched '"queue"'") + the
+<code>/history</code> dashboard render (46 real items served via this
+API). Scope: service-up + serving; full add→download flow not yet
+captured.</td>
 </tr>
 <tr>
 <td>Flask 'Боба' cookie-auth onboarding + aborted-history ledger + proxy
@@ -342,7 +354,13 @@ MeTube; writes <code>/config/aborted.json</code></td>
 <code>tests/test-cookie-validator.sh</code>,
 <code>challenges/scripts/landing_cookie_upload_challenge.sh</code></td>
 <td>PENDING_FORENSICS</td>
-<td>PENDING — not yet recorded</td>
+<td>PASS (service serving — render+API) —
+<code>ytdlp---landing---20260616T074850Z.png</code> (Боба UI) +
+<code>ytdlp---landing-api---20260616T083612Z.txt</code> (7 read-only
+routes each 200/204 with real bodies). Scope: service-up + serving
+read-only routes; mutating POST/DELETE (cookie-upload, delete-download,
+aborted-history write) NOT captured (operator state,
+§9.2/§11.4.122).</td>
 </tr>
 <tr>
 <td>Sleeping CLI container for <code>./download</code>
@@ -358,7 +376,11 @@ it; <code>yt-dlp/config</code>, <code>cookies</code>,
 <td><code>tests/test-media-services.sh</code>,
 <code>challenges/scripts/download_completes_challenge.sh</code></td>
 <td>PENDING_FORENSICS</td>
-<td>PENDING — not yet recorded</td>
+<td>PASS (wiring — CLI render) —
+<code>ytdlp---download-cli---20260616T080936Z.txt</code>:
+<code>./download --help</code> resolved the runtime and printed the
+wired exec path <code>podman exec yt-dlp-cli yt-dlp</code>. Scope:
+container-wired; an actual exec'd download flow not yet captured.</td>
 </tr>
 <tr>
 <td>Angular 17 + nginx dashboard (<code>dashboard/</code>, port 9090,
@@ -373,7 +395,12 @@ it; <code>yt-dlp/config</code>, <code>cookies</code>,
 <code>tests/e2e/tests/dashboard.spec.ts</code>, Angular
 <code>*.spec.ts</code></td>
 <td>PENDING_FORENSICS</td>
-<td>PENDING — not yet recorded</td>
+<td>PASS (service serving — render) — all four dashboard routes render
+via this service (<code>ytdlp---dashboard---*</code> +
+<code>ytdlp---dashboard-{queue,history,cookies}---*</code>); the nginx
+<code>/api/postprocess/</code> proxy serves live JSON
+(<code>ytdlp---postprocess---*</code>). Scope: service-up + serving +
+proxying.</td>
 </tr>
 <tr>
 <td>Image auto-update (<code>containrrr/watchtower:latest</code>,
