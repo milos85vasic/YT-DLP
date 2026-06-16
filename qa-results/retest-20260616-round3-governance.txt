@@ -1,0 +1,26 @@
+=== safety pre-check: do these touch containers? ===
+(none listed above = no lifecycle calls)
+
+=== test-constitution-inheritance.sh ===
+PASS: constitution submodule present and populated
+PASS: Constitution.md carries the §11.4 forensic anchor
+PASS: constitution CLAUDE.md carries anti-bluff covenant anchor
+PASS: constitution AGENTS.md carries anti-bluff covenant anchor
+PASS: constitution helper scripts present and executable
+PASS: parent CLAUDE, AGENTS, CONSTITUTION reference the submodule
+PASS: nested Challenges submodule inherits the constitution
+=== inheritance gate: 7/7 invariants PASS ===
+=== meta-test-constitution-inheritance.sh ===
+
+--- mutation 4: parent CLAUDE.md @constitution/CLAUDE.md inheritance pointer ---
+META-PASS: parent CLAUDE.md inheritance pointer — gate FAILed (rc=1) with anchor removed, file restored clean
+
+================================================================
+ META-TEST SUMMARY:  PASS=5  FAIL=0
+================================================================
+✓ constitution submodule working tree is clean (all mutations restored)
+=== vpn-compose (config-only, read-only validation — NO boot) ===
+[INFO] Running VPN Compose Tests...
+Pass: 7  Fail: 0
+=== stack still intact? ===
+4

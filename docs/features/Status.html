@@ -176,8 +176,8 @@
 <h1 class="title">Status</h1>
 </header>
 <h1 id="feature-status-ledger">Feature Status Ledger</h1>
-<p><strong>Revision:</strong> 11 <strong>Last modified:</strong>
-2026-06-16T09:52:00Z <strong>Authority:</strong> constitution §11.4.153
+<p><strong>Revision:</strong> 12 <strong>Last modified:</strong>
+2026-06-16T10:00:00Z <strong>Authority:</strong> constitution §11.4.153
 (per-feature Status + video-recording confirmation), composes §11.4.44
 (revision header), §11.4.45 (integration-status-doc + closed status
 vocabulary), §11.4.56 (Status_Summary two-audience companion), §11.4.65
@@ -1208,7 +1208,11 @@ operator state, so it was bypassed)</td>
 <td>Implemented</td>
 <td>vpn profile</td>
 <td>self</td>
-<td>PENDING_FORENSICS</td>
+<td>PARTIAL — <code>test-vpn-compose.sh</code> 7/7 PASS (config-only
+validation, no boot), captured 2026-06-16
+(<code>qa-results/retest-20260616-round3-governance.txt</code>);
+<code>test-vpn-smoke.sh</code> needs a live VPN container (operator
+<code>.ovpn</code>) → PENDING_FORENSICS</td>
 <td>PENDING — not yet recorded</td>
 </tr>
 <tr>
@@ -1229,7 +1233,9 @@ tests/meta-test-constitution-inheritance.sh</td>
 <td>Implemented</td>
 <td>repo tree</td>
 <td>self</td>
-<td>PENDING_FORENSICS</td>
+<td>PASS — inheritance 7/7 + meta-test 5/0 (mutations restored, tree
+clean), captured 2026-06-16
+(<code>qa-results/retest-20260616-round3-governance.txt</code>)</td>
 <td>PENDING — not yet recorded</td>
 </tr>
 <tr>

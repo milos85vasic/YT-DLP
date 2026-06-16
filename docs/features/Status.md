@@ -1,7 +1,7 @@
 # Feature Status Ledger
 
-**Revision:** 11
-**Last modified:** 2026-06-16T09:52:00Z
+**Revision:** 12
+**Last modified:** 2026-06-16T10:00:00Z
 **Authority:** constitution §11.4.153 (per-feature Status + video-recording confirmation), composes §11.4.44 (revision header), §11.4.45 (integration-status-doc + closed status vocabulary), §11.4.56 (Status_Summary two-audience companion), §11.4.65 (HTML+PDF export) + §11.4.153 DOCX, §11.4.107 (no frozen-frame video proof), §11.4.6 (no-guessing — every row reconciled against real code).
 **Scope:** Full feature surface of the `ytdlp` Podman/Docker orchestration around `yt-dlp` — every service, client surface, CLI script, landing route, dashboard component, test/challenge suite, and every PLANNED-but-unbuilt feature.
 **Maintainer:** project conductor.
@@ -123,9 +123,9 @@ No feature in this project is currently `OPERATOR-BLOCKED`. (The VPN profile req
 | Media-services compatibility (anti-bluff documented-failure) | tests/test-media-services.sh | Test suite | Implemented | yt-dlp-cli / metube up | self | PENDING_FORENSICS | PENDING — not yet recorded |
 | Bulk operations | tests/test-bulk-operations.sh | Test suite | Implemented | services up | self | PENDING_FORENSICS | PENDING — not yet recorded |
 | Add-all-platforms / add-download | tests/test-add-all-platforms.sh, tests/test-add-download.sh | Test suite | Implemented | metube up | self | PENDING_FORENSICS | PENDING — not yet recorded |
-| VPN compose + smoke | tests/test-vpn-compose.sh, tests/test-vpn-smoke.sh | Test suite | Implemented | vpn profile | self | PENDING_FORENSICS | PENDING — not yet recorded |
+| VPN compose + smoke | tests/test-vpn-compose.sh, tests/test-vpn-smoke.sh | Test suite | Implemented | vpn profile | self | PARTIAL — `test-vpn-compose.sh` 7/7 PASS (config-only validation, no boot), captured 2026-06-16 (`qa-results/retest-20260616-round3-governance.txt`); `test-vpn-smoke.sh` needs a live VPN container (operator `.ovpn`) → PENDING_FORENSICS | PENDING — not yet recorded |
 | Chaos / resilience | tests/test-chaos.sh | Test suite | Implemented | services up | self | PENDING_FORENSICS | PENDING — not yet recorded |
-| Constitution inheritance + meta-test | tests/test-constitution-inheritance.sh, tests/meta-test-constitution-inheritance.sh | Test suite | Implemented | repo tree | self | PENDING_FORENSICS | PENDING — not yet recorded |
+| Constitution inheritance + meta-test | tests/test-constitution-inheritance.sh, tests/meta-test-constitution-inheritance.sh | Test suite | Implemented | repo tree | self | PASS — inheritance 7/7 + meta-test 5/0 (mutations restored, tree clean), captured 2026-06-16 (`qa-results/retest-20260616-round3-governance.txt`) | PENDING — not yet recorded |
 | E2E (Playwright): dashboard, landing, cross-service, clear-history, delete-retry-cancel, cleanup-and-start | tests/e2e/ | E2E suite | Implemented | `run-e2e.sh` + `playwright.config.ts` | self | PENDING_FORENSICS | PENDING — not yet recorded |
 | Benchmark suite | tests/benchmark/run-benchmarks.sh | Benchmark suite | Implemented | services up | self | PENDING_FORENSICS | PENDING — not yet recorded |
 | Cookie auth + youtube-download + validate-fix | tests/cookies/ | Test suite | Implemented | metube + cookies | self | PENDING_FORENSICS | PENDING — not yet recorded |
