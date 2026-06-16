@@ -1,7 +1,7 @@
 # Feature Status Summary
 
-**Revision:** 4
-**Last modified:** 2026-06-16T08:10:00Z
+**Revision:** 5
+**Last modified:** 2026-06-16T08:32:00Z
 **Authority:** constitution §11.4.56 (Status_Summary two-audience companion to §11.4.153 `Status.md`), §11.4.44 (revision header), §11.4.65 + §11.4.153 (HTML+PDF+DOCX export).
 **Companion of:** `docs/features/Status.md`.
 
@@ -40,12 +40,15 @@ service keeps the container images fresh.
 
 ### What is recorded so far
 
-- **Six screens are now video-confirmed** by a real captured screenshot/transcript
-  of the genuinely-running system: the Dashboard, the Боба landing page, the
-  classic MeTube interface, the post-processing status page, the `./status` health
-  command, and the `./download` command (which shows its usage and the detected
-  container runtime). Each was examined and confirmed to be working — no blank,
-  frozen, or error screens. These confirm the screens *look right and respond*.
+- **Nine screens/transcripts are now video-confirmed** by a real capture of the
+  genuinely-running system: the Dashboard's four tabs (Download, Queue, History,
+  Cookies — all four examined individually), the Боба landing page, the classic
+  MeTube interface, the post-processing status page, the `./status` health command,
+  and the `./download` command. Each was examined and confirmed working — no blank,
+  frozen, or error screens. The History tab shows 46 real downloads; the Cookies tab
+  shows the real per-site cookie status (YouTube and X cookies have expired, which is
+  why login-protected downloads need fresh cookies). These confirm the screens *look
+  right and respond*.
 - **One full end-to-end *flow* is now confirmed too:** downloading a video all the
   way to a web-ready copy. We watched the live pipeline finish one more item (its
   "done" count went up by one) and verified the newly-produced web-ready file is a
@@ -150,14 +153,16 @@ service keeps the container images fresh.
 ### Video-confirmation status (load-bearing honest fact)
 
 Per §11.4.153, EVERY user-visible confirmed claim must be backed by a recorded
-real-use capture. At Revision 6 exactly **SEVEN** Video-Confirmation cells are real
-PASSes across six surfaces — SIX render/transcript + ONE flow — each backed by a
-`ytdlp---`-prefixed artifact (§11.4.154/.155) under
+real-use capture. At Revision 7 the real PASSes span **TEN** `ytdlp---`-prefixed
+captures — NINE render/transcript + ONE flow — each under
 `/Volumes/T7/Downloads/Recordings/` and analyzed by Claude Opus 4.8 native
 multimodal (the strong-model path; local CPU vision rejected — see
 `docs/research/vision-path/FINDINGS.md`):
 
-- `ytdlp---dashboard---20260615T221723Z.png` — Dashboard UI render.
+- `ytdlp---dashboard---20260615T221723Z.png` — Dashboard `/` (download-form + navbar).
+- `ytdlp---dashboard-queue---20260616T083018Z.png` — Dashboard `/queue` (empty state).
+- `ytdlp---dashboard-history---20260616T083023Z.png` — Dashboard `/history` (content, 46 items).
+- `ytdlp---dashboard-cookies---20260616T083029Z.png` — Dashboard `/cookies` (content, per-platform).
 - `ytdlp---landing---20260616T074850Z.png` — landing 'Боба' UI render.
 - `ytdlp---metube---20260616T075608Z.png` — MeTube UI render (real Completed table).
 - `ytdlp---postprocess---20260616T075648Z.png` — postprocess status API render

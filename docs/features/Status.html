@@ -176,8 +176,8 @@
 <h1 class="title">Status</h1>
 </header>
 <h1 id="feature-status-ledger">Feature Status Ledger</h1>
-<p><strong>Revision:</strong> 6 <strong>Last modified:</strong>
-2026-06-16T08:10:00Z <strong>Authority:</strong> constitution §11.4.153
+<p><strong>Revision:</strong> 7 <strong>Last modified:</strong>
+2026-06-16T08:32:00Z <strong>Authority:</strong> constitution §11.4.153
 (per-feature Status + video-recording confirmation), composes §11.4.44
 (revision header), §11.4.45 (integration-status-doc + closed status
 vocabulary), §11.4.56 (Status_Summary two-audience companion), §11.4.65
@@ -210,10 +210,13 @@ user-visible confirmed claim MUST be backed by a recorded real-use
 capture. The strong-model analysis path is the agent's OWN native
 multimodal read (Claude Opus 4.8 via the Read tool — see
 <code>docs/research/vision-path/FINDINGS.md</code>); local CPU models
-(moondream) are NOT used (too slow + hallucinate). <strong>SIX surfaces
-are render/transcript-confirmed (dashboard UI, landing 'Боба' UI, MeTube
-UI, postprocess status API, <code>./status</code> CLI,
-<code>./download</code> CLI) AND ONE end-to-end FLOW is confirmed
+(moondream) are NOT used (too slow + hallucinate). <strong>NINE
+render/transcript captures are confirmed — dashboard <code>/</code>
+(download-form + navbar), dashboard <code>/queue</code>, dashboard
+<code>/history</code>, dashboard <code>/cookies</code>, landing 'Боба'
+UI, MeTube UI, postprocess status API, <code>./status</code> CLI,
+<code>./download</code> CLI (together confirming the dashboard's five
+components + the other surfaces) — AND ONE end-to-end FLOW is confirmed
 (download→webready transcode, via advancing live-pipeline counter +
 ffprobe-validated just-produced artifact).</strong> Every OTHER row
 remains <code>PENDING — not yet recorded</code> until its window-scoped,
@@ -222,17 +225,24 @@ recorded + analyzed.</li>
 </ul>
 <blockquote>
 <p><strong>HONEST FACT (§11.4.6 / §11.4.153):</strong> As of this
-revision SEVEN Video-Confirmation cells are real PASSes across six
-distinct surfaces. SIX are scope=render/transcript: dashboard UI render
-(<code>ytdlp---dashboard---20260615T221723Z.png</code>), landing 'Боба'
-UI render (<code>ytdlp---landing---20260616T074850Z.png</code>), MeTube
-UI render (<code>ytdlp---metube---20260616T075608Z.png</code>),
-postprocess status API render
-(<code>ytdlp---postprocess---20260616T075648Z.png</code>) — the four
-image renders analyzed by Claude Opus 4.8 native multimodal — plus the
-<code>./status</code> CLI transcript
-(<code>ytdlp---status---20260616T075901Z.txt</code>) and the
-<code>./download</code> CLI render
+revision the real PASSes span TEN distinct
+<code>ytdlp---</code>-prefixed captures. NINE are
+scope=render/transcript: seven image renders analyzed by Claude Opus 4.8
+native multimodal — dashboard <code>/</code>
+(<code>ytdlp---dashboard---20260615T221723Z.png</code>, download-form +
+navbar), dashboard <code>/queue</code>
+(<code>ytdlp---dashboard-queue---20260616T083018Z.png</code>, empty
+state), dashboard <code>/history</code>
+(<code>ytdlp---dashboard-history---20260616T083023Z.png</code>, content
+state, 46 items), dashboard <code>/cookies</code>
+(<code>ytdlp---dashboard-cookies---20260616T083029Z.png</code>, content
+state, per-platform), landing 'Боба' UI
+(<code>ytdlp---landing---20260616T074850Z.png</code>), MeTube UI
+(<code>ytdlp---metube---20260616T075608Z.png</code>), postprocess status
+API (<code>ytdlp---postprocess---20260616T075648Z.png</code>) — plus two
+CLI transcripts: <code>./status</code>
+(<code>ytdlp---status---20260616T075901Z.txt</code>) and
+<code>./download</code>
 (<code>ytdlp---download-cli---20260616T080936Z.txt</code>). ONE is
 scope=FLOW: the download→webready transcode
 (<code>ytdlp---webready-flow---20260616T080633Z.txt</code>), confirmed
@@ -243,9 +253,10 @@ no UI, so the §11.4.69/.107 sink-side evidence is the validated
 artifact, not a screen recording). <strong>Still NOT
 flow-confirmed:</strong> MP3-derivation and cookie-upload FLOWS (the
 latter operator-gated — needs fresh operator cookies; uploading test
-cookies would overwrite real operator state, §9.2/§11.4.122). Every
-other cell honestly reads <code>PENDING — not yet recorded</code>. No
-row over-claims.</p>
+cookies would overwrite real operator state, §9.2/§11.4.122; the
+<code>/cookies</code> render shows YouTube + X cookies expired 2d ago,
+corroborating the gate). Every other cell honestly reads
+<code>PENDING — not yet recorded</code>. No row over-claims.</p>
 </blockquote>
 <hr />
 <h2 id="operator-blocked-rows-top-per-11445">OPERATOR-BLOCKED rows (top
@@ -818,7 +829,11 @@ failure)</td>
 <td><code>download-form.component.spec.ts</code>,
 <code>challenges/scripts/form_reenables_after_failure_challenge.sh</code></td>
 <td>PENDING_FORENSICS</td>
-<td>PENDING — not yet recorded</td>
+<td>PASS (UI render only) —
+<code>ytdlp---dashboard---20260615T221723Z.png</code> (the
+<code>/</code> route): the Add-Download form (URL input + Quality=Best /
+Format / Folder selects + Add-to-Queue) rendered coherently. Scope:
+render — add-failure-reenable flow not yet captured.</td>
 </tr>
 <tr>
 <td>Queue (STATE_META: pending / preparing / downloading /
@@ -832,7 +847,12 @@ record-and-close aborted)</td>
 <code>challenges/scripts/queue_lifecycle_challenge.sh</code>,
 <code>challenges/scripts/queue_polling_survives_error_challenge.sh</code></td>
 <td>PENDING_FORENSICS</td>
-<td>PENDING — not yet recorded</td>
+<td>PASS (UI render — empty state) —
+<code>ytdlp---dashboard-queue---20260616T083018Z.png</code>
+(<code>/queue</code> route): "⏳ Download Queue" heading + correct
+empty-state ("Queue is empty. Add a download from the Download tab." +
+mailbox icon) — one of the four required component states. Scope: render
+— live downloading-state flow not yet captured.</td>
 </tr>
 <tr>
 <td>History (+ aborted-history merge via
@@ -847,7 +867,14 @@ delete-all, refresh)</td>
 <code>tests/e2e/tests/clear-history.spec.ts</code>,
 <code>tests/e2e/tests/delete-retry-cancel.spec.ts</code></td>
 <td>PENDING_FORENSICS</td>
-<td>PENDING — not yet recorded</td>
+<td>PASS (UI render — content state) —
+<code>ytdlp---dashboard-history---20260616T083023Z.png</code>
+(<code>/history</code> route): "Safe History Management" banner + "📦
+Download History" with Clear All (46)/Delete All (46) + real content
+rows ("Me at the zoo" 463.9 KB FINISHED, "Why Reality Reaches You Late"
+833.5 MB, "10 Metal Songs from 1986…" 171.8 MB, …) each with FINISHED
+badge + real path/URL + retry/delete actions. Scope: render —
+delete/retry click-flow not yet captured.</td>
 </tr>
 <tr>
 <td>Cookies (status badge fresh/expiring/expired, age, MeTube
@@ -859,7 +886,13 @@ online/offline, per-platform breakdown, upload, delete)</td>
 <code>deleteCookies</code></td>
 <td><code>cookies.component.spec.ts</code></td>
 <td>PENDING_FORENSICS</td>
-<td>PENDING — not yet recorded</td>
+<td>PASS (UI render — content state) —
+<code>ytdlp---dashboard-cookies---20260616T083029Z.png</code>
+(<code>/cookies</code> route): "🍪 Cookie Management" — Status ⚠ Stale,
+Age 45h 30m, MeTube ✅ Reachable + per-platform breakdown (Instagram
+16/expires 65d, VK 62/98d, X/Twitter 251/expired 2d ago, YouTube
+303/expired 2d ago). Scope: render — upload/delete click-flow not yet
+captured (upload is operator-gated, §9.2/§11.4.122).</td>
 </tr>
 <tr>
 <td>Navbar (routerLinks Download/Queue/History/Cookies; VPN / No-VPN /
@@ -870,7 +903,11 @@ unknown profile badge; MeTube-unreachable badge)</td>
 <td><code>getProfileStatus</code></td>
 <td>covered via dashboard E2E + Angular harness</td>
 <td>PENDING_FORENSICS</td>
-<td>PENDING — not yet recorded</td>
+<td>PASS (UI render) — visible + consistent across all four dashboard
+captures (<code>ytdlp---dashboard---*</code>,
+<code>ytdlp---dashboard-queue/history/cookies---*</code>): nav links
+Download/Queue/History(6)/Cookies(⚠) + live ●Online profile badge,
+active-route highlight tracking the current route. Scope: render.</td>
 </tr>
 <tr>
 <td>Error boundary (renders loading / error+retry / empty / content
