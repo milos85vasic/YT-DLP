@@ -1,0 +1,20 @@
+run-tests exit=1
+Total:   196
+Passed:  183
+Failed:  13
+Skipped: 0
+FAILED tests:
+test_history_retry_download
+test_landing_delete_download_endpoint
+test_dashboard_proxy_delete_download
+test_add_happy_path_youtube
+test_youtube
+test_vimeo
+test_dailymotion
+test_twitch
+test_peertube
+test_soundcloud
+test_bandcamp
+test_metube_api_vk
+test_metube_api_youtube
+DONE
