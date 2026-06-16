@@ -176,7 +176,7 @@
 <h1 class="title">Status</h1>
 </header>
 <h1 id="feature-status-ledger">Feature Status Ledger</h1>
-<p><strong>Revision:</strong> 13 <strong>Last modified:</strong>
+<p><strong>Revision:</strong> 14 <strong>Last modified:</strong>
 2026-06-16T14:05:00Z <strong>Authority:</strong> constitution §11.4.153
 (per-feature Status + video-recording confirmation), composes §11.4.44
 (revision header), §11.4.45 (integration-status-doc + closed status
@@ -330,17 +330,22 @@ full no-vpn System was distributed to nezha (amd64, Podman 5.7.1) via
 real running production services — <strong>captured evidence in
 <code>qa-results/nezha-heavytest-20260616/</code></strong> (+
 SUMMARY.md): run-tests scenario <strong>17/0</strong> + integration
-<strong>123/0</strong> + error <strong>24/0</strong>, container-restart
-PASS, chaos <strong>27/0</strong>/1skip(DNS), memory-limits PASS, smoke
+<strong>123/1</strong> (the 1 fail = <code>test_metube_api_vk</code>
+VK-playlist-URL allowlist, env — fixed + verified VK-PASS, a post-fix
+full-integration re-run capturing 123/0 not yet recorded) + error
+<strong>24/0</strong>, container-restart PASS, chaos
+<strong>27/0</strong>/1skip(DNS), memory-limits PASS, smoke
 <strong>22/0</strong>, contract <strong>18/0</strong>,
 integration-realhttp <strong>22/0</strong>, 7/7 challenges (incl.
 <code>download_completes</code> → a real <strong>111 MB
 webready</strong> file on disk), postprocessor pytest
-<strong>46p/23skip/0fail</strong>, dashboard 34/1(env), media-services
-16/0, aborted-history 9/0, bulk 9/0. <strong>Zero product bugs</strong>;
-6 deploy/test issues root-caused + fixed (§11.4.102, commits
-5d15a64/f10c727/acbed76/b96dc8f). The 4 user surfaces were
-<strong>re-recorded on nezha + re-read natively (4/4 PASS):</strong>
+<strong>46p/23skip/0fail</strong>, dashboard 34/1(env:
+stale-cookie-size, re-seeded), media-services <strong>16/1</strong>
+(same VK env fail, fixed), aborted-history 9/0, bulk 9/0. <strong>Zero
+product bugs</strong>; 6 deploy/test issues root-caused + fixed
+(§11.4.102, commits 5d15a64/f10c727/acbed76/b96dc8f). The 4 user
+surfaces were <strong>re-recorded on nezha + re-read natively (4/4
+PASS):</strong>
 <code>ytdlp---nezha-dashboard---20260616T135945Z.png</code> (full
 Add-Download UI + 16-platform grid),
 <code>ytdlp---nezha-metube---20260616T140007Z.png</code> (real fresh
@@ -1127,7 +1132,9 @@ operator state, so it was bypassed)</td>
 <td>Implemented</td>
 <td><code>run-tests.sh -p integration</code></td>
 <td>self</td>
-<td>PENDING_FORENSICS</td>
+<td>PASS — 123 pass / 1 env-fail (VK-playlist allowlist, fixed) on the
+nezha production stack, captured
+<code>qa-results/nezha-heavytest-20260616/2-integration.log</code></td>
 <td>PENDING — not yet recorded</td>
 </tr>
 <tr>
@@ -1148,7 +1155,8 @@ operator state, so it was bypassed)</td>
 <td>Implemented</td>
 <td><code>run-tests.sh -p scenario</code></td>
 <td>self</td>
-<td>PENDING_FORENSICS</td>
+<td>PASS — 17/0 on the nezha production stack, captured
+<code>qa-results/nezha-heavytest-20260616/1-scenario.log</code></td>
 <td>PENDING — not yet recorded</td>
 </tr>
 <tr>
@@ -1158,7 +1166,8 @@ operator state, so it was bypassed)</td>
 <td>Implemented</td>
 <td><code>run-tests.sh -p error</code></td>
 <td>self</td>
-<td>PENDING_FORENSICS</td>
+<td>PASS — 24/0 on the nezha production stack, captured
+<code>qa-results/nezha-heavytest-20260616/3-error.log</code></td>
 <td>PENDING — not yet recorded</td>
 </tr>
 <tr>
@@ -1168,7 +1177,9 @@ operator state, so it was bypassed)</td>
 <td>Implemented</td>
 <td>services up</td>
 <td>self</td>
-<td>PENDING_FORENSICS</td>
+<td>PASS — 34 pass / 1 env-fail (stale-cookie-size, re-seeded) on the
+nezha production stack, captured
+<code>qa-results/nezha-heavytest-20260616/test-dashboard.log</code></td>
 <td>PENDING — not yet recorded</td>
 </tr>
 <tr>
@@ -1178,7 +1189,8 @@ operator state, so it was bypassed)</td>
 <td>Implemented</td>
 <td>services up</td>
 <td>self</td>
-<td>PENDING_FORENSICS</td>
+<td>PASS — 5/0 on the nezha production stack, captured
+<code>qa-results/nezha-heavytest-20260616/test-dashboard-operations.log</code></td>
 <td>PENDING — not yet recorded</td>
 </tr>
 <tr>
@@ -1188,7 +1200,8 @@ operator state, so it was bypassed)</td>
 <td>Implemented</td>
 <td>landing up</td>
 <td>self</td>
-<td>PENDING_FORENSICS</td>
+<td>PASS — 9/0 on the nezha production stack, captured
+<code>qa-results/nezha-heavytest-20260616/test-aborted-history.log</code></td>
 <td>PENDING — not yet recorded</td>
 </tr>
 <tr>
@@ -1208,7 +1221,9 @@ operator state, so it was bypassed)</td>
 <td>Implemented</td>
 <td>yt-dlp-cli / metube up</td>
 <td>self</td>
-<td>PENDING_FORENSICS</td>
+<td>PASS — 16 pass / 1 env-fail (VK-playlist allowlist, fixed) on the
+nezha production stack, captured
+<code>qa-results/nezha-heavytest-20260616/test-media-services.log</code></td>
 <td>PENDING — not yet recorded</td>
 </tr>
 <tr>
@@ -1218,7 +1233,8 @@ operator state, so it was bypassed)</td>
 <td>Implemented</td>
 <td>services up</td>
 <td>self</td>
-<td>PENDING_FORENSICS</td>
+<td>PASS — 9/0 on the nezha production stack, captured
+<code>qa-results/nezha-heavytest-20260616/test-bulk-operations.log</code></td>
 <td>PENDING — not yet recorded</td>
 </tr>
 <tr>
@@ -1252,7 +1268,9 @@ validation, no boot), captured 2026-06-16
 <td>Implemented</td>
 <td>services up</td>
 <td>self</td>
-<td>PENDING_FORENSICS</td>
+<td>PASS — 27/0 + 1 skip (host-DNS, env) on the nezha production stack,
+captured
+<code>qa-results/nezha-heavytest-20260616/5-chaos.log</code></td>
 <td>PENDING — not yet recorded</td>
 </tr>
 <tr>
@@ -1276,7 +1294,12 @@ delete-retry-cancel, cleanup-and-start</td>
 <td>Implemented</td>
 <td><code>run-e2e.sh</code> + <code>playwright.config.ts</code></td>
 <td>self</td>
-<td>PENDING_FORENSICS</td>
+<td>PASS (25/26) — ran against the nezha production stack via SSH
+tunnel; the 1 remaining is <code>clear-history</code>'s "clear ALL"
+assertion racing concurrent adds under parallel workers on a shared
+stack (§11.4.3 topology, env — the 2 stateful specs were hardened + pass
+3/3 in isolation, commit 37adda4); landing stale-assertion fixed
+(dd1dc1c)</td>
 <td>PENDING — not yet recorded</td>
 </tr>
 <tr>
@@ -1321,7 +1344,12 @@ no-vpn-direct, queue-lifecycle, queue-polling, retry-visible)</td>
 <td>Implemented</td>
 <td><code>run_all_challenges.sh</code></td>
 <td>self</td>
-<td>PENDING_FORENSICS</td>
+<td>PASS — api_contract + container-restart-resilience + form_reenables
++ landing_cookie_upload + memory-limits + no_vpn_direct +
+queue_lifecycle + queue_polling + retry_immediately_visible all PASS on
+the nezha production stack, captured
+<code>qa-results/nezha-heavytest-20260616/</code>;
+<code>download_completes</code> → real 111 MB webready file on disk</td>
 <td>PENDING — not yet recorded</td>
 </tr>
 <tr>
