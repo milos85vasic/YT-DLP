@@ -22,6 +22,14 @@ FIXTURES = os.path.join(os.path.dirname(__file__), "fixtures")
 SAMPLE_VIDEO = os.path.join(FIXTURES, "sample_video.mp4")
 SAMPLE_AUDIO = os.path.join(FIXTURES, "sample_audio.m4a")
 
+# These end-to-end worker tests run REAL ffmpeg/ffprobe transcodes (no mocks). On a host
+# without ffmpeg they must SKIP, not FAIL — mirroring the guard already used by
+# test_transcoder.py / test_media_probe.py / test_integration_main.py. Without this guard
+# the worker tests FAILed on the ffmpeg-less nezha host (the binaries live only in the
+# postprocessor container), masking a clean topology SKIP (§11.4.3). The real transcode
+# path is validated end-to-end by the live pipeline (download_completes → webready).
+_FFMPEG = shutil.which("ffmpeg") is not None and shutil.which("ffprobe") is not None
+
 
 def _ffprobe_codecs(path):
     """Return the set of (codec_type, codec_name) tuples in `path` via ffprobe."""
@@ -52,6 +60,7 @@ def _status(db_path, job_id):
     return row  # (status, output_path) or None
 
 
+@unittest.skipUnless(_FFMPEG, "ffmpeg/ffprobe required for worker transcode tests")
 class WorkerTestBase(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()

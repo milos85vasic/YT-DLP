@@ -8,6 +8,20 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m'
 
+# §11.4.14 test cleanup: this challenge's upload OVERWRITES ./metube/config/cookies.txt
+# (the landing cookie-sync propagates it), clobbering the operator's real cookies. Back
+# them up before and RESTORE on every exit path, so the test leaves the target quiescent.
+# The live file is written by the container's user-namespaced uid (rootless podman), so
+# `podman unshare` is the sanctioned way to read/write it from the host.
+_CUC_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+_CUC_COOKIES="$_CUC_ROOT/metube/config/cookies.txt"
+_CUC_BACKUP="/tmp/cuc_real_cookies_$$.txt"
+_CUC_RT="$(command -v podman || command -v docker || echo podman)"
+_cuc_unshare_cp() { "$_CUC_RT" unshare cp "$1" "$2" 2>/dev/null || cp "$1" "$2" 2>/dev/null || true; }
+_cuc_restore() { [ -f "$_CUC_BACKUP" ] && { _cuc_unshare_cp "$_CUC_BACKUP" "$_CUC_COOKIES"; rm -f "$_CUC_BACKUP"; }; }
+trap _cuc_restore EXIT
+[ -f "$_CUC_COOKIES" ] && _cuc_unshare_cp "$_CUC_COOKIES" "$_CUC_BACKUP"
+
 echo "[1/3] Preparing test cookies file..."
 COOKIES_FILE="/tmp/test_cookies_$$.txt"
 cat > "$COOKIES_FILE" << 'COOKIE'
