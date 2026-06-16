@@ -1,0 +1,14 @@
+[1/3] Validating MeTube Direct API...
+    MeTube /version: OK (version present)
+    MeTube /version yt-dlp: OK (yt-dlp present)
+    MeTube /history done: OK (done present)
+    MeTube /history queue: OK (queue present)
+    MeTube /history pending: OK (pending present)
+[2/3] Validating Dashboard Proxy API...
+    Dashboard /api/version: OK (version present)
+    Dashboard /api/history: OK (done present)
+    Dashboard /api/cookie-status: OK (has_cookies present)
+[3/3] Validating Landing Page API...
+    Landing /api/cookie-status: OK (has_cookies present)
+    Landing /health: OK (status present)
+[0;32mPASS: All API contracts valid[0m

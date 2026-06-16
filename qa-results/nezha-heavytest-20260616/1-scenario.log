@@ -1,0 +1,50 @@
+
+[0;35m============================================[0m
+[0;35m  YT-DLP Test Suite[0m
+[0;35m============================================[0m
+
+[0;34m[INFO][0m Test Configuration:
+  Runtime: auto
+  Profile: scenario
+  Scenario: all
+  Verbose: false
+  Dry Run: false
+
+[0;34m[INFO][0m Detected runtime: podman
+
+[0;34m[INFO][0m Containers already running, will use existing containers
+
+[0;35m============================================[0m
+[0;35m  Running Scenario Tests[0m
+[0;35m============================================[0m
+
+[0;34m[INFO][0m Running Scenario Tests...
+Running: test_scenario_podman_no_vpn... [0;32mPASS[0m
+Running: test_scenario_podman_with_vpn... [0;32mPASS[0m
+Running: test_scenario_docker_no_vpn... [0;32mPASS[0m
+Running: test_scenario_docker_with_vpn... [0;32mPASS[0m
+Running: test_scenario_batch_download... [0;32mPASS[0m
+Running: test_scenario_channel_download... [0;32mPASS[0m
+Running: test_scenario_complete_workflow_no_vpn... [0;32mPASS[0m
+Running: test_scenario_vpn_profile... [0;32mPASS[0m
+Running: test_scenario_no_vpn_profile... [0;32mPASS[0m
+Running: test_scenario_vpn_cli_profile... [0;32mPASS[0m
+Running: test_scenario_env_combinations... [0;32mPASS[0m
+Running: test_scenario_service_dependencies... [0;32mPASS[0m
+Running: test_scenario_network_configuration... [0;32mPASS[0m
+Running: test_scenario_volume_mounts... [0;32mPASS[0m
+Running: test_scenario_health_checks... [0;32mPASS[0m
+Running: test_scenario_watchtower_config... [0;32mPASS[0m
+Running: test_scenario_all_runtimes... [0;32mPASS[0m
+
+[0;35m============================================[0m
+[0;35m  Test Summary[0m
+[0;35m============================================[0m
+
+Total:   17
+Passed:  [0;32m17[0m
+Failed:  [0;31m0[0m
+Skipped: [1;33m0[0m
+
+[0;34m[INFO][0m Cleaning up test environment...
+[0;32m[PASS][0m All tests passed!

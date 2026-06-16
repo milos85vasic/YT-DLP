@@ -1,0 +1,6 @@
+[1/2] Restarting all containers...
+[2/2] Checking all endpoints recover...
+    landing (port 8086): OK
+    metube (port 8088): OK
+    dashboard (port 9090): OK
+[0;32mPASS: All containers recovered after restart[0m

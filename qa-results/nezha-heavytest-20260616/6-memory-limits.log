@@ -1,0 +1,11 @@
+[1/2] Checking containers have memory limits...
+    metube-direct: OK (limit=1073741824b)
+    metube-landing: OK (limit=268435456b)
+    yt-dlp-dashboard: OK (limit=268435456b)
+    yt-dlp-cli: OK (limit=1572864000b)
+[2/2] Checking oom_score_adj...
+    metube-direct: oom_score_adj=0
+    metube-landing: oom_score_adj=0
+    yt-dlp-dashboard: oom_score_adj=0
+    yt-dlp-cli: oom_score_adj=0
+[0;32mPASS: All containers have resource protections[0m

@@ -1,0 +1,28 @@
+[0;36m============================================[0m
+[0;36m  Dashboard Operations Full Automation Test[0m
+[0;36m============================================[0m
+[0;34m=== Pre-flight checks ===[0m
+[0;32m✓ PASS[0m All services reachable
+[0;34m=== Test 1: Bulk history clear via URLs ===[0m
+Done items before clear: 1
+Clearing with URLs: ["https://www.youtube.com/watch?v=dQw4w9WgXcQ"]
+Done items after clear: 0
+[0;32m✓ PASS[0m Bulk clear removes all history items
+[0;34m=== Test 2: Individual history cleanup via URL ===[0m
+[0;32m✓ PASS[0m Single URL-based delete removes item
+[0;34m=== Test 3: Pending item start via URLs ===[0m
+Pending items before start: 1
+Starting with URLs: ["https://www.youtube.com/watch?v=9bZkp7q19f0"]
+Pending items after start: 0
+[0;32m✓ PASS[0m URL-based start moves all pending items to queue
+[0;34m=== Test 4: Dashboard proxy URL-based delete ===[0m
+[0;32m✓ PASS[0m Dashboard proxy delete works with URLs
+[0;34m=== Test 5: Landing page delete-download proxy with URL ===[0m
+[0;32m✓ PASS[0m Landing page delete-download works with URL
+
+[0;36m============================================[0m
+[0;36m  Dashboard Operations Test Summary[0m
+[0;36m============================================[0m
+Passed:  [0;32m5[0m
+Failed:  [0;31m0[0m
+[0;32mALL TESTS PASSED[0m

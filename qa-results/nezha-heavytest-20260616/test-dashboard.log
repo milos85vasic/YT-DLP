@@ -1,0 +1,54 @@
+[0;34m============================================[0m
+[0;34m  Dashboard & Landing Page Test Suite[0m
+[0;34m============================================[0m
+
+[0;34m[INFO][0m Container Runtime: podman
+[0;34m[INFO][0m Dashboard URL: http://localhost:9090
+[0;34m[INFO][0m Landing URL: http://localhost:8086
+
+[0;34m[INFO][0m Running Dashboard & Landing Page Tests...
+Running: test_dashboard_container_running ... [0;32mPASS[0m
+Running: test_dashboard_nginx_process ... [0;32mPASS[0m
+Running: test_dashboard_entrypoint_exists ... [0;32mPASS[0m
+Running: test_dashboard_nginx_template_exists ... [0;32mPASS[0m
+Running: test_dashboard_nginx_config_valid ... [0;32mPASS[0m
+Running: test_dashboard_homepage_loads ... [0;32mPASS[0m
+Running: test_dashboard_spa_fallback ... [0;32mPASS[0m
+Running: test_dashboard_static_assets ... [0;32mPASS[0m
+Running: test_api_proxy_history ... [0;32mPASS[0m
+Running: test_api_proxy_add_download ... [0;32mPASS[0m
+Running: test_api_proxy_cookie_status ... [0;32mPASS[0m
+Running: test_api_proxy_version ... [0;32mPASS[0m
+Running: test_api_proxy_404_nonexistent ... [0;32mPASS[0m
+Running: test_nginx_uses_resolver_directive ... [0;32mPASS[0m
+Running: test_nginx_uses_variable_proxy_pass ... [0;32mPASS[0m
+Running: test_proxy_reaches_metube_directly ... [0;32mPASS[0m
+Running: test_proxy_works_after_container_restart ... [0;32mPASS[0m
+Running: test_landing_container_running ... [0;32mPASS[0m
+Running: test_landing_page_loads ... [0;32mPASS[0m
+Running: test_landing_has_dashboard_link ... [0;32mPASS[0m
+Running: test_landing_has_metube_classic_link ... [0;32mPASS[0m
+Running: test_landing_redirects_to_dashboard ... [0;32mPASS[0m
+Running: test_landing_upload_cookies_proxy ... [0;32mPASS[0m
+Running: test_landing_upload_cookies_rejects_non_utf8_as_400 ... [0;32mPASS[0m
+Running: test_landing_cookie_status_proxy ... [0;32mPASS[0m
+Running: test_e2e_add_download_via_dashboard ... [0;32mPASS[0m
+Running: test_e2e_metube_api_direct_vs_proxied ... [0;32mPASS[0m
+Running: test_dashboard_api_no_cors_block ... [0;32mPASS[0m
+Running: test_history_delete_single_item ... [0;32mPASS[0m
+Running: test_history_clear_all ... [0;32mPASS[0m
+Running: test_history_retry_download ... [0;32mPASS[0m
+Running: test_landing_delete_download_endpoint ... [0;32mPASS[0m
+Running: test_dashboard_proxy_delete_download ... [0;32mPASS[0m
+Running: test_metube_ytdlp_is_nightly ... [0;32mPASS[0m
+Running: test_metube_has_fresh_cookies ... [0;31mFAIL[0m
+       MeTube cookie file is too small (92 bytes) — cookies may not be synced
+
+[0;34m============================================[0m
+[0;34m  Test Summary[0m
+[0;34m============================================[0m
+Passed:  [0;32m34[0m
+Failed:  [0;31m1[0m
+Skipped: [0;36m0[0m
+
+[0;31mSome tests failed.[0m

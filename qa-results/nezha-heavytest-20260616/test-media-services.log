@@ -1,0 +1,35 @@
+[0;34m============================================[0m
+[0;34m  Media Services Compatibility Test[0m
+[0;34m============================================[0m
+
+[0;34m[INFO][0m Container Runtime: podman
+[0;34m[INFO][0m yt-dlp version: 2026.03.17
+
+[INFO] Running Media Services Tests...
+Running: test_youtube ... [0;32mPASS[0m
+Running: test_vimeo ... [0;32mPASS[0m
+Running: test_dailymotion ... [0;32mPASS[0m
+Running: test_twitch ... [0;32mPASS[0m
+Running: test_instagram ... [0;32mPASS[0m
+Running: test_reddit ... [0;32mPASS[0m
+Running: test_rumble ... [0;32mPASS[0m
+Running: test_vk ... [0;32mPASS[0m
+Running: test_peertube ... [0;32mPASS[0m
+Running: test_soundcloud ... [0;32mPASS[0m
+Running: test_bandcamp ... [0;32mPASS[0m
+Running: test_metube_api_vk ... [0;31mFAIL[0m
+       MeTube API returned error (and not a documented VK CDN flake): {"status": "error", "msg": "ERROR: Unsupported URL: https://vkvideo.ru/video/playlist/-220068665_92"}
+Running: test_metube_api_youtube ... [0;32mPASS[0m
+Running: test_tiktok ... [0;32mPASS[0m
+Running: test_bilibili ... [0;32mPASS[0m
+Running: test_facebook ... [0;32mPASS[0m
+Running: test_twitter ... [0;32mPASS[0m
+
+[0;34m============================================[0m
+[0;34m  Test Summary[0m
+[0;34m============================================[0m
+Passed:  [0;32m16[0m
+Failed:  [0;31m1[0m
+Skipped: [0;36m0[0m
+
+[0;31mSome tests failed.[0m

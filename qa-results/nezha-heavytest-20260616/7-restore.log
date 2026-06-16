@@ -1,0 +1,47 @@
+[0;34m============================================[0m
+[0;34m       Initializing Environment[0m
+[0;34m============================================[0m
+
+[0;34m============================================[0m
+[0;34m    YT-DLP Environment Setup Script[0m
+[0;34m============================================[0m
+
+[0;36mContainer Runtime:[0m podman
+[0;36mCompose Command:[0m podman-compose
+
+[0;34mLoading variables from .env file...[0m
+[0;32m✓[0m File ownership: UID=1000, GID=1000 (milosvasic)
+
+[0;34mValidating required variables...[0m
+
+[0;32m✓[0m USE_VPN: false
+[0;32m✓[0m DOWNLOAD_DIR: /home/milosvasic/ytdlp-data/downloads
+
+[1;33mVPN disabled - skipping VPN-specific validation.[0m
+
+[0;34m============================================[0m
+[0;34m          Directory Setup[0m
+[0;34m============================================[0m
+
+[0;32m✓[0m Download directory exists: /home/milosvasic/ytdlp-data/downloads
+[0;32m✓[0m Download directory is on btrfs (not tmpfs)
+
+[0;34mCreating yt-dlp directories...[0m
+[0;32m✓[0m Created yt-dlp directories
+
+[0;34mCreating Metube directories...[0m
+[0;32m✓[0m Created Metube directories
+
+[0;34m============================================[0m
+[0;34m       Configuration Files[0m
+[0;34m============================================[0m
+
+[0;32m✓[0m yt-dlp configuration already exists
+
+[0;34m============================================[0m
+[0;34m         Setting Permissions[0m
+[0;34m============================================[0m
+
+[0;32m✓[0m Directory permissions set
+[0;31mERROR: download directory missing or not writable: /home/milosvasic/ytdlp-data/downloads[0m
+[0;31mSetup did NOT complete cleanly — see errors above.[0m

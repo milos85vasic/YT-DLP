@@ -1,0 +1,192 @@
+
+[0;35m============================================[0m
+[0;35m  YT-DLP Test Suite[0m
+[0;35m============================================[0m
+
+[0;34m[INFO][0m Test Configuration:
+  Runtime: auto
+  Profile: integration
+  Scenario: all
+  Verbose: false
+  Dry Run: false
+
+[0;34m[INFO][0m Detected runtime: podman
+
+[0;34m[INFO][0m Containers already running, will use existing containers
+
+[0;35m============================================[0m
+[0;35m  Running Integration Tests[0m
+[0;35m============================================[0m
+
+[0;34m[INFO][0m Running Integration Tests...
+Running: test_init_no_vpn... [0;32mPASS[0m
+Running: test_init_with_vpn... [0;32mPASS[0m
+Running: test_init_missing_env... [0;32mPASS[0m
+Running: test_start_no_vpn... [0;32mPASS[0m
+Running: test_start_with_vpn... [0;32mPASS[0m
+Running: test_stop_services... [0;32mPASS[0m
+Running: test_restart_services... [0;32mPASS[0m
+Running: test_download_helper... [0;32mPASS[0m
+Running: test_download_batch_mode... [0;32mPASS[0m
+Running: test_update_images... [0;32mPASS[0m
+Running: test_update_images_execution... [0;32mPASS[0m
+Running: test_cleanup_script... [0;32mPASS[0m
+Running: test_cleanup_options... [0;32mPASS[0m
+Running: test_status_script... [0;32mPASS[0m
+Running: test_status_output... [0;32mPASS[0m
+Running: test_check_vpn_script... [0;32mPASS[0m
+Running: test_check_vpn_without_vpn... [0;32mPASS[0m
+Running: test_setup_auto_update... [0;32mPASS[0m
+Running: test_docker_compose_health... [0;32mPASS[0m
+
+[0;35m============================================[0m
+[0;35m  Running Dashboard Tests[0m
+[0;35m============================================[0m
+
+[0;34m[INFO][0m Running Dashboard & Landing Page Tests...
+Running: test_dashboard_container_running... [0;32mPASS[0m
+Running: test_dashboard_nginx_process... [0;32mPASS[0m
+Running: test_dashboard_entrypoint_exists... [0;32mPASS[0m
+Running: test_dashboard_nginx_template_exists... [0;32mPASS[0m
+Running: test_dashboard_nginx_config_valid... [0;32mPASS[0m
+Running: test_dashboard_homepage_loads... [0;32mPASS[0m
+Running: test_dashboard_spa_fallback... [0;32mPASS[0m
+Running: test_dashboard_static_assets... [0;32mPASS[0m
+Running: test_api_proxy_history... [0;32mPASS[0m
+Running: test_api_proxy_add_download... [0;32mPASS[0m
+Running: test_api_proxy_cookie_status... [0;32mPASS[0m
+Running: test_api_proxy_version... [0;32mPASS[0m
+Running: test_api_proxy_404_nonexistent... [0;32mPASS[0m
+Running: test_nginx_uses_resolver_directive... [0;32mPASS[0m
+Running: test_nginx_uses_variable_proxy_pass... [0;32mPASS[0m
+Running: test_proxy_reaches_metube_directly... [0;32mPASS[0m
+Running: test_proxy_works_after_container_restart... [0;32mPASS[0m
+Running: test_landing_container_running... [0;32mPASS[0m
+Running: test_landing_page_loads... [0;32mPASS[0m
+Running: test_landing_has_dashboard_link... [0;32mPASS[0m
+Running: test_landing_has_metube_classic_link... [0;32mPASS[0m
+Running: test_landing_redirects_to_dashboard... [0;32mPASS[0m
+Running: test_landing_upload_cookies_proxy... [0;32mPASS[0m
+Running: test_landing_upload_cookies_rejects_non_utf8_as_400... [0;32mPASS[0m
+Running: test_landing_cookie_status_proxy... [0;32mPASS[0m
+Running: test_e2e_add_download_via_dashboard... [0;32mPASS[0m
+Running: test_e2e_metube_api_direct_vs_proxied... [0;32mPASS[0m
+Running: test_dashboard_api_no_cors_block... [0;32mPASS[0m
+Running: test_history_delete_single_item... [0;32mPASS[0m
+Running: test_history_clear_all... [0;32mPASS[0m
+Running: test_history_retry_download... [0;32mPASS[0m
+Running: test_landing_delete_download_endpoint... [0;32mPASS[0m
+Running: test_dashboard_proxy_delete_download... [0;32mPASS[0m
+Running: test_metube_ytdlp_is_nightly... [0;32mPASS[0m
+Running: test_metube_has_fresh_cookies... [0;32mPASS[0m
+
+[0;35m============================================[0m
+[0;35m  Running /api/add Coverage Tests[0m
+[0;35m============================================[0m
+
+[0;34m[INFO][0m Running /api/add Coverage Tests...
+Running: test_add_happy_path_youtube... [0;32mPASS[0m
+Running: test_add_proxy_and_direct_return_same_shape... [0;32mPASS[0m
+Running: test_add_via_lan_ip... [0;32mPASS[0m
+Running: test_add_response_body_is_valid_json... [0;32mPASS[0m
+Running: test_add_accepts_vimeo_url... [0;32mPASS[0m
+Running: test_add_accepts_dailymotion_url... [0;32mPASS[0m
+Running: test_add_empty_json_body_not_500... [0;32mPASS[0m
+Running: test_add_malformed_json_not_500... [0;32mPASS[0m
+Running: test_add_no_content_type_not_500... [0;32mPASS[0m
+Running: test_add_empty_url_not_500... [0;32mPASS[0m
+Running: test_add_javascript_scheme_url_not_500... [0;32mPASS[0m
+Running: test_add_file_scheme_url_not_500... [0;32mPASS[0m
+Running: test_add_oversized_url_not_500... [0;32mPASS[0m
+Running: test_add_wrong_typed_quality_not_500... [0;32mPASS[0m
+Running: test_add_concurrent_requests_never_500... [0;32mPASS[0m
+Running: test_add_during_metube_restart_never_returns_500... [0;32mPASS[0m
+
+[0;35m============================================[0m
+[0;35m  Running /api/add Per-Platform NO-500 Tests[0m
+[0;35m============================================[0m
+
+[0;34m[INFO][0m Running /api/add NO-500 Per-Platform Tests...
+Running: test_add_no500_youtube... [0;32mPASS[0m
+Running: test_add_no500_vimeo... [0;32mPASS[0m
+Running: test_add_no500_dailymotion... [0;32mPASS[0m
+Running: test_add_no500_twitch... [0;32mPASS[0m
+Running: test_add_no500_instagram... [0;32mPASS[0m
+Running: test_add_no500_reddit... [0;32mPASS[0m
+Running: test_add_no500_rumble... [0;32mPASS[0m
+Running: test_add_no500_vk... [0;32mPASS[0m
+Running: test_add_no500_peertube... [0;32mPASS[0m
+Running: test_add_no500_soundcloud... [0;32mPASS[0m
+Running: test_add_no500_bandcamp... [0;32mPASS[0m
+Running: test_add_no500_tiktok... [0;32mPASS[0m
+Running: test_add_no500_bilibili... [0;32mPASS[0m
+Running: test_add_no500_facebook... [0;32mPASS[0m
+Running: test_add_no500_twitter... [0;32mPASS[0m
+Running: test_add_no500_x... [0;32mPASS[0m
+Running: test_add_no500_threads... [0;32mPASS[0m
+Running: test_add_no500_all_platforms_in_parallel... [0;32mPASS[0m
+Running: test_history_endpoint_not_500_after_burst... [0;32mPASS[0m
+
+[0;35m============================================[0m
+[0;35m  Running Bulk Operations Tests[0m
+[0;35m============================================[0m
+
+[0;34m[INFO][0m Running Bulk Operations Tests...
+Running: test_bulk_delete_empty_ids_not_500... [0;32mPASS[0m
+Running: test_bulk_delete_missing_where_not_500... [0;32mPASS[0m
+Running: test_bulk_delete_unknown_where_not_500... [0;32mPASS[0m
+Running: test_bulk_delete_unknown_ids_is_idempotent... [0;32mPASS[0m
+Running: test_delete_download_unknown_url_is_idempotent... [0;32mPASS[0m
+Running: test_delete_download_no_file_flag_keeps_disk... [0;32mPASS[0m
+Running: test_bulk_clear_round_trip... [0;32mPASS[0m
+Running: test_bulk_delete_concurrent_never_500... [0;32mPASS[0m
+Running: test_history_endpoint_not_500_after_bulk_burst... [0;32mPASS[0m
+
+[0;35m============================================[0m
+[0;35m  Running Aborted-History Tests[0m
+[0;35m============================================[0m
+
+[0;34m[INFO][0m Running Aborted-History Tests...
+Running: test_aborted_history_get_initial_shape... [0;32mPASS[0m
+Running: test_aborted_history_post_without_url_is_400... [0;32mPASS[0m
+Running: test_aborted_history_post_appends_and_get_reads_back... [0;32mPASS[0m
+Running: test_aborted_history_post_idempotent_within_60s... [0;32mPASS[0m
+Running: test_aborted_history_delete_specific_urls... [0;32mPASS[0m
+Running: test_aborted_history_delete_star_clears_all... [0;32mPASS[0m
+Running: test_aborted_history_delete_invalid_body_is_400_not_500... [0;32mPASS[0m
+Running: test_aborted_history_concurrent_posts_no_500... [0;32mPASS[0m
+Running: test_aborted_history_dashboard_proxy_matches_landing_direct... [0;32mPASS[0m
+
+[0;35m============================================[0m
+[0;35m  Running Media Services Tests[0m
+[0;35m============================================[0m
+
+[0;34m[INFO][0m Running Media Services Tests...
+Running: test_youtube... [0;32mPASS[0m
+Running: test_vimeo... [0;32mPASS[0m
+Running: test_dailymotion... [0;32mPASS[0m
+Running: test_twitch... [0;32mPASS[0m
+Running: test_instagram... [0;32mPASS[0m
+Running: test_reddit... [0;32mPASS[0m
+Running: test_rumble... [0;32mPASS[0m
+Running: test_vk... [0;32mPASS[0m
+Running: test_peertube... [0;32mPASS[0m
+Running: test_soundcloud... [0;32mPASS[0m
+Running: test_bandcamp... [0;32mPASS[0m
+Running: test_metube_api_vk... [0;31mFAIL[0m
+Running: test_metube_api_youtube... [0;32mPASS[0m
+Running: test_tiktok... [0;32mPASS[0m
+Running: test_bilibili... [0;32mPASS[0m
+Running: test_facebook... [0;32mPASS[0m
+Running: test_twitter... [0;32mPASS[0m
+
+[0;35m============================================[0m
+[0;35m  Test Summary[0m
+[0;35m============================================[0m
+
+Total:   124
+Passed:  [0;32m123[0m
+Failed:  [0;31m1[0m
+Skipped: [1;33m0[0m
+
+[0;34m[INFO][0m Cleaning up test environment...

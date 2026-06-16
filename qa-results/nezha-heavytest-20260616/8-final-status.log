@@ -1,0 +1,40 @@
+[0;34m============================================[0m
+[0;34m         Service Status[0m
+[0;34m============================================[0m
+
+[0;36mContainer Runtime:[0m podman
+[0;36mVPN Enabled:[0m false
+
+[0;34mServices:[0m
+  [0;32m✓[0m yt-dlp CLI: [0;32mrunning[0m
+  [0;31m✗[0m JDownloader: not found
+  [0;32m✓[0m Metube (no VPN): [0;32mrunning[0m
+  [0;31m✗[0m Watchtower (Docker only): not found
+  [0;31m✗[0m yt-dlp VPN: not found
+  [0;31m✗[0m Metube (with VPN): not found
+  [0;31m✗[0m JDownloader VPN: not found
+  [0;32m✓[0m YT-DLP Dashboard: [0;32mrunning[0m
+
+[0;34mHTTP Health Checks:[0m
+  [0;32m✓[0m MeTube Direct API responds (body matched '"queue"')
+  [0;32m✓[0m Dashboard Proxy API responds (body matched '"queue"')
+  [0;32m✓[0m Landing Page API responds (body matched '"has_cookies"')
+  [0;32m✓[0m Dashboard HTML responds (body matched 'chunk-')
+  [0;32m✓[0m Landing Page HTML responds (body matched 'Боба')
+
+[0;34mExposed Ports:[0m
+  • Port 8080: yt-dlp API (internal)
+  • Port 8088: Metube Direct (No VPN)
+  • Port 8086: Landing Page (No VPN)
+  • Port 8081: yt-dlp API (internal)
+  • Port 5900: JDownloader VNC
+  • Port 9090: YT-DLP Dashboard
+
+[0;34mDisk Usage:[0m
+  • Downloads: 931M (/home/milosvasic/ytdlp-data/downloads)
+
+[0;34mContainer Storage:[0m
+TYPE           TOTAL       ACTIVE      SIZE        RECLAIMABLE
+Images         616         268         113.8GB     93.18GB (82%)
+Containers     37          27          475MB       398.1MB (84%)
+Local Volumes  71          23          11.58GB     11.2GB (97%)

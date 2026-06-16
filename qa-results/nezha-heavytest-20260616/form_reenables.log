@@ -1,0 +1,9 @@
+[1/3] Checking dashboard API proxy is reachable...
+    API proxy OK
+[2/3] Submitting known-bad URL...
+    First submission: HTTP 200
+[3/3] Verifying second submission is accepted immediately...
+    Second submission accepted (HTTP 200)
+    Response: {"status": "error", "msg": "ERROR: [generic] Unable to download webpage: HTTP Error 404: Not Found (caused by <HTTPError 404: Not Found>)"}
+    Third submission accepted (HTTP 200)
+[0;32mPASS: Form remains interactive after failure[0m

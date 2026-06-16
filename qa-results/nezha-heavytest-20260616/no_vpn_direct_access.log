@@ -1,0 +1,7 @@
+[1/2] Checking all no-vpn endpoints...
+    Landing (port 8086): OK
+    MeTube Direct (port 8088): OK
+    Dashboard (port 9090): OK
+[2/2] Checking yt-dlp-cli DNS resolution...
+    yt-dlp-cli DNS: OK
+[0;32mPASS: All no-vpn services accessible[0m

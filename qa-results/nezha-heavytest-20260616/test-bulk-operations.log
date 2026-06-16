@@ -1,0 +1,11 @@
+[INFO] Running Bulk Operations Tests...
+  PASS: test_bulk_delete_empty_ids_not_500
+  PASS: test_bulk_delete_missing_where_not_500
+  PASS: test_bulk_delete_unknown_where_not_500
+  PASS: test_bulk_delete_unknown_ids_is_idempotent
+  PASS: test_delete_download_unknown_url_is_idempotent
+  PASS: test_delete_download_no_file_flag_keeps_disk
+  PASS: test_bulk_clear_round_trip
+  PASS: test_bulk_delete_concurrent_never_500
+  PASS: test_history_endpoint_not_500_after_bulk_burst
+Pass: 9  Fail: 0

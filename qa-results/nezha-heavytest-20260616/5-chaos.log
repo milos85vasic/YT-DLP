@@ -1,0 +1,105 @@
+[0;36m============================================[0m
+[0;36m  Chaos Tests — Comprehensive Resilience[0m
+[0;36m============================================[0m
+
+Verifying baseline services...
+[0;32m✓ PASS[0m Baseline services healthy
+
+[0;34m[CHAOS][0m ═══ SECTION 1: Service Disruption ═══
+
+[0;34m[CHAOS][0m 1.1 MeTube direct stopped → dashboard proxy error...
+[0;32m✓ PASS[0m Dashboard proxy returns error (502) when MeTube down
+[0;32m✓ PASS[0m MeTube recovered
+
+[0;34m[CHAOS][0m 1.2 Landing page stopped → direct MeTube still works...
+[0;32m✓ PASS[0m MeTube direct works without landing
+
+[0;34m[CHAOS][0m 1.3 Dashboard stopped → MeTube direct still works...
+[0;32m✓ PASS[0m MeTube direct works without dashboard
+
+[0;34m[CHAOS][0m 1.4 Restart metube-direct during idle...
+[0;32m✓ PASS[0m MeTube restart successful
+
+[0;34m[CHAOS][0m 1.5 Restart dashboard during idle...
+[0;32m✓ PASS[0m Dashboard restart successful
+
+[0;34m[CHAOS][0m ═══ SECTION 2: Network & Timeout Chaos ═══
+
+[0;34m[CHAOS][0m 2.1 API responds within 5 seconds...
+[0;32m✓ PASS[0m API responds in 14ms
+
+[0;34m[CHAOS][0m 2.2 Slow client rate limit...
+[0;32m✓ PASS[0m API works with slow client
+
+[0;34m[CHAOS][0m 2.3 Wrong port returns connection refused...
+[0;32m✓ PASS[0m Wrong port returns connection refused
+
+[0;34m[CHAOS][0m 2.4 Invalid host DNS failure...
+[1;33m⚠ SKIP[0m DNS resolution unexpected (000000)
+
+[0;34m[CHAOS][0m ═══ SECTION 3: Invalid Input & Edge Cases ═══
+
+[0;34m[CHAOS][0m 3.1 Invalid URL returns structured response...
+[0;32m✓ PASS[0m Invalid URL returns structured JSON
+
+[0;34m[CHAOS][0m 3.2 Missing 'ids' returns 400...
+[0;32m✓ PASS[0m Missing 'ids' returns 400
+
+[0;34m[CHAOS][0m 3.3 Invalid 'where' returns 400...
+[0;32m✓ PASS[0m Invalid 'where' returns 400
+
+[0;34m[CHAOS][0m 3.4 Empty body POST handled...
+[0;32m✓ PASS[0m Empty body handled (400)
+
+[0;34m[CHAOS][0m 3.5 Malformed JSON handled...
+[0;32m✓ PASS[0m Malformed JSON handled (400)
+
+[0;34m[CHAOS][0m 3.6 Very long URL handled...
+[0;32m✓ PASS[0m Long URL handled with structured response
+
+[0;34m[CHAOS][0m ═══ SECTION 4: Concurrency & Load ═══
+
+[0;34m[CHAOS][0m 4.1 Rapid sequential add requests...
+[0;32m✓ PASS[0m 5 rapid sequential adds handled
+
+[0;34m[CHAOS][0m 4.2 Parallel history requests...
+[0;32m✓ PASS[0m 5 parallel history requests handled
+
+[0;34m[CHAOS][0m 4.3 Mixed read/write load...
+[0;32m✓ PASS[0m Mixed read/write load handled
+
+[0;34m[CHAOS][0m 4.4 Parallel landing page requests...
+[0;32m✓ PASS[0m 5 parallel landing requests handled
+
+[0;34m[CHAOS][0m ═══ SECTION 5: Landing Page Proxy ═══
+
+[0;34m[CHAOS][0m 5.1 Landing /health endpoint...
+[0;32m✓ PASS[0m Landing /health returns 200
+
+[0;34m[CHAOS][0m 5.2 Landing cookie-status structure...
+[0;32m✓ PASS[0m Landing cookie-status valid
+
+[0;34m[CHAOS][0m 5.3 Landing delete-download proxy...
+[0;32m✓ PASS[0m Landing delete-download structured
+
+[0;34m[CHAOS][0m 5.4 Landing page HTML content...
+[0;32m✓ PASS[0m Landing HTML contains expected content
+
+[0;34m[CHAOS][0m ═══ SECTION 6: Cross-Service Consistency ═══
+
+[0;34m[CHAOS][0m 6.1 Dashboard proxy vs MeTube direct keys...
+[0;32m✓ PASS[0m HistoryResponse keys match via proxy
+
+[0;34m[CHAOS][0m 6.2 Version endpoint keys...
+[0;32m✓ PASS[0m VersionResponse keys match via proxy
+
+[0;34m[CHAOS][0m 6.3 History item structure consistency...
+[0;32m✓ PASS[0m History item has fields: chapter_files,chapter_template,clip_end,clip_start,codec,custom_name_prefix,download_type,entry,error,eta,filename,folder,format,id,live_release_timestamp,live_status,msg,percent,playlist_item_limit,quality,size,speed,split_by_chapters,status,subtitle_files,subtitle_language,subtitle_mode,timestamp,title,url,ytdl_options_overrides,ytdl_options_presets
+
+[0;36m============================================[0m
+[0;36m  Chaos Test Summary[0m
+[0;36m============================================[0m
+Passed:  [0;32m27[0m
+Failed:  [0;31m0[0m
+Skipped: [1;33m1[0m
+[0;32mALL CHAOS TESTS PASSED — System is resilient[0m

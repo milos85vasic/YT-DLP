@@ -1,0 +1,11 @@
+[INFO] Running Aborted-History Tests...
+  PASS: test_aborted_history_get_initial_shape
+  PASS: test_aborted_history_post_without_url_is_400
+  PASS: test_aborted_history_post_appends_and_get_reads_back
+  PASS: test_aborted_history_post_idempotent_within_60s
+  PASS: test_aborted_history_delete_specific_urls
+  PASS: test_aborted_history_delete_star_clears_all
+  PASS: test_aborted_history_delete_invalid_body_is_400_not_500
+  PASS: test_aborted_history_concurrent_posts_no_500
+  PASS: test_aborted_history_dashboard_proxy_matches_landing_direct
+Pass: 9  Fail: 0

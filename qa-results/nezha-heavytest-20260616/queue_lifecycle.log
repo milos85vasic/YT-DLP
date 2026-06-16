@@ -1,0 +1,13 @@
+=== queue_lifecycle_challenge ===
+dashboard: http://localhost:9090
+
+[1/4] Submitting test URL: https://www.youtube.com/watch?v=dQw4w9WgXcQ
+    /api/add returned status:ok
+[2/4] Waiting for the item to appear in /api/history…
+    Found in /api/history.queue after 1s
+[3/4] Cancelling and recording the abort…
+    abort recorded
+[4/4] Verifying the abort is visible on /api/aborted-history…
+OK: aborted_at=1781609805 reason=user-cancel
+
+=== summary: PASS — Queue → History (aborted) lifecycle holds end-to-end ===
