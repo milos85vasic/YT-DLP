@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="generator" content="pandoc" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-  <title>Vision-path FINDINGS</title>
+  <title>FINDINGS</title>
   <style>
     /* Default styles provided by pandoc.
     ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -173,24 +173,30 @@
 </head>
 <body>
 <header id="title-block-header">
-<h1 class="title">Vision-path FINDINGS</h1>
+<h1 class="title">FINDINGS</h1>
 </header>
 <h1
 id="vision-analysis-path-for-114153-feature-video-confirmation--findings">Vision-analysis
 path for §11.4.153 feature-video confirmation — FINDINGS</h1>
-<p><strong>Revision:</strong> 3 <strong>Last modified:</strong>
-2026-06-16T09:30:00Z <strong>Status:</strong> RESOLVED — the
-strong-model vision path is the agent's OWN native multimodal analysis
-(Claude Opus 4.8 reading the recording frame via the Read tool). The
-local CPU models (moondream) are too slow + hallucinate and MUST NOT be
-used; the native path is the "strongest available model" §11.4.153 asks
-for and produces grounded, falsifiable, no-bluff verdicts.
-<strong>Re-confirmed 2026-06-16 (tick 16):</strong> moondream was
-re-pulled into <code>helix_ollama_video :11434</code> and re-tested on
-the same dashboard frame — it FAILED again (returned a bare bounding-box
-<code>[0.12,0.13,0.87,0.86]</code> naming ZERO real UI elements after
-160 s; a plain caption call TIMED OUT at 300 s). See the dated re-test
-section below.</p>
+<p><strong>Revision:</strong> 4 <strong>Last modified:</strong>
+2026-06-16T09:28:00Z <strong>See also:</strong> <a
+href="CPU_VISION_RESEARCH.md"><code>CPU_VISION_RESEARCH.md</code></a> —
+§11.4.150 deep-web research (2026-06-16) finding that the moondream
+failure was a STALE Ollama build + wrong endpoint (not a model ceiling),
+and that viable CPU/Metal vision options DO exist (mlx-vlm
+Qwen2.5-VL-3B; <code>moondream</code> pip+Photon ~1.2 s/frame) — pending
+on-host empirical validation (§11.4.123). <strong>Status:</strong>
+RESOLVED — the strong-model vision path is the agent's OWN native
+multimodal analysis (Claude Opus 4.8 reading the recording frame via the
+Read tool). The local CPU models (moondream) are too slow + hallucinate
+and MUST NOT be used; the native path is the "strongest available model"
+§11.4.153 asks for and produces grounded, falsifiable, no-bluff
+verdicts. <strong>Re-confirmed 2026-06-16 (tick 16):</strong> moondream
+was re-pulled into <code>helix_ollama_video :11434</code> and re-tested
+on the same dashboard frame — it FAILED again (returned a bare
+bounding-box <code>[0.12,0.13,0.87,0.86]</code> naming ZERO real UI
+elements after 160 s; a plain caption call TIMED OUT at 300 s). See the
+dated re-test section below.</p>
 <h2 id="goal">Goal</h2>
 <p>§11.4.153 requires every feature's real-use recording to be
 machine-analyzed by an ensemble; a defect found must be fixed/retested.

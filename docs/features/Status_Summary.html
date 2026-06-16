@@ -176,8 +176,8 @@
 <h1 class="title">Status_Summary</h1>
 </header>
 <h1 id="feature-status-summary">Feature Status Summary</h1>
-<p><strong>Revision:</strong> 6 <strong>Last modified:</strong>
-2026-06-16T08:38:00Z <strong>Authority:</strong> constitution §11.4.56
+<p><strong>Revision:</strong> 7 <strong>Last modified:</strong>
+2026-06-16T09:30:00Z <strong>Authority:</strong> constitution §11.4.56
 (Status_Summary two-audience companion to §11.4.153
 <code>Status.md</code>), §11.4.44 (revision header), §11.4.65 +
 §11.4.153 (HTML+PDF+DOCX export). <strong>Companion of:</strong>
@@ -251,10 +251,14 @@ reports live pipeline progress through a status page.</li>
 <li>Still genuinely <strong>not built</strong>: a dashboard screen that
 shows pipeline progress visually, and a "resume an interrupted download"
 feature.</li>
-<li>The automated tests and challenges exist and cover the features, but
-a full, clean, evidence-captured test run is not yet on record in this
-document, so most verdicts read "PENDING_FORENSICS" rather than a
-confirmed PASS.</li>
+<li><strong>The post-processor's automated tests now have a captured,
+evidence-backed green run:</strong> 69 of 69 unit/integration tests
+pass, plus a 22/22 live smoke test and an 18/18 API-contract check — all
+against the running system (saved under <code>qa-results/</code>). So
+the post-processor is a confirmed PASS, not "pending". The remaining
+"PENDING_FORENSICS" verdicts are for tests that start/stop containers,
+which were deliberately not run so the live released system stays
+up.</li>
 </ul>
 <h3 id="team-actions">Team actions</h3>
 <ul>

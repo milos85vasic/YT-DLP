@@ -176,8 +176,8 @@
 <h1 class="title">Status</h1>
 </header>
 <h1 id="feature-status-ledger">Feature Status Ledger</h1>
-<p><strong>Revision:</strong> 9 <strong>Last modified:</strong>
-2026-06-16T08:42:00Z <strong>Authority:</strong> constitution §11.4.153
+<p><strong>Revision:</strong> 10 <strong>Last modified:</strong>
+2026-06-16T09:30:00Z <strong>Authority:</strong> constitution §11.4.153
 (per-feature Status + video-recording confirmation), composes §11.4.44
 (revision header), §11.4.45 (integration-status-doc + closed status
 vocabulary), §11.4.56 (Status_Summary two-audience companion), §11.4.65
@@ -286,6 +286,29 @@ operator-supplied <code>.ovpn</code> credentials and
 and testable in compose-config form without live credentials, so it is
 classified <code>PENDING_FORENSICS</code>, not
 <code>OPERATOR-BLOCKED</code>.)</p>
+<blockquote>
+<p><strong>Rev 10 — captured retest + fresh re-records (§11.4.40 safe
+subset, parallel subagents §11.4.103):</strong> the
+<code>media_postprocessor</code> code-under-test is now
+<code>PASS</code> with captured evidence — <strong>69/69 pytest</strong>
+(incl. the new <code>test_skip_rule_regression.py</code> §11.4.135
+guard) <strong>+ smoke 22/0 + contract 18/0</strong> GREEN against the
+live stack, raw output at
+<code>qa-results/retest-20260616T091806Z/</code>. All four UI surfaces
+were re-recorded fresh + re-read natively (4/4 PASS):
+<code>ytdlp---dashboard---20260616T091827Z.png</code>,
+<code>ytdlp---landing---20260616T091840Z.png</code>,
+<code>ytdlp---metube---20260616T091849Z.png</code>,
+<code>ytdlp---postprocess---20260616T091900Z.png</code>. The
+container-lifecycle suites (scenario/integration/full-suite) were
+deliberately NOT run — they would tear down the released
+<code>ytdlp-1.4.0</code> stack — so rows depending on them stay
+<code>PENDING_FORENSICS</code>. Issue triage (systematic-debugging
+§11.4.102): the <code>done</code>-counter-frozen + the 11
+<code>failed</code> jobs were both proven NOT bugs (a long live
+transcode; pre-fix stale intermediate-file entries) — see
+<code>docs/research/vision-path/</code> + commit history.</p>
+</blockquote>
 <hr />
 <h2 id="1-services-docker-composeyml">1. SERVICES
 (docker-compose.yml)</h2>
@@ -1292,9 +1315,14 @@ crash-safe resume, atomic output, ffprobe-validate,
 dashboard nginx proxies <code>/api/postprocess/</code> →
 <code>media-postprocessor:8089</code>
 (<code>nginx.conf.template:116</code>)</td>
-<td>57 pytest + contract 18/0 + smoke 22/0 (per release record)</td>
-<td>PENDING_FORENSICS (container live + healthy; clean-baseline
-full-suite captured run pending)</td>
+<td>69 pytest (incl. new <code>test_skip_rule_regression.py</code>
+§11.4.135 guard) + contract 18/0 + smoke 22/0</td>
+<td>PASS — <strong>69/69 media_postprocessor pytest + smoke 22/0 +
+contract 18/0 GREEN</strong> against the live stack, captured 2026-06-16
+at <code>qa-results/retest-20260616T091806Z/</code>
+(config/jobs_db/media_probe/transcoder/watcher/worker/service all
+covered; §11.4.40 SAFE subset — container-lifecycle suites deliberately
+not run, would destabilize the released stack)</td>
 <td>PASS (API render) — see status-API row below; service liveness also
 evidenced by <code>ytdlp---status---20260616T075901Z.txt</code></td>
 </tr>
@@ -1336,9 +1364,14 @@ CBR)</td>
 <td><code>transcoder.derive_mp3()</code> →
 <code>&lt;base&gt;.mp3</code>; worker invokes for audio jobs</td>
 <td>pytest <code>transcoder</code></td>
-<td>PENDING_FORENSICS (code present; no <code>.mp3</code> artifact
-currently on disk)</td>
-<td>PENDING — not yet recorded</td>
+<td>PASS (code — captured) — covered by the 69/69
+<code>media_postprocessor</code> pytest run
+(<code>qa-results/retest-20260616T091806Z/</code>);
+<code>transcoder.derive_mp3()</code> unit/integration green</td>
+<td>PENDING — not yet recorded (no real <code>derive_mp3</code> FLOW
+artifact yet — the only <code>.mp3</code> on disk is a 128 kbps-mono
+yt-dlp <strong>test fixture</strong>, not a 320 kbps derivative; §11.4.6
+guarded, not confirmed on it)</td>
 </tr>
 <tr>
 <td>Post-process status API (<code>/postprocess/status</code> — healthy
@@ -1349,9 +1382,10 @@ currently on disk)</td>
 <td><code>media_postprocessor.service</code>
 <code>/postprocess/status</code>; nginx <code>/api/postprocess/</code>
 proxy</td>
-<td>contract 18/0 + smoke</td>
-<td>PENDING_FORENSICS (clean-baseline full-suite captured run
-pending)</td>
+<td>contract 18/0 + smoke 22/0</td>
+<td>PASS — <code>service</code> pytest + contract 18/0 (live API ↔︎
+OpenAPI incl. Status schema) + smoke 22/0, captured
+<code>qa-results/retest-20260616T091806Z/</code></td>
 <td>PASS (API render) —
 <code>ytdlp---postprocess---20260616T075648Z.png</code>, analyzed by
 Claude Opus 4.8 native multimodal: live in-browser JSON

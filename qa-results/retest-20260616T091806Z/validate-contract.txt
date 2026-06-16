@@ -1,0 +1,35 @@
+[0;34m============================================[0m
+[0;34m  OpenAPI Contract Validation[0m
+[0;34m============================================[0m
+
+[0;34m[VALIDATE][0m Validating /history response schema...
+[0;32m✓[0m HistoryResponse has required field 'done'
+[0;32m✓[0m HistoryResponse has required field 'queue'
+[0;32m✓[0m HistoryResponse has required field 'pending'
+[0;32m✓[0m history.done is an array
+[0;34m[VALIDATE][0m Validating DownloadInfo schema...
+[0;32m✓[0m DownloadInfo has required field 'id'
+[0;32m✓[0m DownloadInfo has required field 'title'
+[0;32m✓[0m DownloadInfo has required field 'url'
+[0;32m✓[0m DownloadInfo has required field 'quality'
+[0;32m✓[0m DownloadInfo has required field 'format'
+[0;32m✓[0m DownloadInfo has required field 'folder'
+[0;32m✓[0m DownloadInfo has required field 'status'
+[0;34m[VALIDATE][0m Validating /version response schema...
+[0;32m✓[0m VersionResponse has required field 'version'
+[0;32m✓[0m VersionResponse has required field 'yt-dlp'
+[0;34m[VALIDATE][0m Validating /cookie-status response schema...
+[0;32m✓[0m CookieStatusResponse has required field 'status'
+[0;32m✓[0m CookieStatusResponse has required field 'has_cookies'
+[0;34m[VALIDATE][0m Validating write operation responses...
+[0;32m✓[0m POST /add returns StatusResponse with 'status' field
+[0;32m✓[0m POST /delete returns StatusResponse with 'status' field
+[0;34m[VALIDATE][0m Validating dashboard proxy consistency...
+[0;32m✓[0m Dashboard proxy preserves HistoryResponse schema
+
+[0;34m============================================[0m
+[0;34m  Contract Validation Summary[0m
+[0;34m============================================[0m
+Passed: [0;32m18[0m
+Failed: [0;31m0[0m
+[0;32mALL CONTRACT CHECKS PASSED — API matches spec[0m

@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>CPU_VISION_RESEARCH</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      white-space: pre-wrap;
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">CPU_VISION_RESEARCH</h1>
+</header>
+<h1
+id="cpumetal-viable-vision-models-for-114153--deep-web-research">CPU/Metal-viable
+vision models for §11.4.153 — deep web research</h1>
+<p><strong>Revision:</strong> 1 <strong>Last modified:</strong>
+2026-06-16T09:25:00Z <strong>Authority:</strong> §11.4.150 (deep
+multi-angle web research per issue), §11.4.99 (latest-source
+cross-reference), §11.4.123 (rock-solid-proof-or-research), §11.4.8
+(deep-web-research-before-implementation). <strong>Companion
+of:</strong> <code>FINDINGS.md</code> (the vision-path resolution
+doc).</p>
+<hr />
+<h2 id="why-this-exists">Why this exists</h2>
+<p><code>FINDINGS.md</code> (Rev 2/3) concluded "no CPU-viable vision
+model — moondream too slow + hallucinates; analysis stays the agent's
+own native multimodal read." A §11.4.150 deep-research pass (2026-06-16,
+subagent-driven) re-examined that conclusion from four angles and found
+it was correct <strong>only for the exact path tested</strong>
+(<code>moondream:latest</code> via Ollama) — NOT a real ceiling.</p>
+<h2
+id="root-cause-of-the-moondream-failure-research-supported-one-caveat">Root
+cause of the moondream failure (research-supported, one caveat)</h2>
+<p>The <code>moondream:latest</code> Ollama failure (160 s → bbox-only
+<code>[0.12,0.13,0.87,0.86]</code>; 300 s timeout) is explained by two
+compounding documented problems, not a model limit:</p>
+<ol type="1">
+<li><strong>Ollama ships a stale (2024) moondream build.</strong> Its
+tags were last updated ~2 years ago; an open request (<a
+href="https://github.com/ollama/ollama/issues/8391">ollama/ollama#8391</a>)
+asks Ollama to ship the 2025-01-09 revision that "support[s] bbox and
+gaze detection."</li>
+<li><strong>Ollama exposes moondream as generic text+image chat — no
+skill endpoints.</strong> Modern moondream2 has distinct methods
+<code>caption()</code>, <code>query()</code>,
+<code>detect()</code>→boxes, <code>point()</code>,
+<code>segment()</code>. A free-form chat prompt into the old GGUF let
+the <strong>detection/grounding head</strong> fire instead of caption —
+exactly the raw normalized bbox observed; the caption path then hit the
+unoptimized MPS route and timed out.</li>
+</ol>
+<blockquote>
+<p>Caveat (§11.4.6 honesty): no Ollama maintainer post <em>verbatim</em>
+says "we mis-route to detect." This is inferred from (i) the confirmed
+stale build date, (ii) the lack of skill endpoints, (iii) the
+bbox-shaped output. Strongly supported, not definitive.</p>
+</blockquote>
+<h2 id="comparison-apple-silicon--metal-no-cuda-no-cloud">Comparison
+(Apple-Silicon / Metal, no CUDA, no cloud)</h2>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Runtime</th>
+<th>~Latency/frame (Apple-Silicon)</th>
+<th>Accuracy for grounded UI verdict</th>
+<th>Install</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Qwen2.5-VL-3B-Instruct-4bit</strong></td>
+<td>mlx-vlm (Metal)</td>
+<td>single-digit–~15 s (proxy from tok/s + Qwen3-VL-4B ~2–5 s)</td>
+<td><strong>Best acc/size</strong> — OCRBench 77.1, DocVQA 93.9; built
+for docs/screenshots/agentic UI</td>
+<td><code>pip install -U mlx-vlm</code>; model
+<code>mlx-community/Qwen2.5-VL-3B-Instruct-4bit</code></td>
+</tr>
+<tr>
+<td><strong>Qwen3-VL-4B-Instruct-4bit</strong></td>
+<td>mlx-vlm (Metal)</td>
+<td>~2–5 s/image (M4 Max 1.2 s cold @448²)</td>
+<td>newer gen, strong OCR/UI</td>
+<td><code>mlx-community/Qwen3-VL-4B-Instruct-4bit</code></td>
+</tr>
+<tr>
+<td><strong>moondream2 (2B)</strong></td>
+<td><code>moondream</code> pip + Photon (Metal)</td>
+<td><strong>~1.2–1.3 s/image</strong> (M2 0.79 req/s, M4 0.84,
+batch-4)</td>
+<td>ScreenSpot F1 80.4, DocVQA 79.3, ChartQA 77.5; good for 2B</td>
+<td><code>pip install moondream</code>;
+<code>md.vl(local=True, model="moondream2")</code></td>
+</tr>
+<tr>
+<td><strong>Qwen2-VL-2B / 2.5-VL-3B GGUF</strong></td>
+<td>llama.cpp <code>llama-mtmd-cli</code> (Metal)</td>
+<td>no clean named-chip number (flagged)</td>
+<td>OCRBench 65.5 / 77.1; <strong>first-party GGUF</strong></td>
+<td><code>llama-server -hf ggml-org/Qwen2.5-VL-3B-Instruct-GGUF:Q4_K_M</code></td>
+</tr>
+<tr>
+<td><strong>SmolVLM-500M</strong></td>
+<td>llama.cpp / MLX</td>
+<td>sub-second-class</td>
+<td>DocVQA 70.5, OCRBench 61; <strong>open license,
+simplest</strong></td>
+<td><code>llama-server -hf ggml-org/SmolVLM-500M-Instruct-GGUF:Q8_0</code></td>
+</tr>
+<tr>
+<td><strong>MiniCPM-V 2.6 (8B)</strong></td>
+<td>llama.cpp (Metal)</td>
+<td><strong>latency-risky</strong> (~5.4 s/slice image encode on
+M2)</td>
+<td>best raw OCR</td>
+<td><code>bartowski/MiniCPM-V-2_6-GGUF:Q4_K_M</code></td>
+</tr>
+<tr>
+<td><strong>FastVLM-0.5B/1.5B (Apple)</strong></td>
+<td>MLX</td>
+<td>TTFT 152–166 ms (M1)</td>
+<td>0.5B DocVQA only 31.7 (weak on dense numbers)</td>
+<td><code>apple/ml-fastvlm</code></td>
+</tr>
+<tr>
+<td><strong>Florence-2</strong></td>
+<td>transformers CPU</td>
+<td>"several seconds" CPU; Metal broken</td>
+<td><strong>not</strong> for open-ended description (task-token
+seq2seq)</td>
+<td><code>microsoft/Florence-2-base</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="verdict">VERDICT</h2>
+<p>A genuinely viable CPU/Metal option exists — the prior "none viable"
+verdict was based on a broken test path, not a real ceiling.</p>
+<ul>
+<li><strong>Best UI/OCR fidelity (recommended):</strong>
+<code>mlx-vlm</code> +
+<code>mlx-community/Qwen2.5-VL-3B-Instruct-4bit</code>.</li>
+<li><strong>Fastest + directly fixes the moondream story (~1.2
+s/frame):</strong> <code>pip install moondream</code>
+<ul>
+<li>Photon with <code>md.vl(local=True, model="moondream2")</code>,
+calling <code>.query()</code>/<code>.caption()</code> explicitly (never
+free-form chat) — drop Ollama.</li>
+</ul></li>
+<li><strong>Fully open license, dead-simple:</strong> SmolVLM-500M or
+Qwen2-VL-2B via llama.cpp.</li>
+</ul>
+<p><strong>Honest limitation (§11.4.6):</strong> no source publishes an
+exact per-screenshot wall-clock for these exact quantized builds on a
+<em>named</em> M-chip + RAM; every &lt;30 s figure is a proxy/ratio/
+throughput. The dominant latency risk on Metal is <strong>image
+encoding</strong>, not generation — high-res shots that tile into many
+slices (MiniCPM-V especially) can blow the budget; downscale large
+captures. <strong>→ This research is rock-solid as research, but the
+on-host empirical claim ("X does &lt;30 s AND sees the UI on THIS Mac")
+is NOT yet proven and is the next validation step (§11.4.123).</strong>
+Until that empirical test passes, native-multimodal (the agent's own
+read) remains the zero-setup, already-proven method.</p>
+<h2 id="recommended-install-commands">Recommended install commands</h2>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Option A (recommended): mlx-vlm + Qwen2.5-VL-3B</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">-U</span> mlx-vlm</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> <span class="at">-m</span> mlx_vlm.generate <span class="dt">\</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">--model</span> mlx-community/Qwen2.5-VL-3B-Instruct-4bit <span class="dt">\</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">--image</span> /path/to/screenshot.png <span class="dt">\</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">--prompt</span> <span class="st">&quot;Describe this dashboard UI: panels, headings, metrics+values, button labels, layout.&quot;</span> <span class="dt">\</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">--max-tokens</span> 512 <span class="at">--temperature</span> 0.0</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Option B (fastest, fixes moondream): moondream pip + Photon (NOT Ollama)</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install moondream</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> <span class="at">-</span> <span class="op">&lt;&lt;&#39;PY&#39;</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="st">import moondream as md</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="st">from PIL import Image</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="st">m = md.vl(local=True, model=&quot;moondream2&quot;)</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="st">print(m.query(Image.open(&quot;dashboard.png&quot;), &quot;Describe this dashboard: chart titles, key metrics, button labels.&quot;)[&quot;answer&quot;])</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="op">PY</span></span></code></pre></div>
+<h2 id="sources-verified-2026-06-16">Sources verified 2026-06-16</h2>
+<p>machinelearning.apple.com/research/fast-vision-language-models ·
+arxiv.org/html/2412.13303v1 · github.com/apple/ml-fastvlm ·
+arxiv.org/html/2504.05299v1 · huggingface.co/blog/smolvlm2 ·
+huggingface.co/vikhyatk/moondream2 · docs.moondream.ai/running-locally ·
+pypi.org/project/moondream · moondream.ai/blog/photon-1-2-0-update ·
+ollama.com/library/moondream/tags · github.com/ollama/ollama/issues/8391
+· github.com/ggml-org/llama.cpp/blob/master/tools/mtmd/README.md ·
+github.com/ggml-org/llama.cpp/issues/14527 ·
+huggingface.co/ggml-org/Qwen2.5-VL-3B-Instruct-GGUF ·
+huggingface.co/bartowski/MiniCPM-V-2_6-GGUF ·
+qwenlm.github.io/blog/qwen2.5-vl · github.com/Blaizzy/mlx-vlm ·
+huggingface.co/mlx-community/Qwen2.5-VL-3B-Instruct-4bit ·
+huggingface.co/microsoft/Florence-2-large-ft/discussions/4 ·
+huggingface.co/qnguyen3/nanoLLaVA</p>
+</body>
+</html>
