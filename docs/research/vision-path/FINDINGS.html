@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Vision-path FINDINGS</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      white-space: pre-wrap;
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Vision-path FINDINGS</h1>
+</header>
+<h1
+id="vision-analysis-path-for-114153-feature-video-confirmation--findings">Vision-analysis
+path for §11.4.153 feature-video confirmation — FINDINGS</h1>
+<p><strong>Revision:</strong> 3 <strong>Last modified:</strong>
+2026-06-16T09:30:00Z <strong>Status:</strong> RESOLVED — the
+strong-model vision path is the agent's OWN native multimodal analysis
+(Claude Opus 4.8 reading the recording frame via the Read tool). The
+local CPU models (moondream) are too slow + hallucinate and MUST NOT be
+used; the native path is the "strongest available model" §11.4.153 asks
+for and produces grounded, falsifiable, no-bluff verdicts.
+<strong>Re-confirmed 2026-06-16 (tick 16):</strong> moondream was
+re-pulled into <code>helix_ollama_video :11434</code> and re-tested on
+the same dashboard frame — it FAILED again (returned a bare bounding-box
+<code>[0.12,0.13,0.87,0.86]</code> naming ZERO real UI elements after
+160 s; a plain caption call TIMED OUT at 300 s). See the dated re-test
+section below.</p>
+<h2 id="goal">Goal</h2>
+<p>§11.4.153 requires every feature's real-use recording to be
+machine-analyzed by an ensemble; a defect found must be fixed/retested.
+Operator demands the "strongest models" and <strong>no faulty/bluff LLM
+responses</strong>. This documents what vision capability is actually
+available here.</p>
+<h2 id="what-was-tried-real-evidence">What was tried (real
+evidence)</h2>
+<ol type="1">
+<li><strong>HelixAgent ensemble (<code>:7061</code>)</strong> — its
+<code>/v1/models</code> exposes only text aliases
+(<code>helixagent-llm/debate/ensemble</code>); <strong>no vision-capable
+provider</strong> (no gpt-4o / claude / gemini / llava).
+<code>/v1/chat/completions</code> rejects the OpenAI multimodal
+content-array (<code>content</code> must be a string) and
+<code>/v1/vision/*</code> are stubbed. → no working vision path without
+configuring a vision provider (needs API keys).</li>
+<li><strong>Local Ollama
+(<code>helix_ollama_video :11434</code>)</strong> — had only
+<code>qwen2.5:3b</code> (text). Pulled
+<strong><code>moondream</code></strong> (vision, ~1.7 GB) into it.
+Tested on the real recording
+<code>/Volumes/T7/Downloads/Recordings/ytdlp---dashboard---20260615T221723Z.png</code>:
+<ul>
+<li>1366×900 image: first call <strong>empty after 71 s</strong>, second
+call <strong>timed out (180 s)</strong>.</li>
+<li>Downscaled to 672px: succeeded but took <strong>298 s (~5
+min)</strong>, and the response was <strong>partially correct +
+partially hallucinated</strong>:
+<blockquote>
+<p>"...a web browser window... a webpage that has a 'Add download'
+button located in the upper right corner. Below the button... 'Add
+file', 'Add folder', 'Add zip', 'Add zip archive', 'Add zip file'."</p>
+</blockquote></li>
+<li>The "Add download" button is REAL (the dashboard has it) — so it
+genuinely sees the image — but the "Add zip/file/folder" options
+<strong>do not exist</strong> in the ytdlp dashboard. The model
+confabulates.</li>
+</ul></li>
+</ol>
+<h2
+id="re-test-2026-06-16-tick-16--moondream-re-pulled-re-proven-unusable-real-evidence">Re-test
+2026-06-16 (tick 16) — moondream re-pulled, re-proven UNUSABLE (real
+evidence)</h2>
+<p>The operator re-pulled <code>moondream:latest</code> into the local
+Ollama (<code>helix_ollama_video :11434</code>;
+<code>GET /api/tags</code> →
+<code>['moondream:latest','qwen2.5:3b']</code>) and asked for a genuine
+"does it really see the image" proof: POST the existing real recording
+<code>/Volumes/T7/Downloads/Recordings/ytdlp---dashboard---20260615T221723Z.png</code>
+(downscaled to 768×506) to <code>POST /api/generate</code> (model
+<code>moondream</code>, <code>stream:false</code>), requiring the reply
+to name concrete dashboard UI elements (proving sight, not
+hallucination).</p>
+<p>Two real calls, both FAIL:</p>
+<ul>
+<li><strong>Call 1</strong> (prompt: "Describe the UI… list concrete
+elements… end with JSON <code>{verdict,reason}</code>") —
+<strong>ELAPSED 160.4 s</strong>, full response was literally
+<code>[0.12, 0.13, 0.87, 0.86]</code> — a bare normalized bounding box.
+It named <strong>ZERO</strong> UI elements (no "Add download", no nav
+tabs, no form). It did not see/describe the UI; it emitted detection
+coordinates. <strong>Fails the proof.</strong></li>
+<li><strong>Call 2</strong> (prompt: "Caption this image. What does it
+show?") — <strong>TIMED OUT at 300 s</strong>, no response at all.</li>
+</ul>
+<p>Verdict (anti-bluff, §11.4.6/§11.4.123): moondream on this CPU host
+remains <strong>unusable</strong> for §11.4.153 — it neither produces a
+grounded UI description (returns coordinate garbage) nor runs in
+practical time (160 s for garbage / 300 s timeout). Using its output to
+mark any feature "video-confirmed" would be a §11.4 PASS-bluff. The
+native-multimodal path (this agent reading the PNG) stays the §11.4.153
+analysis method. Capture commands + both raw responses captured in this
+session's transcript.</p>
+<h2 id="honest-assessment-anti-bluff">Honest assessment
+(anti-bluff)</h2>
+<ul>
+<li>A vision path is mechanically reachable (Ollama + a vision model),
+but the only model available on this <strong>CPU-only</strong> host
+(moondream) is <strong>(a) impractically slow — ~5 min per
+frame</strong>, making "analyze every feature's recording" infeasible,
+and <strong>(b) unreliable — it hallucinates UI elements.</strong></li>
+<li>Marking features "video-confirmed" on such output would be a
+<strong>§11.4 PASS-bluff</strong> (a hallucinating model's "PASS" is not
+a confirmation). This is exactly the "faulty/bluff LLM responses" the
+operator forbids — so it MUST NOT be used.</li>
+</ul>
+<h2
+id="resolution-rev-2--native-multimodal-analysis-is-the-strong-model-path">RESOLUTION
+(Rev 2) — native multimodal analysis IS the strong-model path</h2>
+<p>The §11.4.153 ensemble wants the "strongest available models". The
+strongest vision model in this loop is <strong>the agent itself (Claude
+Opus 4.8), which reads image frames directly via the Read tool</strong>.
+Proof (this session): reading
+<code>ytdlp---dashboard---20260615T221723Z.png</code> produced a
+grounded, correct description of the real dashboard — nav tabs
+<code>Download/Queue(71)/History(6)/Cookies⚠/●Online</code>, the
+Add-Download form (URL/Quality=Best/Format=Any/Folder/<strong>Add to
+Queue</strong>), and the Supported-Platforms grid (YouTube🍪, Vimeo✓ …
+Threads🍪). It also <strong>caught moondream's hallucination</strong>
+(moondream invented "Add zip/file/folder" controls that do not exist;
+the real control is "Add to Queue"). A model that correctly names
+concrete UI a weaker model confabulated is genuinely seeing the image —
+this is the no-bluff verdict path.</p>
+<p><strong>Operating rule going forward:</strong> feature recordings are
+captured window-scoped + <code>ytdlp---</code>-prefixed (§11.4.154/.155)
+to <code>/Volumes/T7/Downloads/Recordings</code>; the frames are
+analyzed by the agent's native multimodal read (grounded, falsifiable);
+a defect the frame reveals triggers §11.4.102 → fix → re-record; only
+then is a feature marked video-confirmed. moondream/llava-on-CPU are NOT
+used (slow + hallucinate).</p>
+<p><strong>First confirmed surface:</strong> dashboard UI —
+<strong>PASS</strong> (frame above, fully rendered, coherent, no
+error/frozen state).</p>
+<h2 id="what-unblocks-the-full-fan-out-scale-not-capability">What
+unblocks the FULL fan-out (scale, not capability)</h2>
+<p>The capability is unblocked. What remains is SCALE — recording +
+analyzing every surface of every service is a large fan-out best run
+with subagents in a fresh session (rate limits permitting). A
+heavier/independent ensemble (separate from the conductor) would
+additionally need ONE of:</p>
+<ol type="1">
+<li><strong>Cloud vision API key(s)</strong> (GPT-4o / Claude 3.x/4 /
+Gemini) configured as a provider in <strong>HelixAgent</strong> (the
+intended ensemble) — then <code>/v1/.../completions</code> multimodal
+works and the §11.4.153 loop runs at quality + speed.</li>
+<li><strong>GPU acceleration</strong> for the local Ollama so a strong
+open vision model (llava:13b / qwen2-vl / pixtral) runs fast +
+accurately.</li>
+</ol>
+<p>A heavier independent ensemble (separate from the conductor) is the
+SCALE upgrade and stays OPERATOR-GATED on the keys/GPU above. The
+§11.4.153 video-analysis itself is <strong>NOT blocked</strong> — the
+native-multimodal path is in active use: as of
+<code>docs/features/Status.md</code> Rev 6, SEVEN video-confirmation
+cells across six surfaces + one flow are real PASSes
+(dashboard/landing/MeTube/postprocess-API/<code>./status</code>/<code>./download</code>
+renders + the download→webready flow), each backed by a
+<code>ytdlp---</code>-prefixed capture and a grounded native read.
+Remaining cells stay <strong>PENDING</strong> (truthful) until captured;
+the two remaining FLOWS (MP3-derivation, cookie-upload) are genuinely
+blocked, not faked.</p>
+<h2 id="sources--artifacts">Sources / artifacts</h2>
+<ul>
+<li>Real moondream output captured this session (above).</li>
+<li>Capture harness: <code>scripts/video_confirm.sh</code> (+
+<code>docs/scripts/video_confirm.sh.md</code>).</li>
+<li>Recipe:
+<code>docs/research/helixagent-video-analysis/RECIPE.md</code>.</li>
+</ul>
+</body>
+</html>

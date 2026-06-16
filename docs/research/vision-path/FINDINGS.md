@@ -1,12 +1,16 @@
 # Vision-analysis path for §11.4.153 feature-video confirmation — FINDINGS
 
-**Revision:** 2
-**Last modified:** 2026-06-16T11:20:00Z
+**Revision:** 3
+**Last modified:** 2026-06-16T09:30:00Z
 **Status:** RESOLVED — the strong-model vision path is the agent's OWN native multimodal
 analysis (Claude Opus 4.8 reading the recording frame via the Read tool). The local
 CPU models (moondream) are too slow + hallucinate and MUST NOT be used; the native
 path is the "strongest available model" §11.4.153 asks for and produces grounded,
-falsifiable, no-bluff verdicts.
+falsifiable, no-bluff verdicts. **Re-confirmed 2026-06-16 (tick 16):** moondream was
+re-pulled into `helix_ollama_video :11434` and re-tested on the same dashboard frame —
+it FAILED again (returned a bare bounding-box `[0.12,0.13,0.87,0.86]` naming ZERO real
+UI elements after 160 s; a plain caption call TIMED OUT at 300 s). See the dated re-test
+section below.
 
 ## Goal
 §11.4.153 requires every feature's real-use recording to be machine-analyzed by an
@@ -32,6 +36,31 @@ is actually available here.
    - The "Add download" button is REAL (the dashboard has it) — so it genuinely sees
      the image — but the "Add zip/file/folder" options **do not exist** in the ytdlp
      dashboard. The model confabulates.
+
+## Re-test 2026-06-16 (tick 16) — moondream re-pulled, re-proven UNUSABLE (real evidence)
+
+The operator re-pulled `moondream:latest` into the local Ollama (`helix_ollama_video
+:11434`; `GET /api/tags` → `['moondream:latest','qwen2.5:3b']`) and asked for a genuine
+"does it really see the image" proof: POST the existing real recording
+`/Volumes/T7/Downloads/Recordings/ytdlp---dashboard---20260615T221723Z.png` (downscaled
+to 768×506) to `POST /api/generate` (model `moondream`, `stream:false`), requiring the
+reply to name concrete dashboard UI elements (proving sight, not hallucination).
+
+Two real calls, both FAIL:
+- **Call 1** (prompt: "Describe the UI… list concrete elements… end with JSON
+  `{verdict,reason}`") — **ELAPSED 160.4 s**, full response was literally
+  `[0.12, 0.13, 0.87, 0.86]` — a bare normalized bounding box. It named **ZERO** UI
+  elements (no "Add download", no nav tabs, no form). It did not see/describe the UI;
+  it emitted detection coordinates. **Fails the proof.**
+- **Call 2** (prompt: "Caption this image. What does it show?") — **TIMED OUT at 300 s**,
+  no response at all.
+
+Verdict (anti-bluff, §11.4.6/§11.4.123): moondream on this CPU host remains **unusable**
+for §11.4.153 — it neither produces a grounded UI description (returns coordinate garbage)
+nor runs in practical time (160 s for garbage / 300 s timeout). Using its output to mark
+any feature "video-confirmed" would be a §11.4 PASS-bluff. The native-multimodal path
+(this agent reading the PNG) stays the §11.4.153 analysis method. Capture commands +
+both raw responses captured in this session's transcript.
 
 ## Honest assessment (anti-bluff)
 - A vision path is mechanically reachable (Ollama + a vision model), but the only
@@ -74,10 +103,14 @@ additionally need ONE of:
 2. **GPU acceleration** for the local Ollama so a strong open vision model
    (llava:13b / qwen2-vl / pixtral) runs fast + accurately.
 
-Until then the §11.4.153 video-analysis is honestly **OPERATOR-BLOCKED**; the
-**capture** half (window-scoped recording, `ytdlp---` prefix, rotation) works and is
-ready (`scripts/video_confirm.sh`). The `docs/features/Status.md` video-confirmation
-cells stay **PENDING** (truthful) rather than faked.
+A heavier independent ensemble (separate from the conductor) is the SCALE upgrade and
+stays OPERATOR-GATED on the keys/GPU above. The §11.4.153 video-analysis itself is **NOT
+blocked** — the native-multimodal path is in active use: as of `docs/features/Status.md`
+Rev 6, SEVEN video-confirmation cells across six surfaces + one flow are real PASSes
+(dashboard/landing/MeTube/postprocess-API/`./status`/`./download` renders + the
+download→webready flow), each backed by a `ytdlp---`-prefixed capture and a grounded
+native read. Remaining cells stay **PENDING** (truthful) until captured; the two
+remaining FLOWS (MP3-derivation, cookie-upload) are genuinely blocked, not faked.
 
 ## Sources / artifacts
 - Real moondream output captured this session (above).
