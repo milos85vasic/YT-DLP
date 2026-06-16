@@ -176,8 +176,8 @@
 <h1 class="title">Status</h1>
 </header>
 <h1 id="feature-status-ledger">Feature Status Ledger</h1>
-<p><strong>Revision:</strong> 5 <strong>Last modified:</strong>
-2026-06-16T08:07:00Z <strong>Authority:</strong> constitution §11.4.153
+<p><strong>Revision:</strong> 6 <strong>Last modified:</strong>
+2026-06-16T08:10:00Z <strong>Authority:</strong> constitution §11.4.153
 (per-feature Status + video-recording confirmation), composes §11.4.44
 (revision header), §11.4.45 (integration-status-doc + closed status
 vocabulary), §11.4.56 (Status_Summary two-audience companion), §11.4.65
@@ -210,36 +210,40 @@ user-visible confirmed claim MUST be backed by a recorded real-use
 capture. The strong-model analysis path is the agent's OWN native
 multimodal read (Claude Opus 4.8 via the Read tool — see
 <code>docs/research/vision-path/FINDINGS.md</code>); local CPU models
-(moondream) are NOT used (too slow + hallucinate). <strong>FIVE surfaces
+(moondream) are NOT used (too slow + hallucinate). <strong>SIX surfaces
 are render/transcript-confirmed (dashboard UI, landing 'Боба' UI, MeTube
-UI, postprocess status API, <code>./status</code> CLI) AND ONE
-end-to-end FLOW is confirmed (download→webready transcode, via advancing
-live-pipeline counter + ffprobe-validated just-produced
-artifact).</strong> Every OTHER row remains
-<code>PENDING — not yet recorded</code> until its window-scoped,
+UI, postprocess status API, <code>./status</code> CLI,
+<code>./download</code> CLI) AND ONE end-to-end FLOW is confirmed
+(download→webready transcode, via advancing live-pipeline counter +
+ffprobe-validated just-produced artifact).</strong> Every OTHER row
+remains <code>PENDING — not yet recorded</code> until its window-scoped,
 <code>ytdlp---</code>-prefixed real-use capture (§11.4.154/.155) is
 recorded + analyzed.</li>
 </ul>
 <blockquote>
 <p><strong>HONEST FACT (§11.4.6 / §11.4.153):</strong> As of this
-revision SIX Video-Confirmation cells are real PASSes. FIVE are
-scope=render/transcript, analyzed by Claude Opus 4.8 native multimodal:
-dashboard UI render
+revision SEVEN Video-Confirmation cells are real PASSes across six
+distinct surfaces. SIX are scope=render/transcript: dashboard UI render
 (<code>ytdlp---dashboard---20260615T221723Z.png</code>), landing 'Боба'
 UI render (<code>ytdlp---landing---20260616T074850Z.png</code>), MeTube
 UI render (<code>ytdlp---metube---20260616T075608Z.png</code>),
 postprocess status API render
-(<code>ytdlp---postprocess---20260616T075648Z.png</code>), and the
+(<code>ytdlp---postprocess---20260616T075648Z.png</code>) — the four
+image renders analyzed by Claude Opus 4.8 native multimodal — plus the
 <code>./status</code> CLI transcript
-(<code>ytdlp---status---20260616T075901Z.txt</code>). ONE is scope=FLOW:
-the download→webready transcode
+(<code>ytdlp---status---20260616T075901Z.txt</code>) and the
+<code>./download</code> CLI render
+(<code>ytdlp---download-cli---20260616T080936Z.txt</code>). ONE is
+scope=FLOW: the download→webready transcode
 (<code>ytdlp---webready-flow---20260616T080633Z.txt</code>), confirmed
 by the live pipeline's <code>done</code> counter advancing 25→26 across
 two real status snapshots plus ffprobe-validation of the just-produced
 1920×1080 h264 +faststart artifact (the postprocessor is a backend with
 no UI, so the §11.4.69/.107 sink-side evidence is the validated
 artifact, not a screen recording). <strong>Still NOT
-flow-confirmed:</strong> MP3-derivation and cookie-upload FLOWS. Every
+flow-confirmed:</strong> MP3-derivation and cookie-upload FLOWS (the
+latter operator-gated — needs fresh operator cookies; uploading test
+cookies would overwrite real operator state, §9.2/§11.4.122). Every
 other cell honestly reads <code>PENDING — not yet recorded</code>. No
 row over-claims.</p>
 </blockquote>
@@ -449,7 +453,14 @@ container)</td>
 <td><code>tests/test-media-services.sh</code>,
 <code>challenges/scripts/download_completes_challenge.sh</code></td>
 <td>PENDING_FORENSICS</td>
-<td>PENDING — not yet recorded</td>
+<td>PASS (CLI render) —
+<code>ytdlp---download-cli---20260616T080936Z.txt</code>: real run
+prints the YT-DLP Download Helper banner + usage
+(<code>&lt;URL&gt;</code> / <code>--batch</code> /
+<code>--channels</code> / <code>--help</code>) + auto-detected
+<code>Container Runtime: podman</code> + the wired exec path
+<code>podman exec yt-dlp-cli yt-dlp</code>. Scope: CLI surface renders +
+is wired — the download FLOW itself not yet captured.</td>
 </tr>
 </tbody>
 </table>
@@ -541,7 +552,12 @@ invocation.</td>
 <td><code>tests/test-media-services.sh</code>,
 <code>challenges/scripts/download_completes_challenge.sh</code></td>
 <td>PENDING_FORENSICS</td>
-<td>PENDING — not yet recorded</td>
+<td>PASS (CLI render) —
+<code>ytdlp---download-cli---20260616T080936Z.txt</code> (same capture
+as the §2 <code>./download</code> client row): banner + usage +
+<code>Container Runtime: podman</code> + wired
+<code>podman exec yt-dlp-cli yt-dlp</code>. Scope: CLI surface render —
+download FLOW not yet captured.</td>
 </tr>
 <tr>
 <td>Check VPN (query ipinfo.io inside VPN container)</td>

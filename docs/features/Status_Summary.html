@@ -176,8 +176,8 @@
 <h1 class="title">Status_Summary</h1>
 </header>
 <h1 id="feature-status-summary">Feature Status Summary</h1>
-<p><strong>Revision:</strong> 3 <strong>Last modified:</strong>
-2026-06-16T08:07:00Z <strong>Authority:</strong> constitution §11.4.56
+<p><strong>Revision:</strong> 4 <strong>Last modified:</strong>
+2026-06-16T08:10:00Z <strong>Authority:</strong> constitution §11.4.56
 (Status_Summary two-audience companion to §11.4.153
 <code>Status.md</code>), §11.4.44 (revision header), §11.4.65 +
 §11.4.153 (HTML+PDF+DOCX export). <strong>Companion of:</strong>
@@ -217,20 +217,24 @@ system with one command each.</li>
 </ul>
 <h3 id="what-is-recorded-so-far">What is recorded so far</h3>
 <ul>
-<li><strong>Five screens are now video-confirmed</strong> by a real
+<li><strong>Six screens are now video-confirmed</strong> by a real
 captured screenshot/transcript of the genuinely-running system: the
 Dashboard, the Боба landing page, the classic MeTube interface, the
-post-processing status page, and the <code>./status</code> health
-command. Each was examined and confirmed to be working — no blank,
-frozen, or error screens. These confirm the screens <em>look right and
-respond</em>.</li>
+post-processing status page, the <code>./status</code> health command,
+and the <code>./download</code> command (which shows its usage and the
+detected container runtime). Each was examined and confirmed to be
+working — no blank, frozen, or error screens. These confirm the screens
+<em>look right and respond</em>.</li>
 <li><strong>One full end-to-end <em>flow</em> is now confirmed
 too:</strong> downloading a video all the way to a web-ready copy. We
 watched the live pipeline finish one more item (its "done" count went up
 by one) and verified the newly-produced web-ready file is a genuine,
 playable video (correct H.264 format, 1920×1080, ~2 hours long,
 fast-start enabled). The two flows still to record are MP3 audio
-extraction and the cookie upload start-to-finish.</li>
+extraction (no audio job has run recently, so no MP3 file exists to
+confirm yet) and the cookie upload start-to-finish — the latter needs
+the operator's own fresh login cookies, and uploading test cookies would
+overwrite the real ones, so it waits on the operator.</li>
 <li>Every other feature still reads <strong>"PENDING — not yet
 recorded."</strong> This is the honest status, not a placeholder.</li>
 </ul>
@@ -366,13 +370,13 @@ multi-format export.</li>
 id="video-confirmation-status-load-bearing-honest-fact">Video-confirmation
 status (load-bearing honest fact)</h3>
 <p>Per §11.4.153, EVERY user-visible confirmed claim must be backed by a
-recorded real-use capture. At Revision 5 exactly <strong>SIX</strong>
-Video-Confirmation cells are real PASSes — FIVE render/transcript + ONE
-flow — each backed by a <code>ytdlp---</code>-prefixed artifact
-(§11.4.154/.155) under <code>/Volumes/T7/Downloads/Recordings/</code>
-and analyzed by Claude Opus 4.8 native multimodal (the strong-model
-path; local CPU vision rejected — see
-<code>docs/research/vision-path/FINDINGS.md</code>):</p>
+recorded real-use capture. At Revision 6 exactly <strong>SEVEN</strong>
+Video-Confirmation cells are real PASSes across six surfaces — SIX
+render/transcript + ONE flow — each backed by a
+<code>ytdlp---</code>-prefixed artifact (§11.4.154/.155) under
+<code>/Volumes/T7/Downloads/Recordings/</code> and analyzed by Claude
+Opus 4.8 native multimodal (the strong-model path; local CPU vision
+rejected — see <code>docs/research/vision-path/FINDINGS.md</code>):</p>
 <ul>
 <li><code>ytdlp---dashboard---20260615T221723Z.png</code> — Dashboard UI
 render.</li>
@@ -386,6 +390,10 @@ done).</li>
 <li><code>ytdlp---status---20260616T075901Z.txt</code> —
 <code>./status</code> CLI transcript (all 5 HTTP health checks
 body-matched).</li>
+<li><code>ytdlp---download-cli---20260616T080936Z.txt</code> —
+<code>./download</code> CLI render (usage banner + detected
+<code>podman</code> runtime + wired
+<code>podman exec yt-dlp-cli yt-dlp</code>).</li>
 <li><code>ytdlp---webready-flow---20260616T080633Z.txt</code> —
 <strong>download→webready FLOW</strong>: live pipeline <code>done</code>
 counter 25→26 across two real <code>/api/postprocess/status</code>
