@@ -243,8 +243,8 @@
 <h1
 id="cpumetal-viable-vision-models-for-114153--deep-web-research">CPU/Metal-viable
 vision models for §11.4.153 — deep web research</h1>
-<p><strong>Revision:</strong> 1 <strong>Last modified:</strong>
-2026-06-16T09:25:00Z <strong>Authority:</strong> §11.4.150 (deep
+<p><strong>Revision:</strong> 2 <strong>Last modified:</strong>
+2026-06-16T09:50:00Z <strong>Authority:</strong> §11.4.150 (deep
 multi-angle web research per issue), §11.4.99 (latest-source
 cross-reference), §11.4.123 (rock-solid-proof-or-research), §11.4.8
 (deep-web-research-before-implementation). <strong>Companion
@@ -380,35 +380,73 @@ free-form chat) — drop Ollama.</li>
 <li><strong>Fully open license, dead-simple:</strong> SmolVLM-500M or
 Qwen2-VL-2B via llama.cpp.</li>
 </ul>
-<p><strong>Honest limitation (§11.4.6):</strong> no source publishes an
-exact per-screenshot wall-clock for these exact quantized builds on a
-<em>named</em> M-chip + RAM; every &lt;30 s figure is a proxy/ratio/
-throughput. The dominant latency risk on Metal is <strong>image
-encoding</strong>, not generation — high-res shots that tile into many
-slices (MiniCPM-V especially) can blow the budget; downscale large
-captures. <strong>→ This research is rock-solid as research, but the
-on-host empirical claim ("X does &lt;30 s AND sees the UI on THIS Mac")
-is NOT yet proven and is the next validation step (§11.4.123).</strong>
-Until that empirical test passes, native-multimodal (the agent's own
-read) remains the zero-setup, already-proven method.</p>
-<h2 id="recommended-install-commands">Recommended install commands</h2>
+<h2
+id="on-host-empirical-validation--done-2026-06-16-114123-rock-solid">ON-HOST
+EMPIRICAL VALIDATION — DONE (2026-06-16, §11.4.123 rock-solid)</h2>
+<p>The research above was empirically validated on THIS host (Apple M3
+Pro, arm64, macOS 15.5, <strong>no CUDA</strong>) — not trusted,
+MEASURED:</p>
+<ul>
+<li><strong>Setup:</strong>
+<code>python3.13 -m venv /tmp/vlm_venv</code>;
+<code>pip install -U mlx-vlm</code> (0.6.3, mlx 0.31.2, Metal); model
+<code>mlx-community/Qwen2.5-VL-3B-Instruct-4bit</code> (~2.9 GB,
+one-time download).</li>
+<li><strong>Input:</strong> the real dashboard capture
+<code>ytdlp---dashboard---20260616T091827Z.png</code>, downscaled to
+1024px (<code>sips -Z 1024</code>).</li>
+<li><strong>Measured latency (model cached,
+<code>/usr/bin/time -p</code>): ~20.3 s/frame</strong> (prompt ~295
+tok/s, gen ~49 tok/s, peak 4.23 GB RAM) — <strong>under the 30 s
+target.</strong> First run was 855 s but that was the one-time model
+download, not compute.</li>
+<li><strong>Grounded + correct:</strong> named the real nav tabs
+(Dashboard/Queue/History/Cookies), the Online status, the form fields
+(URL/QUALITY/FORMAT/FOLDER) + the <strong>"Add to Queue"</strong>
+button, and <strong>all 16 platform tiles</strong> correctly.</li>
+<li><strong>Honest flaw (§11.4.6):</strong> it also invented
+plausible-but-not-visible dropdown option lists (QUALITY/FORMAT values)
+— i.e. it genuinely SEES the image but will occasionally fabricate
+plausible detail. Full-res (un-downscaled) was slightly worse;
+downscaling to ~1024px both speeds it up AND improves grounding.</li>
+</ul>
+<p><strong>Reproducible command (model cached on this
+host):</strong></p>
 <div class="sourceCode" id="cb1"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Option A (recommended): mlx-vlm + Qwen2.5-VL-3B</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">-U</span> mlx-vlm</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> <span class="at">-m</span> mlx_vlm.generate <span class="dt">\</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">--model</span> mlx-community/Qwen2.5-VL-3B-Instruct-4bit <span class="dt">\</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">--image</span> /path/to/screenshot.png <span class="dt">\</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">--prompt</span> <span class="st">&quot;Describe this dashboard UI: panels, headings, metrics+values, button labels, layout.&quot;</span> <span class="dt">\</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">--max-tokens</span> 512 <span class="at">--temperature</span> 0.0</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Option B (fastest, fixes moondream): moondream pip + Photon (NOT Ollama)</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install moondream</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> <span class="at">-</span> <span class="op">&lt;&lt;&#39;PY&#39;</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="st">import moondream as md</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="st">from PIL import Image</span></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="st">m = md.vl(local=True, model=&quot;moondream2&quot;)</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="st">print(m.query(Image.open(&quot;dashboard.png&quot;), &quot;Describe this dashboard: chart titles, key metrics, button labels.&quot;)[&quot;answer&quot;])</span></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="op">PY</span></span></code></pre></div>
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="bu">source</span> /tmp/vlm_venv/bin/activate</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">sips</span> <span class="at">-Z</span> 1024 <span class="st">&quot;&lt;ytdlp---dashboard---*.png&gt;&quot;</span> <span class="at">--out</span> /tmp/vlm_dash.png</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> <span class="at">-m</span> mlx_vlm.generate <span class="at">--model</span> mlx-community/Qwen2.5-VL-3B-Instruct-4bit <span class="dt">\</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">--image</span> /tmp/vlm_dash.png <span class="at">--max-tokens</span> 400 <span class="at">--temperature</span> 0.0 <span class="dt">\</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">--prompt</span> <span class="st">&quot;Describe this dashboard UI: nav tabs, form fields, button labels, platform names, status text.&quot;</span></span></code></pre></div>
+<p><strong>Conclusion (rock-solid):</strong> a local CPU/Metal vision
+model DOES work here (~20 s, grounded) — the prior "no CPU-viable
+option" verdict is overturned. <strong>BUT</strong> because it can
+fabricate plausible detail, it is a <em>good-not-flawless</em>
+second-opinion / scale option, NOT a replacement for the
+<strong>native-multimodal read</strong> (the agent's own
+zero-hallucination-on-what-it-claims read), which stays the PRIMARY
+§11.4.153 verdict path. The mlx-vlm path is now available for an
+independent ensemble or high-volume pre-screen when the operator wants
+analysis off the conductor. The latency-risk caveat (image encoding on
+Metal; downscale large captures) stands.</p>
+<h2 id="recommended-install-commands">Recommended install commands</h2>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Option A (recommended): mlx-vlm + Qwen2.5-VL-3B</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install <span class="at">-U</span> mlx-vlm</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> <span class="at">-m</span> mlx_vlm.generate <span class="dt">\</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">--model</span> mlx-community/Qwen2.5-VL-3B-Instruct-4bit <span class="dt">\</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">--image</span> /path/to/screenshot.png <span class="dt">\</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">--prompt</span> <span class="st">&quot;Describe this dashboard UI: panels, headings, metrics+values, button labels, layout.&quot;</span> <span class="dt">\</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">--max-tokens</span> 512 <span class="at">--temperature</span> 0.0</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Option B (fastest, fixes moondream): moondream pip + Photon (NOT Ollama)</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install moondream</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> <span class="at">-</span> <span class="op">&lt;&lt;&#39;PY&#39;</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="st">import moondream as md</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="st">from PIL import Image</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="st">m = md.vl(local=True, model=&quot;moondream2&quot;)</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="st">print(m.query(Image.open(&quot;dashboard.png&quot;), &quot;Describe this dashboard: chart titles, key metrics, button labels.&quot;)[&quot;answer&quot;])</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="op">PY</span></span></code></pre></div>
 <h2 id="sources-verified-2026-06-16">Sources verified 2026-06-16</h2>
 <p>machinelearning.apple.com/research/fast-vision-language-models ·
 arxiv.org/html/2412.13303v1 · github.com/apple/ml-fastvlm ·

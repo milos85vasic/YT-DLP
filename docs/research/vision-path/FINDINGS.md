@@ -1,8 +1,8 @@
 # Vision-analysis path for §11.4.153 feature-video confirmation — FINDINGS
 
-**Revision:** 4
-**Last modified:** 2026-06-16T09:28:00Z
-**See also:** [`CPU_VISION_RESEARCH.md`](CPU_VISION_RESEARCH.md) — §11.4.150 deep-web research (2026-06-16) finding that the moondream failure was a STALE Ollama build + wrong endpoint (not a model ceiling), and that viable CPU/Metal vision options DO exist (mlx-vlm Qwen2.5-VL-3B; `moondream` pip+Photon ~1.2 s/frame) — pending on-host empirical validation (§11.4.123).
+**Revision:** 5
+**Last modified:** 2026-06-16T09:50:00Z
+**See also:** [`CPU_VISION_RESEARCH.md`](CPU_VISION_RESEARCH.md) — §11.4.150 deep-web research (2026-06-16): the moondream failure was a STALE Ollama build + wrong endpoint (not a model ceiling). **EMPIRICALLY VALIDATED on this host (§11.4.123):** `mlx-vlm` + `Qwen2.5-VL-3B-Instruct-4bit` (Metal, no CUDA) does **~20 s/frame** and gives a grounded, mostly-correct UI description (named the real nav tabs / form / 16 platforms) — so a local CPU vision option DOES work. It occasionally fabricates plausible detail, so it is a good-not-flawless **second-opinion/scale** option; the **native-multimodal read stays the PRIMARY** §11.4.153 verdict path.
 **Status:** RESOLVED — the strong-model vision path is the agent's OWN native multimodal
 analysis (Claude Opus 4.8 reading the recording frame via the Read tool). The local
 CPU models (moondream) are too slow + hallucinate and MUST NOT be used; the native

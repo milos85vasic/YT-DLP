@@ -176,8 +176,8 @@
 <h1 class="title">Status_Summary</h1>
 </header>
 <h1 id="feature-status-summary">Feature Status Summary</h1>
-<p><strong>Revision:</strong> 7 <strong>Last modified:</strong>
-2026-06-16T09:30:00Z <strong>Authority:</strong> constitution §11.4.56
+<p><strong>Revision:</strong> 8 <strong>Last modified:</strong>
+2026-06-16T09:52:00Z <strong>Authority:</strong> constitution §11.4.56
 (Status_Summary two-audience companion to §11.4.153
 <code>Status.md</code>), §11.4.44 (revision header), §11.4.65 +
 §11.4.153 (HTML+PDF+DOCX export). <strong>Companion of:</strong>
@@ -251,14 +251,21 @@ reports live pipeline progress through a status page.</li>
 <li>Still genuinely <strong>not built</strong>: a dashboard screen that
 shows pipeline progress visually, and a "resume an interrupted download"
 feature.</li>
-<li><strong>The post-processor's automated tests now have a captured,
-evidence-backed green run:</strong> 69 of 69 unit/integration tests
-pass, plus a 22/22 live smoke test and an 18/18 API-contract check — all
-against the running system (saved under <code>qa-results/</code>). So
-the post-processor is a confirmed PASS, not "pending". The remaining
-"PENDING_FORENSICS" verdicts are for tests that start/stop containers,
-which were deliberately not run so the live released system stays
-up.</li>
+<li><strong>The automated tests now have a captured, evidence-backed
+green run — 189 tests this session, zero real failures:</strong> 69/69
+post-processor unit/integration, 22/22 live smoke, 18/18 API-contract,
+<strong>63/63 dashboard (Angular) UI-component tests</strong>, and 17/17
+pure-shell unit tests — all saved under <code>qa-results/</code>. So the
+post-processor AND the dashboard components are confirmed PASS, not
+"pending". The remaining "PENDING_FORENSICS" verdicts are for tests that
+start/stop containers, which were deliberately not run so the live
+released system stays up.</li>
+<li><strong>Local image analysis was proven to work on this
+machine:</strong> a small vision model (Qwen2.5-VL-3B via mlx, using the
+Mac's GPU, no cloud) described a real dashboard screenshot correctly in
+~20 seconds. It's a useful helper but occasionally invents small
+plausible details, so the assistant's own reading of screenshots stays
+the primary check.</li>
 </ul>
 <h3 id="team-actions">Team actions</h3>
 <ul>

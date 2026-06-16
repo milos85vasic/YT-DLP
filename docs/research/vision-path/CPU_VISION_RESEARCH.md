@@ -1,7 +1,7 @@
 # CPU/Metal-viable vision models for §11.4.153 — deep web research
 
-**Revision:** 1
-**Last modified:** 2026-06-16T09:25:00Z
+**Revision:** 2
+**Last modified:** 2026-06-16T09:50:00Z
 **Authority:** §11.4.150 (deep multi-angle web research per issue), §11.4.99 (latest-source cross-reference), §11.4.123 (rock-solid-proof-or-research), §11.4.8 (deep-web-research-before-implementation).
 **Companion of:** `FINDINGS.md` (the vision-path resolution doc).
 
@@ -57,14 +57,42 @@ a broken test path, not a real ceiling.
   explicitly (never free-form chat) — drop Ollama.
 - **Fully open license, dead-simple:** SmolVLM-500M or Qwen2-VL-2B via llama.cpp.
 
-**Honest limitation (§11.4.6):** no source publishes an exact per-screenshot wall-clock for
-these exact quantized builds on a *named* M-chip + RAM; every <30 s figure is a proxy/ratio/
-throughput. The dominant latency risk on Metal is **image encoding**, not generation —
-high-res shots that tile into many slices (MiniCPM-V especially) can blow the budget;
-downscale large captures. **→ This research is rock-solid as research, but the on-host
-empirical claim ("X does <30 s AND sees the UI on THIS Mac") is NOT yet proven and is the
-next validation step (§11.4.123).** Until that empirical test passes, native-multimodal
-(the agent's own read) remains the zero-setup, already-proven method.
+## ON-HOST EMPIRICAL VALIDATION — DONE (2026-06-16, §11.4.123 rock-solid)
+
+The research above was empirically validated on THIS host (Apple M3 Pro, arm64, macOS 15.5,
+**no CUDA**) — not trusted, MEASURED:
+
+- **Setup:** `python3.13 -m venv /tmp/vlm_venv`; `pip install -U mlx-vlm` (0.6.3, mlx 0.31.2,
+  Metal); model `mlx-community/Qwen2.5-VL-3B-Instruct-4bit` (~2.9 GB, one-time download).
+- **Input:** the real dashboard capture `ytdlp---dashboard---20260616T091827Z.png`, downscaled
+  to 1024px (`sips -Z 1024`).
+- **Measured latency (model cached, `/usr/bin/time -p`): ~20.3 s/frame** (prompt ~295 tok/s,
+  gen ~49 tok/s, peak 4.23 GB RAM) — **under the 30 s target.** First run was 855 s but that
+  was the one-time model download, not compute.
+- **Grounded + correct:** named the real nav tabs (Dashboard/Queue/History/Cookies), the
+  Online status, the form fields (URL/QUALITY/FORMAT/FOLDER) + the **"Add to Queue"** button,
+  and **all 16 platform tiles** correctly.
+- **Honest flaw (§11.4.6):** it also invented plausible-but-not-visible dropdown option lists
+  (QUALITY/FORMAT values) — i.e. it genuinely SEES the image but will occasionally fabricate
+  plausible detail. Full-res (un-downscaled) was slightly worse; downscaling to ~1024px both
+  speeds it up AND improves grounding.
+
+**Reproducible command (model cached on this host):**
+```bash
+source /tmp/vlm_venv/bin/activate
+sips -Z 1024 "<ytdlp---dashboard---*.png>" --out /tmp/vlm_dash.png
+python -m mlx_vlm.generate --model mlx-community/Qwen2.5-VL-3B-Instruct-4bit \
+  --image /tmp/vlm_dash.png --max-tokens 400 --temperature 0.0 \
+  --prompt "Describe this dashboard UI: nav tabs, form fields, button labels, platform names, status text."
+```
+
+**Conclusion (rock-solid):** a local CPU/Metal vision model DOES work here (~20 s, grounded) —
+the prior "no CPU-viable option" verdict is overturned. **BUT** because it can fabricate
+plausible detail, it is a *good-not-flawless* second-opinion / scale option, NOT a replacement
+for the **native-multimodal read** (the agent's own zero-hallucination-on-what-it-claims read),
+which stays the PRIMARY §11.4.153 verdict path. The mlx-vlm path is now available for an
+independent ensemble or high-volume pre-screen when the operator wants analysis off the
+conductor. The latency-risk caveat (image encoding on Metal; downscale large captures) stands.
 
 ## Recommended install commands
 

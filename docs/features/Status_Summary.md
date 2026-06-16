@@ -1,7 +1,7 @@
 # Feature Status Summary
 
-**Revision:** 7
-**Last modified:** 2026-06-16T09:30:00Z
+**Revision:** 8
+**Last modified:** 2026-06-16T09:52:00Z
 **Authority:** constitution §11.4.56 (Status_Summary two-audience companion to §11.4.153 `Status.md`), §11.4.44 (revision header), §11.4.65 + §11.4.153 (HTML+PDF+DOCX export).
 **Companion of:** `docs/features/Status.md`.
 
@@ -67,12 +67,18 @@ service keeps the container images fresh.
   out MP3 audio, and reports live pipeline progress through a status page.
 - Still genuinely **not built**: a dashboard screen that shows pipeline progress
   visually, and a "resume an interrupted download" feature.
-- **The post-processor's automated tests now have a captured, evidence-backed green
-  run:** 69 of 69 unit/integration tests pass, plus a 22/22 live smoke test and an
-  18/18 API-contract check — all against the running system (saved under
-  `qa-results/`). So the post-processor is a confirmed PASS, not "pending". The
-  remaining "PENDING_FORENSICS" verdicts are for tests that start/stop containers,
-  which were deliberately not run so the live released system stays up.
+- **The automated tests now have a captured, evidence-backed green run — 189 tests
+  this session, zero real failures:** 69/69 post-processor unit/integration, 22/22 live
+  smoke, 18/18 API-contract, **63/63 dashboard (Angular) UI-component tests**, and 17/17
+  pure-shell unit tests — all saved under `qa-results/`. So the post-processor AND the
+  dashboard components are confirmed PASS, not "pending". The remaining
+  "PENDING_FORENSICS" verdicts are for tests that start/stop containers, which were
+  deliberately not run so the live released system stays up.
+- **Local image analysis was proven to work on this machine:** a small vision model
+  (Qwen2.5-VL-3B via mlx, using the Mac's GPU, no cloud) described a real dashboard
+  screenshot correctly in ~20 seconds. It's a useful helper but occasionally invents
+  small plausible details, so the assistant's own reading of screenshots stays the
+  primary check.
 
 ### Team actions
 

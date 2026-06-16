@@ -176,8 +176,8 @@
 <h1 class="title">Status</h1>
 </header>
 <h1 id="feature-status-ledger">Feature Status Ledger</h1>
-<p><strong>Revision:</strong> 10 <strong>Last modified:</strong>
-2026-06-16T09:30:00Z <strong>Authority:</strong> constitution §11.4.153
+<p><strong>Revision:</strong> 11 <strong>Last modified:</strong>
+2026-06-16T09:52:00Z <strong>Authority:</strong> constitution §11.4.153
 (per-feature Status + video-recording confirmation), composes §11.4.44
 (revision header), §11.4.45 (integration-status-doc + closed status
 vocabulary), §11.4.56 (Status_Summary two-audience companion), §11.4.65
@@ -308,6 +308,20 @@ deliberately NOT run — they would tear down the released
 <code>failed</code> jobs were both proven NOT bugs (a long live
 transcode; pre-fix stale intermediate-file entries) — see
 <code>docs/research/vision-path/</code> + commit history.</p>
+<p><strong>Rev 11 — Round-2 parallel subagents (189 tests green this
+session):</strong> added <strong>Angular dashboard unit 63/63
+SUCCESS</strong> (download-form/queue/history/cookies components +
+metube.service ×2 → those §5 Validation cells now <code>PASS</code>) and
+<strong>pure-shell unit 17/17 PASS</strong>
+(<code>tests/test-unit.sh</code>) — evidence
+<code>qa-results/retest-20260616-round2.md</code>. Cumulative
+captured-green this session = 69 pytest + 22 smoke + 18 contract + 63
+Angular + 17 shell = <strong>189 tests, 0 real regressions</strong>.
+Vision (§11.4.150) was EMPIRICALLY VALIDATED on this host —
+<code>mlx-vlm</code> + Qwen2.5-VL-3B (Metal) does ~20 s/frame with a
+grounded UI description (good-not-flawless; native-multimodal stays
+primary) — see
+<code>docs/research/vision-path/CPU_VISION_RESEARCH.md</code>.</p>
 </blockquote>
 <hr />
 <h2 id="1-services-docker-composeyml">1. SERVICES
@@ -907,7 +921,9 @@ failure)</td>
 <td><code>MeTubeService.addDownload</code></td>
 <td><code>download-form.component.spec.ts</code>,
 <code>challenges/scripts/form_reenables_after_failure_challenge.sh</code></td>
-<td>PENDING_FORENSICS</td>
+<td>PASS (Angular unit) — <code>download-form.component.spec.ts</code>
+green in the 63/63 headless-Chrome run
+(<code>qa-results/retest-20260616-round2.md</code>)</td>
 <td>PASS (UI render only) —
 <code>ytdlp---dashboard---20260615T221723Z.png</code> (the
 <code>/</code> route): the Add-Download form (URL input + Quality=Best /
@@ -925,7 +941,9 @@ record-and-close aborted)</td>
 <td><code>queue.component.spec.ts</code>,
 <code>challenges/scripts/queue_lifecycle_challenge.sh</code>,
 <code>challenges/scripts/queue_polling_survives_error_challenge.sh</code></td>
-<td>PENDING_FORENSICS</td>
+<td>PASS (Angular unit) — <code>queue.component.spec.ts</code> green in
+the 63/63 headless-Chrome run
+(<code>qa-results/retest-20260616-round2.md</code>)</td>
 <td>PASS (UI render — empty state) —
 <code>ytdlp---dashboard-queue---20260616T083018Z.png</code>
 (<code>/queue</code> route): "⏳ Download Queue" heading + correct
@@ -945,7 +963,9 @@ delete-all, refresh)</td>
 <td><code>history.component.spec.ts</code>,
 <code>tests/e2e/tests/clear-history.spec.ts</code>,
 <code>tests/e2e/tests/delete-retry-cancel.spec.ts</code></td>
-<td>PENDING_FORENSICS</td>
+<td>PASS (Angular unit) — <code>history.component.spec.ts</code> green
+in the 63/63 headless-Chrome run
+(<code>qa-results/retest-20260616-round2.md</code>)</td>
 <td>PASS (UI render — content state) —
 <code>ytdlp---dashboard-history---20260616T083023Z.png</code>
 (<code>/history</code> route): "Safe History Management" banner + "📦
@@ -964,7 +984,9 @@ online/offline, per-platform breakdown, upload, delete)</td>
 <td><code>getCookieStatus</code> + <code>uploadCookies</code> +
 <code>deleteCookies</code></td>
 <td><code>cookies.component.spec.ts</code></td>
-<td>PENDING_FORENSICS</td>
+<td>PASS (Angular unit) — <code>cookies.component.spec.ts</code> green
+in the 63/63 headless-Chrome run
+(<code>qa-results/retest-20260616-round2.md</code>)</td>
 <td>PASS (UI render — content state) —
 <code>ytdlp---dashboard-cookies---20260616T083029Z.png</code>
 (<code>/cookies</code> route): "🍪 Cookie Management" — Status ⚠ Stale,
@@ -1029,7 +1051,10 @@ no <code>any</code>)</td>
 <td><code>HttpClient</code> to <code>/api/*</code></td>
 <td><code>metube.service.spec.ts</code>,
 <code>metube.service.bulk.spec.ts</code></td>
-<td>PENDING_FORENSICS</td>
+<td>PASS (Angular unit) — both <code>metube.service.spec.ts</code> +
+<code>metube.service.bulk.spec.ts</code> green in the 63/63
+headless-Chrome run
+(<code>qa-results/retest-20260616-round2.md</code>)</td>
 <td>PENDING — not yet recorded</td>
 </tr>
 </tbody>
@@ -1058,7 +1083,11 @@ CHALLENGES (real test files reconciled)</h2>
 <td>Implemented</td>
 <td><code>run-tests.sh -p unit</code></td>
 <td>self</td>
-<td>PENDING_FORENSICS</td>
+<td>PASS — 17/17 PASS, captured 2026-06-16
+(<code>qa-results/retest-20260616-round2.md</code>); run via a read-only
+harness calling <code>run_unit_tests</code> directly (the orchestrator
+<code>main()</code> calls <code>pre_suite_drain</code> which mutates
+operator state, so it was bypassed)</td>
 <td>PENDING — not yet recorded</td>
 </tr>
 <tr>
