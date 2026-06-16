@@ -11,7 +11,9 @@ test.describe('Landing Page', () => {
   test('displays main heading and subtitle', async ({ page }) => {
     await page.goto(LANDING_URL);
     await expect(page.locator('h1')).toHaveText('Боба');
-    await expect(page.locator('.subtitle')).toContainText('YouTube Video Downloader');
+    // Product copy is "Universal Video Downloader — YouTube, Instagram, …" (landing/app.py).
+    // Was asserting the old "YouTube Video Downloader" — stale test data (CONST-034).
+    await expect(page.locator('.subtitle')).toContainText('Universal Video Downloader');
   });
 
   test('shows 3-step authentication flow', async ({ page }) => {
