@@ -176,8 +176,8 @@
 <h1 class="title">Status</h1>
 </header>
 <h1 id="feature-status-ledger">Feature Status Ledger</h1>
-<p><strong>Revision:</strong> 4 <strong>Last modified:</strong>
-2026-06-16T08:00:00Z <strong>Authority:</strong> constitution §11.4.153
+<p><strong>Revision:</strong> 5 <strong>Last modified:</strong>
+2026-06-16T08:07:00Z <strong>Authority:</strong> constitution §11.4.153
 (per-feature Status + video-recording confirmation), composes §11.4.44
 (revision header), §11.4.45 (integration-status-doc + closed status
 vocabulary), §11.4.56 (Status_Summary two-audience companion), §11.4.65
@@ -211,28 +211,37 @@ capture. The strong-model analysis path is the agent's OWN native
 multimodal read (Claude Opus 4.8 via the Read tool — see
 <code>docs/research/vision-path/FINDINGS.md</code>); local CPU models
 (moondream) are NOT used (too slow + hallucinate). <strong>FIVE surfaces
-are so far confirmed (render/transcript scope): dashboard UI, landing
-'Боба' UI, MeTube UI, postprocess status API, and the
-<code>./status</code> CLI.</strong> Every OTHER row remains
+are render/transcript-confirmed (dashboard UI, landing 'Боба' UI, MeTube
+UI, postprocess status API, <code>./status</code> CLI) AND ONE
+end-to-end FLOW is confirmed (download→webready transcode, via advancing
+live-pipeline counter + ffprobe-validated just-produced
+artifact).</strong> Every OTHER row remains
 <code>PENDING — not yet recorded</code> until its window-scoped,
 <code>ytdlp---</code>-prefixed real-use capture (§11.4.154/.155) is
 recorded + analyzed.</li>
 </ul>
 <blockquote>
 <p><strong>HONEST FACT (§11.4.6 / §11.4.153):</strong> As of this
-revision exactly FIVE Video-Confirmation cells are real PASSes, all
-analyzed by Claude Opus 4.8 native multimodal: dashboard UI render
+revision SIX Video-Confirmation cells are real PASSes. FIVE are
+scope=render/transcript, analyzed by Claude Opus 4.8 native multimodal:
+dashboard UI render
 (<code>ytdlp---dashboard---20260615T221723Z.png</code>), landing 'Боба'
 UI render (<code>ytdlp---landing---20260616T074850Z.png</code>), MeTube
 UI render (<code>ytdlp---metube---20260616T075608Z.png</code>),
 postprocess status API render
 (<code>ytdlp---postprocess---20260616T075648Z.png</code>), and the
 <code>./status</code> CLI transcript
-(<code>ytdlp---status---20260616T075901Z.txt</code>). <strong>Every one
-is scope=render/transcript — NOT flow-confirmed:</strong> the end-to-end
-download→webready, MP3-derivation, and cookie-upload FLOWS are NOT yet
-video-confirmed. Every other cell honestly reads
-<code>PENDING — not yet recorded</code>. No row over-claims.</p>
+(<code>ytdlp---status---20260616T075901Z.txt</code>). ONE is scope=FLOW:
+the download→webready transcode
+(<code>ytdlp---webready-flow---20260616T080633Z.txt</code>), confirmed
+by the live pipeline's <code>done</code> counter advancing 25→26 across
+two real status snapshots plus ffprobe-validation of the just-produced
+1920×1080 h264 +faststart artifact (the postprocessor is a backend with
+no UI, so the §11.4.69/.107 sink-side evidence is the validated
+artifact, not a screen recording). <strong>Still NOT
+flow-confirmed:</strong> MP3-derivation and cookie-upload FLOWS. Every
+other cell honestly reads <code>PENDING — not yet recorded</code>. No
+row over-claims.</p>
 </blockquote>
 <hr />
 <h2 id="operator-blocked-rows-top-per-11445">OPERATOR-BLOCKED rows (top
@@ -1191,10 +1200,23 @@ H.264/AAC, +faststart)</td>
 (<code>_validate_webready</code> asserts h264 + faststart);
 watcher(+min-age) + worker</td>
 <td>pytest <code>transcoder</code>/<code>media_probe</code>; smoke</td>
-<td>PENDING_FORENSICS (6+ real <code>webready-*.mp4</code> on disk incl.
-"Me at the zoo", "Rick Astley…", "Watchtower of Turkey")</td>
-<td>PENDING — not yet recorded (transcode FLOW / artifact-playback not
-yet captured)</td>
+<td>PASS (FLOW — artifact-validated) —
+<code>ytdlp---webready-flow---20260616T080633Z.txt</code>: live pipeline
+ADVANCED <code>done</code> 25→26 between two real
+<code>/api/postprocess/status</code> snapshots (07:56:48Z→08:05:28Z);
+the +1 is <code>webready-Nobel Prize…James Webb…mp4</code> produced
+08:05:05Z, ffprobe-validated genuine non-degenerate artifact (codec
+<strong>h264</strong>, <strong>1920×1080</strong>, duration
+<strong>7135.13s</strong>, <strong>faststart=YES</strong>, 3.34 GB);
+total <code>webready-*.mp4</code> on disk = 26 = done counter. §11.4.107
+artifact-validation / §11.4.123.</td>
+<td><strong>PASS (FLOW)</strong> — see Validation cell: live
+download→webready end-to-end confirmed via advancing pipeline counter +
+ffprobe-validated just-produced artifact
+(<code>ytdlp---webready-flow---20260616T080633Z.txt</code>). The
+media_postprocessor is a backend (no UI screen), so the §11.4.69/.107
+sink-side evidence is the validated output artifact, not a screen
+recording.</td>
 </tr>
 <tr>
 <td>MP3 audio derivation (<code>&lt;base&gt;.mp3</code>, 320 kbps

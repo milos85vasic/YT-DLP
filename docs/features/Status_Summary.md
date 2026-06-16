@@ -1,7 +1,7 @@
 # Feature Status Summary
 
-**Revision:** 2
-**Last modified:** 2026-06-16T08:00:00Z
+**Revision:** 3
+**Last modified:** 2026-06-16T08:07:00Z
 **Authority:** constitution §11.4.56 (Status_Summary two-audience companion to §11.4.153 `Status.md`), §11.4.44 (revision header), §11.4.65 + §11.4.153 (HTML+PDF+DOCX export).
 **Companion of:** `docs/features/Status.md`.
 
@@ -44,10 +44,13 @@ service keeps the container images fresh.
   of the genuinely-running system: the Dashboard, the Боба landing page, the
   classic MeTube interface, the post-processing status page, and the `./status`
   health command. Each was examined and confirmed to be working — no blank, frozen,
-  or error screens. **These confirm the screens *look right and respond*; they do
-  not yet prove the full end-to-end *flows*** (downloading a video all the way to a
-  web-ready copy, or uploading cookies start to finish). Those flow recordings are
-  the next step.
+  or error screens. These confirm the screens *look right and respond*.
+- **One full end-to-end *flow* is now confirmed too:** downloading a video all the
+  way to a web-ready copy. We watched the live pipeline finish one more item (its
+  "done" count went up by one) and verified the newly-produced web-ready file is a
+  genuine, playable video (correct H.264 format, 1920×1080, ~2 hours long, fast-start
+  enabled). The two flows still to record are MP3 audio extraction and the cookie
+  upload start-to-finish.
 - Every other feature still reads **"PENDING — not yet recorded."** This is the
   honest status, not a placeholder.
 
@@ -144,8 +147,9 @@ service keeps the container images fresh.
 ### Video-confirmation status (load-bearing honest fact)
 
 Per §11.4.153, EVERY user-visible confirmed claim must be backed by a recorded
-real-use capture. At Revision 4 exactly **FIVE** Video-Confirmation cells are real
-PASSes, each backed by a `ytdlp---`-prefixed artifact (§11.4.154/.155) under
+real-use capture. At Revision 5 exactly **SIX** Video-Confirmation cells are real
+PASSes — FIVE render/transcript + ONE flow — each backed by a `ytdlp---`-prefixed
+artifact (§11.4.154/.155) under
 `/Volumes/T7/Downloads/Recordings/` and analyzed by Claude Opus 4.8 native
 multimodal (the strong-model path; local CPU vision rejected — see
 `docs/research/vision-path/FINDINGS.md`):
@@ -157,9 +161,14 @@ multimodal (the strong-model path; local CPU vision rejected — see
   (live healthy JSON, 1 running / 25 done).
 - `ytdlp---status---20260616T075901Z.txt` — `./status` CLI transcript (all 5 HTTP
   health checks body-matched).
+- `ytdlp---webready-flow---20260616T080633Z.txt` — **download→webready FLOW**:
+  live pipeline `done` counter 25→26 across two real `/api/postprocess/status`
+  snapshots + ffprobe-validated just-produced artifact (h264, 1920×1080, 7135s,
+  faststart=YES, 3.34 GB). Backend pipeline (no UI) → §11.4.69/.107 sink-side
+  evidence is the validated artifact, not a screen recording.
 
-**All five are scope=render/transcript — none is flow-confirmed.** The
-download→webready, MP3-derivation, and cookie-upload end-to-end FLOWS are NOT yet
+The first five are scope=render/transcript; the sixth is the first **flow**
+confirmation. The MP3-derivation and cookie-upload end-to-end FLOWS are NOT yet
 video-confirmed (§11.4.153 render-only ≠ flow-confirmed). Every other row carries
 `Video-Confirmation = PENDING — not yet recorded`. This is the truthful state
 (§11.4.2 / §11.4.5 / §11.4.6 / §11.4.107), not a stub.
