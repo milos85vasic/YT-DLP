@@ -176,8 +176,8 @@
 <h1 class="title">Status_Summary</h1>
 </header>
 <h1 id="feature-status-summary">Feature Status Summary</h1>
-<p><strong>Revision:</strong> 5 <strong>Last modified:</strong>
-2026-06-16T08:32:00Z <strong>Authority:</strong> constitution §11.4.56
+<p><strong>Revision:</strong> 6 <strong>Last modified:</strong>
+2026-06-16T08:38:00Z <strong>Authority:</strong> constitution §11.4.56
 (Status_Summary two-audience companion to §11.4.153
 <code>Status.md</code>), §11.4.44 (revision header), §11.4.65 +
 §11.4.153 (HTML+PDF+DOCX export). <strong>Companion of:</strong>
@@ -402,6 +402,13 @@ body-matched).</li>
 <code>./download</code> CLI render (usage banner + detected
 <code>podman</code> runtime + wired
 <code>podman exec yt-dlp-cli yt-dlp</code>).</li>
+<li><code>ytdlp---landing-api---20260616T083612Z.txt</code> — landing
+read-only-API sweep: seven §4 routes (<code>/</code>,
+<code>/health</code>, <code>/api/cookie-status</code>,
+<code>/api/profile-status</code>, <code>/api/aborted-history</code> GET,
+<code>/logo.png</code>, <code>/favicon.ico</code>) each HTTP 200/204
+with real bodies (mutating POST/DELETE routes deliberately NOT
+auto-called — operator state).</li>
 <li><code>ytdlp---webready-flow---20260616T080633Z.txt</code> —
 <strong>download→webready FLOW</strong>: live pipeline <code>done</code>
 counter 25→26 across two real <code>/api/postprocess/status</code>

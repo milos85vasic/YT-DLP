@@ -1,7 +1,7 @@
 # Feature Status Summary
 
-**Revision:** 5
-**Last modified:** 2026-06-16T08:32:00Z
+**Revision:** 6
+**Last modified:** 2026-06-16T08:38:00Z
 **Authority:** constitution §11.4.56 (Status_Summary two-audience companion to §11.4.153 `Status.md`), §11.4.44 (revision header), §11.4.65 + §11.4.153 (HTML+PDF+DOCX export).
 **Companion of:** `docs/features/Status.md`.
 
@@ -171,6 +171,10 @@ multimodal (the strong-model path; local CPU vision rejected — see
   health checks body-matched).
 - `ytdlp---download-cli---20260616T080936Z.txt` — `./download` CLI render (usage
   banner + detected `podman` runtime + wired `podman exec yt-dlp-cli yt-dlp`).
+- `ytdlp---landing-api---20260616T083612Z.txt` — landing read-only-API sweep: seven §4
+  routes (`/`, `/health`, `/api/cookie-status`, `/api/profile-status`,
+  `/api/aborted-history` GET, `/logo.png`, `/favicon.ico`) each HTTP 200/204 with real
+  bodies (mutating POST/DELETE routes deliberately NOT auto-called — operator state).
 - `ytdlp---webready-flow---20260616T080633Z.txt` — **download→webready FLOW**:
   live pipeline `done` counter 25→26 across two real `/api/postprocess/status`
   snapshots + ffprobe-validated just-produced artifact (h264, 1920×1080, 7135s,

@@ -176,8 +176,8 @@
 <h1 class="title">Status</h1>
 </header>
 <h1 id="feature-status-ledger">Feature Status Ledger</h1>
-<p><strong>Revision:</strong> 7 <strong>Last modified:</strong>
-2026-06-16T08:32:00Z <strong>Authority:</strong> constitution §11.4.153
+<p><strong>Revision:</strong> 8 <strong>Last modified:</strong>
+2026-06-16T08:38:00Z <strong>Authority:</strong> constitution §11.4.153
 (per-feature Status + video-recording confirmation), composes §11.4.44
 (revision header), §11.4.45 (integration-status-doc + closed status
 vocabulary), §11.4.56 (Status_Summary two-audience companion), §11.4.65
@@ -216,12 +216,21 @@ render/transcript captures are confirmed — dashboard <code>/</code>
 <code>/history</code>, dashboard <code>/cookies</code>, landing 'Боба'
 UI, MeTube UI, postprocess status API, <code>./status</code> CLI,
 <code>./download</code> CLI (together confirming the dashboard's five
-components + the other surfaces) — AND ONE end-to-end FLOW is confirmed
-(download→webready transcode, via advancing live-pipeline counter +
-ffprobe-validated just-produced artifact).</strong> Every OTHER row
-remains <code>PENDING — not yet recorded</code> until its window-scoped,
+components + the other surfaces) PLUS a landing read-only-API transcript
+(<code>ytdlp---landing-api---*</code>) confirming seven §4 routes
+(<code>/</code>, <code>/health</code>, <code>/api/cookie-status</code>,
+<code>/api/profile-status</code>, <code>/api/aborted-history</code> GET,
+<code>/logo.png</code>, <code>/favicon.ico</code>) — AND ONE end-to-end
+FLOW is confirmed (download→webready transcode, via advancing
+live-pipeline counter + ffprobe-validated just-produced
+artifact).</strong> Every OTHER row remains
+<code>PENDING — not yet recorded</code> until its window-scoped,
 <code>ytdlp---</code>-prefixed real-use capture (§11.4.154/.155) is
-recorded + analyzed.</li>
+recorded + analyzed. The remaining PENDING rows are dominated by
+<strong>mutating</strong> routes/flows (POST/DELETE cookie-upload,
+delete-download, aborted-history write) which are NOT auto-captured
+because they would alter operator state (§9.2/§11.4.122), and the
+MP3-derivation flow (no audio artifact yet).</li>
 </ul>
 <blockquote>
 <p><strong>HONEST FACT (§11.4.6 / §11.4.153):</strong> As of this
@@ -239,12 +248,15 @@ state, 46 items), dashboard <code>/cookies</code>
 state, per-platform), landing 'Боба' UI
 (<code>ytdlp---landing---20260616T074850Z.png</code>), MeTube UI
 (<code>ytdlp---metube---20260616T075608Z.png</code>), postprocess status
-API (<code>ytdlp---postprocess---20260616T075648Z.png</code>) — plus two
-CLI transcripts: <code>./status</code>
-(<code>ytdlp---status---20260616T075901Z.txt</code>) and
+API (<code>ytdlp---postprocess---20260616T075648Z.png</code>) — plus
+three transcripts: <code>./status</code>
+(<code>ytdlp---status---20260616T075901Z.txt</code>),
 <code>./download</code>
-(<code>ytdlp---download-cli---20260616T080936Z.txt</code>). ONE is
-scope=FLOW: the download→webready transcode
+(<code>ytdlp---download-cli---20260616T080936Z.txt</code>), and the
+landing read-only-API sweep
+(<code>ytdlp---landing-api---20260616T083612Z.txt</code>, seven §4
+routes each HTTP 200/204 with real bodies). ONE is scope=FLOW: the
+download→webready transcode
 (<code>ytdlp---webready-flow---20260616T080633Z.txt</code>), confirmed
 by the live pipeline's <code>done</code> counter advancing 25→26 across
 two real status snapshots plus ffprobe-validation of the just-produced
@@ -659,7 +671,10 @@ id, dynamic service URLs)</td>
 <td><code>render_template_string(INDEX_TEMPLATE)</code></td>
 <td><code>tests/e2e/tests/landing.spec.ts</code></td>
 <td>PENDING_FORENSICS</td>
-<td>PENDING — not yet recorded</td>
+<td>PASS (UI render only) —
+<code>ytdlp---landing---20260616T074850Z.png</code> (the rendered Боба
+page: title + tagline + cookie-freshness banner + Available-Services
+grid; auto-redirect to dashboard firing). Scope: render.</td>
 </tr>
 <tr>
 <td><code>/app</code> — proxy GET to MeTube backend</td>
@@ -705,7 +720,11 @@ per-platform breakdown + MeTube reachability</td>
 <td><code>tests/test-cookie-validator.sh</code>,
 <code>tests/test-dashboard.sh</code></td>
 <td>PENDING_FORENSICS</td>
-<td>PENDING — not yet recorded</td>
+<td>PASS (API transcript) —
+<code>ytdlp---landing-api---20260616T083612Z.txt</code>: GET → HTTP 200,
+real JSON
+<code>has_cookies:true, cookie_age_minutes:2736.1, metube_reachable:true, platforms{instagram:16, vk:62, x:…}</code>
+(matches the <code>/cookies</code> dashboard render).</td>
 </tr>
 <tr>
 <td><code>/api/aborted-history</code> (GET) — return persisted aborted
@@ -716,7 +735,9 @@ list</td>
 <td><code>_read_aborted_history</code> (lock-free read)</td>
 <td><code>tests/test-aborted-history.sh</code></td>
 <td>PENDING_FORENSICS</td>
-<td>PENDING — not yet recorded</td>
+<td>PASS (API transcript) —
+<code>ytdlp---landing-api---20260616T083612Z.txt</code>: GET → HTTP 200,
+<code>{"aborted":[]}</code> (valid empty list).</td>
 </tr>
 <tr>
 <td><code>/api/aborted-history</code> (POST) — append entry,
@@ -751,7 +772,9 @@ vpn_active + MeTube reachability</td>
 <td>reads <code>ACTIVE_PROFILE</code> env</td>
 <td><code>tests/test-dashboard.sh</code></td>
 <td>PENDING_FORENSICS</td>
-<td>PENDING — not yet recorded</td>
+<td>PASS (API transcript) —
+<code>ytdlp---landing-api---20260616T083612Z.txt</code>: GET → HTTP 200,
+<code>{"profile":"no-vpn","vpn_active":false,"metube_reachable":true,"metube_url":"http://metube-direct:8081"}</code>.</td>
 </tr>
 <tr>
 <td><code>/health</code> (GET) — service + MeTube reachability +
@@ -763,7 +786,9 @@ timestamp</td>
 <td><code>tests/test-integration-realhttp.sh</code>,
 <code>tests/test-vpn-smoke.sh</code></td>
 <td>PENDING_FORENSICS</td>
-<td>PENDING — not yet recorded</td>
+<td>PASS (API transcript) —
+<code>ytdlp---landing-api---20260616T083612Z.txt</code>: GET → HTTP 200,
+<code>{"status":"ok","service":"landing-page","metube_reachable":true,"timestamp":…}</code>.</td>
 </tr>
 <tr>
 <td><code>/logo.png</code> (GET) — serve branding asset</td>
@@ -773,7 +798,9 @@ timestamp</td>
 <td><code>send_from_directory</code></td>
 <td><code>tests/e2e/tests/landing.spec.ts</code></td>
 <td>PENDING_FORENSICS</td>
-<td>PENDING — not yet recorded</td>
+<td>PASS (API transcript) —
+<code>ytdlp---landing-api---20260616T083612Z.txt</code>: GET → HTTP 200,
+image/png, 13938 bytes (real non-degenerate asset).</td>
 </tr>
 <tr>
 <td><code>/favicon.ico</code> (GET) — 204 stub</td>
@@ -783,7 +810,9 @@ timestamp</td>
 <td>returns <code>"", 204</code></td>
 <td>— (trivial; covered by landing smoke)</td>
 <td>PENDING_FORENSICS</td>
-<td>PENDING — not yet recorded</td>
+<td>PASS (API transcript) —
+<code>ytdlp---landing-api---20260616T083612Z.txt</code>: GET → HTTP 204
+(correct stub).</td>
 </tr>
 <tr>
 <td><code>/api/delete-download</code> (POST) — remove from history +
