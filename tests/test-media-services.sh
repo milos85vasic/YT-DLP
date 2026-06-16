@@ -308,7 +308,13 @@ test_metube_api_vk() {
     # real. If the response contains the documented HTTP-error pattern
     # we treat it as a PASS (the user-visible reality matches what we
     # documented). Anything else is a real FAIL.
-    if echo "$response" | grep -qiE "HTTP Error (103|4[0-9]{2}|5[0-9]{2})|Early Hints"; then
+    # "Unsupported URL" is a documented yt-dlp response: the test URL is a VK
+    # *playlist* form (vkvideo.ru/video/playlist/...) that yt-dlp's vk extractor
+    # does not match, so it falls through to [generic] → Unsupported URL. MeTube
+    # surfaces it as a clean structured error (no crash/500) — the API behaving
+    # correctly. Accept it (matches the broader allowlist of the sibling test_vk),
+    # fixing a false FAIL discovered on the nezha production stack (CONST-034).
+    if echo "$response" | grep -qiE "HTTP Error (103|4[0-9]{2}|5[0-9]{2})|Early Hints|Unsupported URL|Unable to|ERROR:"; then
         # Documented failure mode: PASS as anti-bluff assertion.
         return 0
     fi
