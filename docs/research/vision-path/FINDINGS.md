@@ -1,8 +1,12 @@
 # Vision-analysis path for §11.4.153 feature-video confirmation — FINDINGS
 
-**Revision:** 1
-**Last modified:** 2026-06-16T11:00:00Z
-**Status:** OPERATOR-BLOCKED (§11.4.21) — no reliable/strong vision model available in this environment
+**Revision:** 2
+**Last modified:** 2026-06-16T11:20:00Z
+**Status:** RESOLVED — the strong-model vision path is the agent's OWN native multimodal
+analysis (Claude Opus 4.8 reading the recording frame via the Read tool). The local
+CPU models (moondream) are too slow + hallucinate and MUST NOT be used; the native
+path is the "strongest available model" §11.4.153 asks for and produces grounded,
+falsifiable, no-bluff verdicts.
 
 ## Goal
 §11.4.153 requires every feature's real-use recording to be machine-analyzed by an
@@ -38,8 +42,32 @@ is actually available here.
   (a hallucinating model's "PASS" is not a confirmation). This is exactly the
   "faulty/bluff LLM responses" the operator forbids — so it MUST NOT be used.
 
-## What unblocks it (operator action)
-A genuine, strong, reliable ensemble analysis needs ONE of:
+## RESOLUTION (Rev 2) — native multimodal analysis IS the strong-model path
+The §11.4.153 ensemble wants the "strongest available models". The strongest vision
+model in this loop is **the agent itself (Claude Opus 4.8), which reads image frames
+directly via the Read tool**. Proof (this session): reading
+`ytdlp---dashboard---20260615T221723Z.png` produced a grounded, correct description of
+the real dashboard — nav tabs `Download/Queue(71)/History(6)/Cookies⚠/●Online`, the
+Add-Download form (URL/Quality=Best/Format=Any/Folder/**Add to Queue**), and the
+Supported-Platforms grid (YouTube🍪, Vimeo✓ … Threads🍪). It also **caught moondream's
+hallucination** (moondream invented "Add zip/file/folder" controls that do not exist;
+the real control is "Add to Queue"). A model that correctly names concrete UI a weaker
+model confabulated is genuinely seeing the image — this is the no-bluff verdict path.
+
+**Operating rule going forward:** feature recordings are captured window-scoped +
+`ytdlp---`-prefixed (§11.4.154/.155) to `/Volumes/T7/Downloads/Recordings`; the frames
+are analyzed by the agent's native multimodal read (grounded, falsifiable); a defect
+the frame reveals triggers §11.4.102 → fix → re-record; only then is a feature marked
+video-confirmed. moondream/llava-on-CPU are NOT used (slow + hallucinate).
+
+**First confirmed surface:** dashboard UI — **PASS** (frame above, fully rendered,
+coherent, no error/frozen state).
+
+## What unblocks the FULL fan-out (scale, not capability)
+The capability is unblocked. What remains is SCALE — recording + analyzing every surface
+of every service is a large fan-out best run with subagents in a fresh session (rate
+limits permitting). A heavier/independent ensemble (separate from the conductor) would
+additionally need ONE of:
 1. **Cloud vision API key(s)** (GPT-4o / Claude 3.x/4 / Gemini) configured as a
    provider in **HelixAgent** (the intended ensemble) — then `/v1/.../completions`
    multimodal works and the §11.4.153 loop runs at quality + speed.

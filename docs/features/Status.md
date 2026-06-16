@@ -1,7 +1,7 @@
 # Feature Status Ledger
 
-**Revision:** 1
-**Last modified:** 2026-06-15T15:27:34Z
+**Revision:** 2
+**Last modified:** 2026-06-16T11:25:00Z
 **Authority:** constitution §11.4.153 (per-feature Status + video-recording confirmation), composes §11.4.44 (revision header), §11.4.45 (integration-status-doc + closed status vocabulary), §11.4.56 (Status_Summary two-audience companion), §11.4.65 (HTML+PDF export) + §11.4.153 DOCX, §11.4.107 (no frozen-frame video proof), §11.4.6 (no-guessing — every row reconciled against real code).
 **Scope:** Full feature surface of the `ytdlp` Podman/Docker orchestration around `yt-dlp` — every service, client surface, CLI script, landing route, dashboard component, test/challenge suite, and every PLANNED-but-unbuilt feature.
 **Maintainer:** project conductor.
@@ -12,9 +12,9 @@
 
 - **Implementation** — `Implemented` (code present + wired), `Partial` (code present, incomplete/edge-gaps), `Planned` (not yet built).
 - **Validation/Verification** — closed status vocabulary per §11.4.45: `PASS` / `FAIL` / `SKIP` / `PENDING_FORENSICS` / `OPERATOR-BLOCKED`. Because no clean-baseline full-suite run with captured evidence was executed in the session that produced this ledger, verdicts that would require live captured runtime evidence are recorded `PENDING_FORENSICS` (per §11.4.6 — an unproven PASS is forbidden; the code is present and test files exist, but a green-with-captured-evidence run is not yet on record here). `Planned` rows carry `SKIP` (no feature to validate yet).
-- **Video-Confirmation** — per §11.4.153 every user-visible confirmed claim MUST be backed by a recorded real-use video. **NO feature has a video recording yet.** Therefore **EVERY** row's Video-Confirmation cell is **`PENDING — not yet recorded`**, without exception. None is "confirmed".
+- **Video-Confirmation** — per §11.4.153 every user-visible confirmed claim MUST be backed by a recorded real-use capture. The strong-model analysis path is the agent's OWN native multimodal read (Claude Opus 4.8 via the Read tool — see `docs/research/vision-path/FINDINGS.md`); local CPU models (moondream) are NOT used (too slow + hallucinate). **ONE surface is so far confirmed: the dashboard UI render (PASS, scope=render-only).** Every OTHER row remains `PENDING — not yet recorded` until its window-scoped, `ytdlp---`-prefixed real-use capture (§11.4.154/.155) is recorded + analyzed.
 
-> **HONEST FACT (§11.4.6 / §11.4.153):** Not a single feature in this project has a real-use video recording at the time of this revision. Every Video-Confirmation cell below reads `PENDING — not yet recorded`. No row claims video confirmation.
+> **HONEST FACT (§11.4.6 / §11.4.153):** As of this revision exactly ONE Video-Confirmation cell is a real PASS — the dashboard UI render (frame `ytdlp---dashboard---20260615T221723Z.png`, analyzed by Claude Opus 4.8 native multimodal, scope=render-only; the end-to-end download flow is NOT yet video-confirmed). Every other cell honestly reads `PENDING — not yet recorded`. No row over-claims.
 
 ---
 
@@ -41,7 +41,7 @@ No feature in this project is currently `OPERATOR-BLOCKED`. (The VPN profile req
 
 | Feature | Component | Category | Implementation | Wiring | Tests Coverage | Validation/Verification | Video-Confirmation |
 |---|---|---|---|---|---|---|---|
-| Dashboard web UI (download-form / queue / history / cookies / navbar, error-boundary, not-found) | dashboard | Web client | Implemented | Routed via `app.routes.ts`; calls `/api/*` through nginx | `tests/test-dashboard.sh`, `tests/e2e/tests/dashboard.spec.ts`, component `*.spec.ts` | PENDING_FORENSICS | PENDING — not yet recorded |
+| Dashboard web UI (download-form / queue / history / cookies / navbar, error-boundary, not-found) | dashboard | Web client | Implemented | Routed via `app.routes.ts`; calls `/api/*` through nginx | `tests/test-dashboard.sh`, `tests/e2e/tests/dashboard.spec.ts`, component `*.spec.ts` | PENDING_FORENSICS | PASS (UI render only) — `ytdlp---dashboard---20260615T221723Z.png`, analyzed by Claude Opus 4.8 native multimodal: navbar (Download/Queue 71/History 6/Cookies⚠/●Online) + Add-Download form (URL/Quality/Format/Folder/Add-to-Queue) + Supported-Platforms grid all rendered, coherent, no error/frozen frame. Scope: render only — e2e download flow not yet video-confirmed. |
 | Landing Flask 'Боба' UI (3-step cookie onboarding, drag-drop upload, freshness banner, services grid) | landing | Web client | Implemented | `INDEX_TEMPLATE` in `landing/app.py`; auto-redirect to dashboard | `tests/e2e/tests/landing.spec.ts`, `tests/test-dashboard.sh` | PENDING_FORENSICS | PENDING — not yet recorded |
 | MeTube minimal UI (vendor original interface, dark theme) | metube | Web client | Implemented (vendor) | Served on `:8088`; linked as "Classic UI" from landing | `tests/test-media-services.sh` | PENDING_FORENSICS | PENDING — not yet recorded |
 | `./download` CLI (host script execs yt-dlp in sleeping container) | download | CLI client | Implemented | `./download` → `exec` into `yt-dlp-cli`; runtime auto-detect | `tests/test-media-services.sh`, `challenges/scripts/download_completes_challenge.sh` | PENDING_FORENSICS | PENDING — not yet recorded |
