@@ -19,3 +19,6 @@
 [submodule "Media"]
 	path = Media
 	url = git@github.com:vasic-digital/Media.git
+[submodule "submodules/superspec"]
+	path = submodules/superspec
+	url = git@github.com:WangX0111/superspec.git
