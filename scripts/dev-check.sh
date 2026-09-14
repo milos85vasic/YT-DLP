@@ -23,7 +23,7 @@ info() { echo -e "${CYAN}▶${NC} $1"; }
 
 # ── Gate 0: Shell script syntax ──────────────────────────────────────
 info "Gate 0: Shell script syntax"
-for script in init start stop restart download cleanup status check-vpn update-images setup-auto-update start_no_vpn prepare-release.sh; do
+for script in scripts/setup/init scripts/service/start scripts/service/stop scripts/service/restart scripts/service/download scripts/service/cleanup scripts/service/status scripts/service/check-vpn scripts/service/update-images scripts/lifecycle/setup-auto-update scripts/service/start_no_vpn scripts/lifecycle/prepare-release.sh; do
     if [ -f "$script" ]; then
         if bash -n "$script" 2>/dev/null; then
             pass "$script syntax OK"
@@ -33,7 +33,7 @@ for script in init start stop restart download cleanup status check-vpn update-i
     fi
 done
 
-for script in tests/*.sh scripts/*.sh; do
+for script in tests/*.sh; do
     if [ -f "$script" ]; then
         if bash -n "$script" 2>/dev/null; then
             pass "$(basename "$script") syntax OK"
@@ -43,7 +43,16 @@ for script in tests/*.sh scripts/*.sh; do
     fi
 done
 
-# ── Gate 1: Python syntax ────────────────────────────────────────────
+# Find all shell scripts in scripts directory and subdirectories
+while IFS= read -r -d $'\0' script; do
+    if [ -f "$script" ]; then
+        if bash -n "$script" 2>/dev/null; then
+            pass "$(basename "$script") syntax OK"
+        else
+            fail "$(basename "$script") has syntax errors"
+        fi
+    fi
+done < <(find scripts -type f -name "*.sh" -print0)
 info "Gate 1: Python syntax"
 if python3 -m py_compile landing/app.py 2>/dev/null; then
     pass "landing/app.py syntax OK"
@@ -88,7 +97,7 @@ if [ -d dashboard/node_modules ]; then
         fail "Dashboard build failed"
     fi
 else
-    log_warn "Dashboard node_modules missing — skipping build check"
+    info "Dashboard node_modules missing — skipping build check"
 fi
 
 # ── Gate 4: Smoke tests (if containers running) ──────────────────────

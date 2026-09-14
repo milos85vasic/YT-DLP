@@ -1,7 +1,7 @@
 # YT-DLP Project — Convenience Makefile
 # Use this for common development tasks instead of memorizing script names.
 
-.PHONY: help init start stop restart status smoke audit dev-check build test ci
+.PHONY: help init start stop restart status smoke audit dev-check build test ci validate chaos
 
 help:
 	@echo "YT-DLP Development Commands"
@@ -17,20 +17,22 @@ help:
 	@echo "  make build       - Build dashboard container image"
 	@echo "  make test        - Run full test suite"
 	@echo "  make ci          - Run CI-level validation (compose, build, tests)"
+	@echo "  make validate    - Validate API contract"
+	@echo "  make chaos       - Run chaos tests"
 
 init:
-	./init
+	./scripts/setup/init
 
 start:
-	./start_no_vpn
+	./scripts/service/start_no_vpn
 
 stop:
-	./stop
+	./scripts/service/stop
 
 restart: stop start
 
 status:
-	./status
+	./scripts/service/status
 
 smoke:
 	./scripts/smoke-test.sh
@@ -56,7 +58,7 @@ chaos:
 ci:
 	@echo "=== CI Validation ==="
 	@echo "1. Shell syntax..."
-	@bash -n init && bash -n start && bash -n stop && bash -n start_no_vpn
+	@bash -n scripts/setup/init && bash -n scripts/service/start && bash -n scripts/service/stop && bash -n scripts/service/start_no_vpn
 	@echo "2. Docker Compose..."
 	@docker compose config > /dev/null 2>&1 || docker-compose config > /dev/null 2>&1 || podman-compose config > /dev/null 2>&1
 	@echo "3. Dashboard build..."

@@ -1,0 +1,31 @@
+[Unit]
+Description=Metube web UI
+After=network-online.target openvpn-yt-dlp.service
+Wants=network-online.target
+After=openvpn-yt-dlp.service
+Requires=openvpn-yt-dlp.service
+
+[Service]
+Type=simple
+ExecStartPre=/usr/bin/podman pull ghcr.io/alexta69/metube:latest
+ExecStart=/usr/bin/podman run --rm \
+    --name metube \
+    --network=container:openvpn-yt-dlp \
+    -e UID={{PUID}} \
+    -e GID={{PGID}} \
+    -e DOWNLOAD_DIR=/downloads \
+    -e STATE_DIR=/config \
+    -e DELETE_FILE_ON_TRASHCAN=false \
+    -e DEFAULT_THEME=dark \
+    -e OUTPUT_TEMPLATE=%(title)s.%(ext)s \
+    -e YTDL_OPTIONS={"writesubtitles":true,"subtitleslangs":["en","es","fr"],"postprocessors":[{"key":"FFmpegEmbedSubtitle","already_have_subtitle":false}],"format":"bestvideo[height<=?1080]+bestaudio/best","http_headers":{"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}} \
+    -v "{{DOWNLOAD_DIR}}:/downloads" \
+    -v "{{PROJECT_DIR}}/metube/config:/config" \
+    ghcr.io/alexta69/metube:latest
+ExecStop=/usr/bin/podman stop metube
+Restart=unless-stopped
+TimeoutStartSec=300
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target

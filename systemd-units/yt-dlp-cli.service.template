@@ -1,0 +1,27 @@
+[Unit]
+Description=YT-DLP CLI container
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStartPre=/usr/bin/podman pull ghcr.io/jim60105/yt-dlp:pot
+ExecStart=/usr/bin/podman run --rm \
+    --name yt-dlp-cli \
+    -e PUID={{PUID}} \
+    -e PGID={{PGID}} \
+    -e TZ=Europe/Moscow \
+    -v "{{PROJECT_DIR}}/yt-dlp/config:/config:rw" \
+    -v "{{DOWNLOAD_DIR}}:/downloads:rw" \
+    -v "{{PROJECT_DIR}}/yt-dlp/cookies:/cookies:rw" \
+    -v "{{PROJECT_DIR}}/yt-dlp/archive:/archive:rw" \
+    -v "{{PROJECT_DIR}}/metube/config:/metube-cookies:ro" \
+    ghcr.io/jim60105/yt-dlp:pot \
+    /bin/sh -c "yt-dlp --update-to nightly 2>/dev/null || true; cp /metube-cookies/cookies.txt /tmp/metube-cookies.txt 2>/dev/null || true; while true; do sleep 3600; done"
+ExecStop=/usr/bin/podman stop yt-dlp-cli
+Restart=unless-stopped
+TimeoutStartSec=300
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target

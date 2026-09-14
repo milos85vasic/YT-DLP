@@ -1,0 +1,25 @@
+[Unit]
+Description=Media postprocessor
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Build image if needed
+ExecStartPre=/bin/sh -c 'if ! podman images -q localhost/media-postprocessor:latest >/dev/null 2>&1; then cd "{{PROJECT_DIR}}/media_postprocessor" && podman build -t localhost/media-postprocessor .; fi'
+ExecStart=/usr/bin/podman run --rm \
+    --name media-postprocessor \
+    -e DOWNLOAD_DIR=/downloads \
+    -e MP_DB_PATH=/downloads/.media_postprocessor/jobs.db \
+    -e MP_PORT=8089 \
+    -e MP_MAX_CONCURRENCY=2 \
+    -e TZ=Europe/Moscow \
+    -v "{{DOWNLOAD_DIR}}:/downloads:rw" \
+    localhost/media-postprocessor:latest
+ExecStop=/usr/bin/podman stop media-postprocessor
+Restart=unless-stopped
+TimeoutStartSec=300
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target

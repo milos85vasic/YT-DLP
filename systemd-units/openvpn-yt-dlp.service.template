@@ -1,0 +1,25 @@
+[Unit]
+Description=OpenVPN client for yt-dlp
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStartPre=/usr/bin/podman pull dperson/openvpn-client:latest
+ExecStart=/usr/bin/podman run --rm \
+    --name openvpn-yt-dlp \
+    --cap-add=NET_ADMIN \
+    --device=/dev/net/tun \
+    -v "{{VPN_OVPN_PATH}}:/vpn/credentials.ovpn:ro" \
+    -v "{{PROJECT_DIR}}/vpn-auth.txt:/vpn/vpn.auth:ro" \
+    -p 3130:3129/tcp \
+    -e TZ={{TZ}} \
+    --security-opt label=disable \
+    dperson/openvpn-client:latest
+ExecStop=/usr/bin/podman stop openvpn-yt-dlp
+Restart=unless-stopped
+TimeoutStartSec=300
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target

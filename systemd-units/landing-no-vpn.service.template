@@ -1,0 +1,29 @@
+[Unit]
+Description=Landing page (no VPN)
+After=network-online.target metube-direct.service
+Wants=network-online.target
+After=metube-direct.service
+Requires=metube-direct.service
+
+[Service]
+Type=simple
+# Build image if needed
+ExecStartPre=/bin/sh -c 'if ! podman images -q localhost/landing:latest >/dev/null 2>&1; then cd "{{PROJECT_DIR}}/landing" && podman build -t localhost/landing .; fi'
+ExecStart=/usr/bin/podman run --rm \
+    --name metube-landing \
+    -p 8086:8080/tcp \
+    -e METUBE_URL=http://metube-direct:8081 \
+    -e PROXY_PORT=8080 \
+    -e DASHBOARD_PORT=9090 \
+    -e DOWNLOAD_DIR=/downloads \
+    -e ACTIVE_PROFILE=no-vpn \
+    -v "{{DOWNLOAD_DIR}}:/downloads:rw" \
+    -v "{{PROJECT_DIR}}/metube/config:/config:rw" \
+    localhost/landing:latest
+ExecStop=/usr/bin/podman stop metube-landing
+Restart=unless-stopped
+TimeoutStartSec=300
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target

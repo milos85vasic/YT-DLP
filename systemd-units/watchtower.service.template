@@ -1,0 +1,24 @@
+[Unit]
+Description=Watchtower container auto-updater
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStartPre=/usr/bin/podman pull containrrr/watchtower:latest
+ExecStart=/usr/bin/podman run --rm \
+    --name watchtower \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -e WATCHTOWER_CLEANUP=true \
+    -e WATCHTOWER_INCLUDE_RESTARTING=false \
+    -e WATCHTOWER_NO_STARTUP_CHECK=true \
+    -e WATCHTOWER_SCHEDULE=0 0 */3 * * * \
+    -e DOCKER_API_VERSION=1.44 \
+    containrrr/watchtower:latest
+ExecStop=/usr/bin/podman stop watchtower
+Restart=unless-stopped
+TimeoutStartSec=300
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target

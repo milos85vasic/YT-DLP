@@ -38,15 +38,15 @@ Run [yt-dlp](https://github.com/yt-dlp/yt-dlp) inside a container with optional 
 git clone --recursive https://github.com/milos85vasic/YT-DLP.git
 cd YT-DLP
 # Already cloned without --recursive? Run: git submodule update --init --recursive
-# (./init also self-heals this automatically.)
+# (./scripts/setup/init also self-heals this automatically.)
 
 # 2. Copy and edit configuration
 cp .env.example .env
 # Edit .env with your settings
 
 # 3. Initialize and start
-./init
-./start
+./scripts/setup/init
+./scripts/service/start
 
 # 4. Access the web interface
 # Open http://localhost:9090 for the Angular Dashboard
@@ -76,7 +76,7 @@ cp .env.example .env
    > This repo uses git submodules (`constitution/` — the Helix Universal
    > Constitution this project inherits — and `Challenges/`). The `--recursive`
    > flag populates them on clone. If you already cloned without it, run
-   > `git submodule update --init --recursive`. `./init` also self-heals this.
+   > `git submodule update --init --recursive`. `./scripts/setup/init` also self-heals this.
 
 2. **Create configuration:**
    ```bash
@@ -97,13 +97,13 @@ cp .env.example .env
 
 4. **Initialize the environment:**
    ```bash
-   ./init
+   ./scripts/setup/init
    ```
    This creates necessary directories and validates your configuration.
 
 5. **Start the services:**
    ```bash
-   ./start
+   ./scripts/service/start
    ```
 
 ## Configuration
@@ -150,19 +150,19 @@ TZ=America/New_York
 
 | Script | Description |
 |--------|-------------|
-| `./init` | Initialize environment, validate config |
-| `./start` | Start services (uses VPN setting from `.env`) |
-| `./start_no_vpn` | Start services without VPN |
-| `./stop` | Stop all services |
-| `./restart` | Stop and restart services |
-| `./update-images` | Pull latest container images |
-| `./setup-auto-update` | Setup automatic updates (Podman cron) |
-| `./status` | Show service status and container info |
-| `./check-vpn` | Verify VPN connection status |
-| `./cleanup [all\|ytdlp\|jdownloader]` | Remove containers |
-| `./download <URL>` | Download a video |
-| `./download --batch` | Download from `urls.txt` |
-| `./download --channels` | Download from `channels.txt` |
+| `./scripts/setup/init` | Initialize environment, validate config |
+| `./scripts/service/start` | Start services (uses VPN setting from `.env`) |
+| `./scripts/service/start_no_vpn` | Start services without VPN |
+| `./scripts/service/stop` | Stop all services |
+| `./scripts/service/restart` | Stop and restart services |
+| `./scripts/service/update-images` | Pull latest container images |
+| `./scripts/lifecycle/setup-auto-update` | Setup automatic updates (Podman cron) |
+| `./scripts/service/status` | Show service status and container info |
+| `./scripts/service/check-vpn` | Verify VPN connection status |
+| `./scripts/service/cleanup [all\|ytdlp\|jdownloader]` | Remove containers |
+| `./scripts/service/download <URL>` | Download a video |
+| `./scripts/service/download --batch` | Download from `urls.txt` |
+| `./scripts/service/download --channels` | Download from `channels.txt` |
 
 ### Web Interface (Metube)
 
@@ -220,13 +220,13 @@ The Landing Page handles cookie authentication and redirects to MeTube when read
 
 **Download a single video:**
 ```bash
-./download 'https://www.youtube.com/watch?v=VIDEO_ID'
+./scripts/service/download 'https://www.youtube.com/watch?v=VIDEO_ID'
 ```
 
 **Download with options:**
 ```bash
 # With Podman (auto-detected)
-./download 'URL' -f 'bestvideo[height<=720]+bestaudio'
+./scripts/service/download 'URL' -f 'bestvideo[height<=720]+bestaudio'
 
 # Or directly with container runtime
 podman exec yt-dlp-cli yt-dlp 'URL'
@@ -240,7 +240,7 @@ echo 'https://youtube.com/watch?v=VIDEO1' >> ./yt-dlp/config/urls.txt
 echo 'https://youtube.com/watch?v=VIDEO2' >> ./yt-dlp/config/urls.txt
 
 # Download all
-./download --batch
+./scripts/service/download --batch
 ```
 
 **Channel subscriptions:**
@@ -249,7 +249,7 @@ echo 'https://youtube.com/watch?v=VIDEO2' >> ./yt-dlp/config/urls.txt
 echo 'https://youtube.com/c/ChannelName' >> ./yt-dlp/config/channels.txt
 
 # Download recent videos (last 7 days)
-./download --channels
+./scripts/service/download --channels
 ```
 
 ### Viewing Logs
@@ -275,7 +275,7 @@ This project automatically detects and uses the available container runtime:
 podman --version
 
 # The scripts will automatically use Podman if available
-./start  # Uses Podman by default
+./scripts/service/start  # Uses Podman by default
 ```
 
 Benefits of Podman:
@@ -291,7 +291,7 @@ Benefits of Podman:
 docker --version
 
 # If Podman is not installed, scripts will use Docker
-./start  # Uses Docker if Podman unavailable
+./scripts/service/start  # Uses Docker if Podman unavailable
 ```
 
 ### Forcing a Runtime
@@ -351,18 +351,18 @@ Any OpenVPN-compatible provider should work. Tested with:
 
 4. **Initialize:**
    ```bash
-   ./init
+   ./scripts/setup/init
    # This creates vpn-auth.txt from your credentials
    ```
 
 5. **Start with VPN:**
    ```bash
-   ./start
+   ./scripts/service/start
    ```
 
 6. **Verify connection:**
    ```bash
-   ./check-vpn
+   ./scripts/service/check-vpn
    ```
 
 ### VPN Authentication
@@ -383,8 +383,8 @@ All container images are automatically kept up-to-date through two mechanisms:
 Whenever you start the services, the latest images are pulled automatically:
 
 ```bash
-./start         # Pulls latest images before starting
-./start_no_vpn  # Also pulls latest images
+./scripts/service/start         # Pulls latest images before starting
+./scripts/service/start_no_vpn  # Also pulls latest images
 ```
 
 ### 2. Periodic Background Updates (Every 3-4 Hours)
@@ -397,7 +397,7 @@ Since Watchtower requires Docker socket access, Podman users should set up a cro
 
 ```bash
 # Setup automatic updates
-./setup-auto-update
+./scripts/lifecycle/setup-auto-update
 
 # This creates a cron job that runs every 3 hours
 # Logs are saved to ./logs/update.log
@@ -408,13 +408,13 @@ Since Watchtower requires Docker socket access, Podman users should set up a cro
 To manually check for and pull updates:
 
 ```bash
-./update-images
+./scripts/service/update-images
 ```
 
 Or specify the runtime:
 
 ```bash
-CONTAINER_RUNTIME=docker ./update-images
+CONTAINER_RUNTIME=docker ./scripts/service/update-images
 ```
 
 ### Updated Images
@@ -461,7 +461,7 @@ Alternatively, to access age-restricted or subscriber-only content:
 
 1. **Export cookies** from your browser using an extension
 2. **Place cookies file** at `./yt-dlp/cookies/youtube_cookies.txt`
-3. Restart: `./stop && ./start`
+3. Restart: `./scripts/service/stop && ./scripts/service/start`
 
 **Cookie Helper Scripts:**
 ```bash
@@ -493,7 +493,7 @@ This project is designed to work alongside [JDownloader](https://github.com/milo
 To use together:
 ```bash
 # Start both services
-./start                    # Starts YT-DLP
+./scripts/service/start                    # Starts YT-DLP
 # (Start JDownloader separately in its directory)
 ```
 
@@ -579,7 +579,7 @@ docker --version
 
 ```bash
 # Check VPN status
-./check-vpn
+./scripts/service/check-vpn
 
 # View VPN logs
 podman-compose logs -f openvpn-yt-dlp
@@ -627,7 +627,7 @@ This is caused by YouTube's bot detection. YouTube requires cookies from a brows
 # 1. Install "Get cookies.txt LOCALLY" extension for Firefox/Chrome
 # 2. Go to youtube.com (logged in)
 # 3. Export cookies as youtube_cookies.txt in ./yt-dlp/cookies/
-# 4. Restart: ./stop && ./start_no_vpn
+# 4. Restart: ./scripts/service/stop && ./scripts/service/start_no_vpn
 ```
 
 **Detailed instructions:** See [docs/YOUTUBE_DOWNLOAD_FIX.md](docs/YOUTUBE_DOWNLOAD_FIX.md)

@@ -1,0 +1,34 @@
+# Progress tracking for User Account Services feature
+current_phase: 7
+completed_phases:
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+phase_4_tasks_completed:
+  - "Create systemd user service unit files for all services (metube, yt-dlp-cli, landing, dashboard, openvpn, watchtower)"
+  - "Develop setup script that installs and configures services for systemd --user"
+  - "Develop start script that starts all services using systemctl --user"
+  - "Develop stop script that stops all services using systemctl --user"
+  - "Develop status script that queries status of all services using systemctl --user"
+  - "Develop restart script that restarts all services using systemctl --user"
+  - "Ensure services can be started, stopped, queried for status, and restarted using systemctl --user commands"
+  - "Implement proper error handling and logging in service management scripts"
+  - "Verify that services persist appropriately across user sessions and reboots"
+phase_5_tasks_completed:
+  - "Develop installation script that prepares the environment and installs dependencies"
+  - "Create boot script that starts all services and verifies they are running"
+  - "Implement testing script that performs exhaustive live testing with deterministic validation"
+  - "Develop release script that tags new version using GitHub/GitLab CLIs and generates changelogs"
+  - "Ensure the release script mirrors version tags to all owned submodules"
+  - "Ensure services survive system reboots and automatically restart"
+  - "Verify that the install-boot-test-release cycle completes successfully"
+phase_6_tasks_completed:
+  - "Verify that all executable scripts reside in the scripts directory, none in the project root"
+  - "Update all documentation to reflect the new script locations"
+  - "Ensure user guides and manuals are complete, accurate, and up-to-date with current functionality"
+  - "Create or update user guides and manuals to cover all current functionality"
+  - "Verify documentation completeness and accuracy through review"
+last_updated: "2026-09-14T01:30:00+02:00"

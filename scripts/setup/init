@@ -9,6 +9,9 @@ set -e
 # Script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Source file ownership utility
+source "$SCRIPT_DIR/../utils/file-ownership.sh"
+
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -501,8 +504,20 @@ else
     echo -e "${YELLOW}WARNING: Running without VPN - your downloads are not protected!${NC}"
 fi
 
+# Fix ownership of created files and directories
+echo -e "${BLUE}Fixing file ownership to UID=$PUID GID=$PGID...${NC}"
+enforce_file_ownership "$SCRIPT_DIR/vpn-auth.txt"
+enforce_file_ownership "$SCRIPT_DIR/yt-dlp/config"
+enforce_file_ownership "$SCRIPT_DIR/yt-dlp/cookies"
+enforce_file_ownership "$SCRIPT_DIR/yt-dlp/archive"
+enforce_file_ownership "$SCRIPT_DIR/metube/config"
+enforce_file_ownership "$SCRIPT_DIR/yt-dlp/config/yt-dlp.conf"
+if [ -n "${DOWNLOAD_DIR:-}" ] && [ -d "$DOWNLOAD_DIR" ]; then
+    enforce_file_ownership "$DOWNLOAD_DIR"
+fi
+
 echo ""
 echo -e "${GREEN}Next steps:${NC}"
-echo "  1. Start services: ./start"
-echo "  2. Check status:   ./status"
-echo "  3. Download video: ./download 'VIDEO_URL'"
+echo "  1. Start services: ./scripts/service/start"
+echo "  2. Check status:   ./scripts/service/status"
+echo "  3. Download video: ./scripts/service/download 'VIDEO_URL'"

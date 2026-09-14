@@ -16,6 +16,9 @@ NC='\033[0m'
 # Script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Source file ownership utility
+source "$SCRIPT_DIR/../utils/file-ownership.sh"
+
 # =============================================================================
 # Container Runtime Detection
 # =============================================================================
@@ -77,19 +80,19 @@ fi
 # and usually fresher than the metube upload)
 # =============================================================================
 
-if [ -f "$SCRIPT_DIR/yt-dlp/cookies/cookies.txt" ] && grep -qE "youtube\.com|youtu\.be" "$SCRIPT_DIR/yt-dlp/cookies/cookies.txt" 2>/dev/null; then
+if [ -f "$SCRIPT_DIR/../../yt-dlp/cookies/cookies.txt" ] && grep -qE "youtube\.com|youtu\.be" "$SCRIPT_DIR/../../yt-dlp/cookies/cookies.txt" 2>/dev/null; then
     echo -e "${GREEN}✓ Fresh YouTube cookies found in yt-dlp/cookies/cookies.txt — syncing to metube${NC}"
-    cp -f "$SCRIPT_DIR/yt-dlp/cookies/cookies.txt" "$SCRIPT_DIR/metube/config/cookies.txt"
-    chmod 644 "$SCRIPT_DIR/metube/config/cookies.txt"
-elif [ -f "$SCRIPT_DIR/metube/config/cookies.txt" ]; then
+    cp -f "$SCRIPT_DIR/../../yt-dlp/cookies/cookies.txt" "$SCRIPT_DIR/../../metube/config/cookies.txt"
+    chmod 644 "$SCRIPT_DIR/../../metube/config/cookies.txt"
+elif [ -f "$SCRIPT_DIR/../../metube/config/cookies.txt" ]; then
     if [ "${YOUTUBE_COOKIES:-}" = "false" ]; then
         echo -e "${YELLOW}⚠ YOUTUBE_COOKIES=false — removing metube/config/cookies.txt${NC}"
-        rm -f "$SCRIPT_DIR/metube/config/cookies.txt"
-    elif grep -qE "youtube\.com|youtu\.be" "$SCRIPT_DIR/metube/config/cookies.txt" 2>/dev/null; then
+        rm -f "$SCRIPT_DIR/../../metube/config/cookies.txt"
+    elif grep -qE "youtube\.com|youtu\.be" "$SCRIPT_DIR/../../metube/config/cookies.txt" 2>/dev/null; then
         echo -e "${GREEN}✓ YouTube cookies found in metube/config/cookies.txt — keeping${NC}"
     else
         echo -e "${YELLOW}⚠ Removing stale cookies file (no YouTube domains found)${NC}"
-        rm -f "$SCRIPT_DIR/metube/config/cookies.txt"
+        rm -f "$SCRIPT_DIR/../../metube/config/cookies.txt"
     fi
 fi
 
@@ -102,7 +105,7 @@ echo -e "${BLUE}       Initializing Environment${NC}"
 echo -e "${BLUE}============================================${NC}"
 echo ""
 
-"$SCRIPT_DIR/init"
+"$SCRIPT_DIR/../../setup/init"
 
 # =============================================================================
 # Update Images
@@ -169,23 +172,22 @@ for container in metube metube-direct; do
 done
 
 # Sync fresh cookies from yt-dlp to metube if available
-if [ -f "$SCRIPT_DIR/yt-dlp/cookies/cookies.txt" ]; then
+if [ -f "$SCRIPT_DIR/../../yt-dlp/cookies/cookies.txt" ]; then
     for container in metube metube-direct; do
         if $CONTAINER_RUNTIME ps --format "{{.Names}}" | grep -q "^${container}$"; then
             echo -e "${BLUE}Syncing cookies to $container...${NC}"
-            $CONTAINER_RUNTIME cp "$SCRIPT_DIR/yt-dlp/cookies/cookies.txt" "$container:/config/cookies.txt" 2>/dev/null || true
+            $CONTAINER_RUNTIME cp "$SCRIPT_DIR/../../yt-dlp/cookies/cookies.txt" "$container:/config/cookies.txt" 2>/dev/null || true
         fi
     done
 fi
 
 # Fix ownership of existing files so everything belongs to the host user
-HOST_UID=$(id -u)
-HOST_GID=$(id -g)
+# Fix ownership of created files and directories
 echo -e "${BLUE}Fixing file ownership to UID=$HOST_UID GID=$HOST_GID...${NC}"
-chown -R "$HOST_UID:$HOST_GID" "$SCRIPT_DIR/metube/config" 2>/dev/null || true
-chown -R "$HOST_UID:$HOST_GID" "$SCRIPT_DIR/yt-dlp" 2>/dev/null || true
+enforce_file_ownership "$SCRIPT_DIR/../metube/config"
+enforce_file_ownership "$SCRIPT_DIR/../yt-dlp"
 if [ -n "${DOWNLOAD_DIR:-}" ] && [ -d "$DOWNLOAD_DIR" ]; then
-    chown -R "$HOST_UID:$HOST_GID" "$DOWNLOAD_DIR" 2>/dev/null || true
+    enforce_file_ownership "$DOWNLOAD_DIR"
 fi
 
 echo ""

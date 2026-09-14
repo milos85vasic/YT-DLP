@@ -18,6 +18,9 @@ NC='\033[0m'
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$SCRIPT_DIR"
 
+# Source file ownership utility
+source "$SCRIPT_DIR/../utils/file-ownership.sh"
+
 # =============================================================================
 # Main
 # =============================================================================
@@ -50,7 +53,7 @@ if ! command -v crontab &> /dev/null; then
 fi
 
 # Create the cron job command
-CRON_JOB="0 */3 * * * cd $PROJECT_DIR && ./update-images >> ./logs/update.log 2>&1"
+CRON_JOB="0 */3 * * * cd $PROJECT_DIR CRON_JOB="0 */3 * * * cd $PROJECT_DIR && ./update-images >> ./logs/update.log 2>&1"CRON_JOB="0 */3 * * * cd $PROJECT_DIR && ./update-images >> ./logs/update.log 2>&1" ./scripts/service/update-images >> ./logs/update.log 2>CRON_JOB="0 */3 * * * cd $PROJECT_DIR && ./update-images >> ./logs/update.log 2>&1"1"
 
 echo -e "${BLUE}The following cron job will be added:${NC}"
 echo "  $CRON_JOB"
@@ -62,7 +65,8 @@ echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     # Create logs directory
     mkdir -p "$PROJECT_DIR/logs"
-    
+    enforce_file_ownership "$PROJECT_DIR/logs"
+
     # Check if cron job already exists
     if crontab -l 2>/dev/null | grep -q "update-images"; then
         echo -e "${YELLOW}Cron job already exists. Updating...${NC}"
