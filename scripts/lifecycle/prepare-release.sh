@@ -10,7 +10,7 @@ echo "============================================"
 echo ""
 
 # Check if we're in the right directory
-if [ ! -f "README.md" ] || [ ! -d "tests" ]; then
+if [ ! -f "docs/user-guides/README.md" ] || [ ! -d "tests" ]; then
     echo "ERROR: Please run this script from the project root directory"
     exit 1
 fi
@@ -62,7 +62,7 @@ Major Enhancements:
   * Watchtower for Docker (3-hour intervals)
   * Cron job option for Podman users
 - Create comprehensive documentation
-  * USER_GUIDE.md - Complete user manual
+  * docs/user-guides/USER_GUIDE.md - Complete user manual
   * TEST_RESULTS.md - Detailed test report
   * READY_FOR_TESTING.md - Release checklist
   * Enhanced README with testing section
