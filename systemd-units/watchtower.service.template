@@ -16,7 +16,7 @@ ExecStart=/usr/bin/podman run --rm \
     -e DOCKER_API_VERSION=1.44 \
     containrrr/watchtower:latest
 ExecStop=/usr/bin/podman stop watchtower
-Restart=unless-stopped
+Restart=on-failure
 TimeoutStartSec=300
 TimeoutStopSec=30
 

@@ -504,16 +504,47 @@ else
     echo -e "${YELLOW}WARNING: Running without VPN - your downloads are not protected!${NC}"
 fi
 
-# Fix ownership of created files and directories
+# Fix ownership of created files and directories.
+# PROJECT_ROOT (not SCRIPT_DIR, which is scripts/setup/) is where these
+# actually live — they're created via paths relative to the project root,
+# since this script is invoked as ./scripts/setup/init from the repo root.
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 echo -e "${BLUE}Fixing file ownership to UID=$PUID GID=$PGID...${NC}"
-enforce_file_ownership "$SCRIPT_DIR/vpn-auth.txt"
-enforce_file_ownership "$SCRIPT_DIR/yt-dlp/config"
-enforce_file_ownership "$SCRIPT_DIR/yt-dlp/cookies"
-enforce_file_ownership "$SCRIPT_DIR/yt-dlp/archive"
-enforce_file_ownership "$SCRIPT_DIR/metube/config"
-enforce_file_ownership "$SCRIPT_DIR/yt-dlp/config/yt-dlp.conf"
+
+# Same rationale as the DOWNLOAD_DIR handling above: under rootless podman
+# these paths get written to by containers running as a user-namespace-
+# remapped subuid (>=100000) once a service has started. A plain host-level
+# chown cannot touch subuid-owned files (EPERM) — that is expected and
+# correct, not a failure; only a genuinely host-owned-but-chown-failing
+# target is an error.
+enforce_or_tolerate_subuid_ownership() {
+    local target="$1"
+    [ -e "$target" ] || return 0
+    if enforce_file_ownership "$target" 2>/dev/null; then
+        return 0
+    fi
+    local owner_uid
+    owner_uid="$(stat -c %u "$target" 2>/dev/null || stat -f %u "$target" 2>/dev/null || echo 0)"
+    if [ "${owner_uid:-0}" -ge 100000 ]; then
+        echo -e "${YELLOW}NOTE: $target is owned by a rootless-podman subuid (${owner_uid}); containers write here, host user cannot — OK.${NC}"
+        return 0
+    fi
+    echo -e "${RED}ERROR: failed to set ownership of $target${NC}"
+    return 1
+}
+
+# vpn-auth.txt only exists when USE_VPN=true created it above; enforcing
+# ownership on it unconditionally would abort a no-VPN install.
+if [ -f "$PROJECT_ROOT/vpn-auth.txt" ]; then
+    enforce_or_tolerate_subuid_ownership "$PROJECT_ROOT/vpn-auth.txt"
+fi
+enforce_or_tolerate_subuid_ownership "$PROJECT_ROOT/yt-dlp/config"
+enforce_or_tolerate_subuid_ownership "$PROJECT_ROOT/yt-dlp/cookies"
+enforce_or_tolerate_subuid_ownership "$PROJECT_ROOT/yt-dlp/archive"
+enforce_or_tolerate_subuid_ownership "$PROJECT_ROOT/metube/config"
+enforce_or_tolerate_subuid_ownership "$PROJECT_ROOT/yt-dlp/config/yt-dlp.conf"
 if [ -n "${DOWNLOAD_DIR:-}" ] && [ -d "$DOWNLOAD_DIR" ]; then
-    enforce_file_ownership "$DOWNLOAD_DIR"
+    enforce_or_tolerate_subuid_ownership "$DOWNLOAD_DIR"
 fi
 
 echo ""

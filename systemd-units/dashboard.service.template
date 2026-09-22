@@ -8,14 +8,14 @@ Requires=metube-direct.service
 [Service]
 Type=simple
 # Build image if needed
-ExecStartPre=/bin/sh -c 'if ! podman images -q localhost/dashboard:latest >/dev/null 2>&1; then cd "{{PROJECT_DIR}}/dashboard" && podman build -t localhost/dashboard .; fi'
+ExecStartPre=/bin/sh -c 'if [ -z "$(podman images -q localhost/dashboard:latest 2>/dev/null)" ]; then cd "{{PROJECT_DIR}}/dashboard" && podman build -t localhost/dashboard .; fi'
 ExecStart=/usr/bin/podman run --rm \
     --name yt-dlp-dashboard \
     -p 9090:8080/tcp \
     -e NGINX_ENVSUBST_OUTPUT_DIR=/etc/nginx/conf.d \
     localhost/dashboard:latest
 ExecStop=/usr/bin/podman stop yt-dlp-dashboard
-Restart=unless-stopped
+Restart=on-failure
 TimeoutStartSec=300
 TimeoutStopSec=30
 

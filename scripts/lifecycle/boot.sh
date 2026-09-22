@@ -135,11 +135,18 @@ log_info "Running additional health checks..."
 
 HEALTH_FAILED=0
 
+# Detect a LAN-facing IPv4 address so we can prove local-network reachability,
+# not just loopback. Falls back gracefully if neither method is available.
+LAN_IP="$(ip -4 route get 1.1.1.1 2>/dev/null | awk '{for(i=1;i<=NF;i++) if ($i=="src") print $(i+1)}')"
+if [ -z "$LAN_IP" ]; then
+    LAN_IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
+fi
+
 # Check if we can reach the web interfaces
 if [ "$USE_SYSTEMD" = "true" ]; then
     # Systemd mode - check systemd status
     log_info "Checking systemd service status..."
-    
+
     if [ "${USE_VPN:-false}" = "true" ]; then
         SERVICES_TO_CHECK=(
             "openvpn-yt-dlp.service"
@@ -157,11 +164,11 @@ if [ "$USE_SYSTEMD" = "true" ]; then
             "yt-dlp-cli.service"
         )
     fi
-    
+
     if [ "$CONTAINER_RUNTIME" = "docker" ]; then
         SERVICES_TO_CHECK+=("watchtower.service")
     fi
-    
+
     for service in "${SERVICES_TO_CHECK[@]}"; do
         if systemctl --user list-unit-files | grep -q "^${service}"; then
             SUBSTATE=$(systemctl --user show "$service" --property=SubState --value 2>/dev/null)
@@ -171,6 +178,49 @@ if [ "$USE_SYSTEMD" = "true" ]; then
                 log_error "$service is not running (state: $SUBSTATE)"
                 HEALTH_FAILED=$((HEALTH_FAILED + 1))
             fi
+        fi
+    done
+
+    # Real HTTP reachability check — a "running" container does not prove the
+    # app inside is actually serving, and does not prove it is reachable from
+    # other machines on the LAN, not just loopback.
+    echo ""
+    log_info "Checking HTTP reachability (loopback + LAN)..."
+
+    declare -A HTTP_PORTS
+    if [ "${USE_VPN:-false}" = "true" ]; then
+        HTTP_PORTS=(
+            ["landing-vpn"]="${LANDING_PAGE_VPN_PORT:-8087}"
+        )
+    else
+        HTTP_PORTS=(
+            ["metube-direct"]="${METUBE_DIRECT_PORT:-8088}"
+            ["landing-no-vpn"]="${METUBE_PORT:-8086}"
+            ["dashboard"]="9090"
+        )
+    fi
+
+    for name in "${!HTTP_PORTS[@]}"; do
+        port="${HTTP_PORTS[$name]}"
+
+        loopback_code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "http://127.0.0.1:${port}/" 2>/dev/null || echo "000")"
+        if [ "$loopback_code" = "200" ] || [ "$loopback_code" = "302" ]; then
+            log_success "$name reachable on 127.0.0.1:$port (HTTP $loopback_code)"
+        else
+            log_error "$name NOT reachable on 127.0.0.1:$port (HTTP $loopback_code)"
+            HEALTH_FAILED=$((HEALTH_FAILED + 1))
+        fi
+
+        if [ -n "$LAN_IP" ]; then
+            lan_code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "http://${LAN_IP}:${port}/" 2>/dev/null || echo "000")"
+            if [ "$lan_code" = "200" ] || [ "$lan_code" = "302" ]; then
+                log_success "$name reachable on LAN at ${LAN_IP}:$port (HTTP $lan_code)"
+            else
+                log_error "$name NOT reachable on LAN at ${LAN_IP}:$port (HTTP $lan_code)"
+                HEALTH_FAILED=$((HEALTH_FAILED + 1))
+            fi
+        else
+            log_warning "Could not determine a LAN IPv4 address to verify local-network reachability"
         fi
     done
 else
@@ -228,6 +278,21 @@ else
 fi
 echo -e "${BLUE}============================================${NC}"
 echo ""
+
+if [ "$USE_SYSTEMD" = "true" ] && [ "${USE_VPN:-false}" != "true" ]; then
+    echo -e "${CYAN}Access URLs (loopback):${NC}"
+    echo "  Dashboard:    http://127.0.0.1:9090"
+    echo "  Landing page: http://127.0.0.1:${METUBE_PORT:-8086}"
+    echo "  MeTube:       http://127.0.0.1:${METUBE_DIRECT_PORT:-8088}"
+    if [ -n "$LAN_IP" ]; then
+        echo ""
+        echo -e "${CYAN}Access URLs (local network):${NC}"
+        echo "  Dashboard:    http://${LAN_IP}:9090"
+        echo "  Landing page: http://${LAN_IP}:${METUBE_PORT:-8086}"
+        echo "  MeTube:       http://${LAN_IP}:${METUBE_DIRECT_PORT:-8088}"
+    fi
+    echo ""
+fi
 
 if [ $HEALTH_FAILED -gt 0 ]; then
     log_warning "$HEALTH_FAILED service(s) failed health checks"

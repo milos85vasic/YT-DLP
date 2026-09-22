@@ -6,7 +6,7 @@ Wants=network-online.target
 [Service]
 Type=simple
 # Build image if needed
-ExecStartPre=/bin/sh -c 'if ! podman images -q localhost/media-postprocessor:latest >/dev/null 2>&1; then cd "{{PROJECT_DIR}}/media_postprocessor" && podman build -t localhost/media-postprocessor .; fi'
+ExecStartPre=/bin/sh -c 'if [ -z "$(podman images -q localhost/media-postprocessor:latest 2>/dev/null)" ]; then cd "{{PROJECT_DIR}}/media_postprocessor" && podman build -t localhost/media-postprocessor .; fi'
 ExecStart=/usr/bin/podman run --rm \
     --name media-postprocessor \
     -e DOWNLOAD_DIR=/downloads \
@@ -17,7 +17,7 @@ ExecStart=/usr/bin/podman run --rm \
     -v "{{DOWNLOAD_DIR}}:/downloads:rw" \
     localhost/media-postprocessor:latest
 ExecStop=/usr/bin/podman stop media-postprocessor
-Restart=unless-stopped
+Restart=on-failure
 TimeoutStartSec=300
 TimeoutStopSec=30
 

@@ -96,15 +96,24 @@ TOTAL_COUNT=0
 for service in "${SERVICES[@]}"; do
     if systemctl --user list-unit-files | grep -q "^${service}"; then
         TOTAL_COUNT=$((TOTAL_COUNT + 1))
-        ENABLED=$(systemctl --user is-enabled "$service" 2>/dev/null || echo "disabled")
-        
+        # is-enabled exits non-zero for a "disabled" (not missing) unit, so it
+        # already prints the real state to stdout regardless of exit code —
+        # a trailing `|| echo "disabled"` would duplicate that output.
+        ENABLED=$(systemctl --user is-enabled "$service" 2>/dev/null)
+        [ -z "$ENABLED" ] && ENABLED="disabled"
+
         if [ "$ENABLED" = "enabled" ]; then
             log_success "$service is enabled"
             ENABLED_COUNT=$((ENABLED_COUNT + 1))
         else
             log_warning "$service is not enabled (status: $ENABLED)"
             log_info "  Enabling $service..."
-            systemctl --user enable "$service" 2>/dev/null && log_success "  Enabled" || log_warning "  Failed to enable"
+            if systemctl --user enable "$service" 2>/dev/null; then
+                log_success "  Enabled"
+                ENABLED_COUNT=$((ENABLED_COUNT + 1))
+            else
+                log_warning "  Failed to enable"
+            fi
         fi
     fi
 done

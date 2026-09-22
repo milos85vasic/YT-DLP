@@ -17,7 +17,7 @@ ExecStart=/usr/bin/podman run --rm \
     --security-opt label=disable \
     dperson/openvpn-client:latest
 ExecStop=/usr/bin/podman stop openvpn-yt-dlp
-Restart=unless-stopped
+Restart=on-failure
 TimeoutStartSec=300
 TimeoutStopSec=30
 

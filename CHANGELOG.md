@@ -3,6 +3,73 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [ytdlp-1.4.1] — 2026-09-22
+
+### Fixed — systemd --user integration bugs found by live boot testing
+- All ten `systemd-units/*.service.template` files had a `Restart=unless-stopped`
+  value, which is a Docker Compose restart-policy string that systemd's
+  `Restart=` directive does not recognize (systemd only accepts
+  no/always/on-success/on-failure/on-abnormal/on-watchdog/on-abort) — systemd
+  silently ignored it, so units never auto-restarted on crash. Changed to
+  `Restart=on-failure` everywhere.
+- `metube-direct.service.template` and `metube.service.template` inlined the
+  `YTDL_OPTIONS` JSON value unquoted into `ExecStart=`; the JSON's User-Agent
+  string contains spaces, which systemd's ExecStart word-splitting corrupted
+  before it reached the container (runtime error: `Environment variable
+  YTDL_OPTIONS is invalid`). Moved the JSON to a properly single-quoted
+  `Environment=` line instead.
+- `dashboard.service.template`, `landing-no-vpn.service.template`,
+  `landing-vpn.service.template`, and `media-postprocessor.service.template`
+  had a broken "build image if missing" `ExecStartPre` check that tested
+  `podman images -q IMAGE`'s exit code (always 0) instead of its output, so
+  the build step never ran and `podman run` tried (and failed) to pull
+  `localhost/...` from a nonexistent registry. Fixed the test to check for
+  empty output.
+- `yt-dlp-cli.service.template` and `yt-dlp-cli-vpn.service.template` were
+  missing `--entrypoint /bin/sh` on `podman run`, so the sleep-loop script was
+  passed straight to the `yt-dlp` binary as CLI arguments (it tried to
+  download `/bin/sh` as a URL) instead of being executed as a shell script.
+  Added the entrypoint override to match the existing (correct)
+  `docker-compose.yml` behavior.
+- `scripts/setup/init` unconditionally ran `enforce_file_ownership
+  "$SCRIPT_DIR/vpn-auth.txt"` against the wrong base directory
+  (`scripts/setup/`, not the project root) and against a file that only
+  exists when `USE_VPN=true`; under `set -e` this aborted every fresh,
+  no-VPN `init` run. Same wrong-base-directory bug affected the five other
+  `enforce_file_ownership` calls in the same block
+  (`yt-dlp/{config,cookies,archive}`, `metube/config`,
+  `yt-dlp/config/yt-dlp.conf`). Fixed to resolve the real project root, and
+  made the `vpn-auth.txt` check conditional on the file actually existing.
+- Same block also aborted once a service had actually run, because rootless
+  Podman writes into `metube/config` (and the other paths above) as a
+  user-namespace-remapped subuid (`>=100000`), which a plain host `chown`
+  cannot touch (`EPERM`) — that is expected, not a failure, and was already
+  handled this way for `DOWNLOAD_DIR` a few lines up but not for these other
+  paths. Extended the same subuid-tolerant check to all of them.
+- `scripts/lifecycle/enable-persistence.sh` under-reported its own result: it
+  enabled any service found disabled but never re-counted it as enabled, so a
+  clean first-run install always ended in "some services need attention"
+  even after fixing everything. Also fixed a `systemctl --user is-enabled`
+  usage that printed `disabled` twice (its real stdout plus a redundant
+  `|| echo "disabled"` fallback firing on the command's expected non-zero
+  exit for a disabled unit).
+
+All of the above were found and fixed by actually tearing down the installed
+systemd units and containers and running `./install` + `./boot` from scratch
+— not just re-running against an already-working host.
+
+### Added — root-level install/boot entrypoints, systemd --user as the mandatory path
+- New **`./install`** — orchestrates environment setup, systemd --user unit
+  install/enable, and reboot-persistence (loginctl linger) in one idempotent
+  command.
+- New **`./boot`** — starts every service via `systemctl --user` and verifies
+  real HTTP reachability on both loopback (127.0.0.1) and the host's
+  LAN-facing IPv4 address (not just systemd's reported service state),
+  printing access URLs for both.
+- `scripts/lifecycle/boot.sh` extended with LAN-IP detection and dual
+  (loopback + LAN) HTTP health checks in systemd mode.
+- New `Makefile` targets: `install`, `boot`, `boot-status`, `boot-stop`.
+
 ## [ytdlp-1.4.0] — 2026-06-15
 
 ### Added — Dual-version media pipeline (webready video + MP3)

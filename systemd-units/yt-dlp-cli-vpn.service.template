@@ -11,6 +11,7 @@ ExecStartPre=/usr/bin/podman pull ghcr.io/jim60105/yt-dlp:pot
 ExecStart=/usr/bin/podman run --rm \
     --name yt-dlp-cli-vpn \
     --network=container:openvpn-yt-dlp \
+    --entrypoint /bin/sh \
     -e PUID={{PUID}} \
     -e PGID={{PGID}} \
     -e TZ=Europe/Moscow \
@@ -20,9 +21,9 @@ ExecStart=/usr/bin/podman run --rm \
     -v "{{PROJECT_DIR}}/yt-dlp/archive:/archive:rw" \
     -v "{{PROJECT_DIR}}/metube/config:/metube-cookies:ro" \
     ghcr.io/jim60105/yt-dlp:pot \
-    /bin/sh -c "yt-dlp --update-to nightly 2>/dev/null || true; cp /metube-cookies/cookies.txt /tmp/metube-cookies.txt 2>/dev/null || true; while true; do sleep 3600; done"
+    -c "yt-dlp --update-to nightly 2>/dev/null || true; cp /metube-cookies/cookies.txt /tmp/metube-cookies.txt 2>/dev/null || true; while true; do sleep 3600; done"
 ExecStop=/usr/bin/podman stop yt-dlp-cli-vpn
-Restart=unless-stopped
+Restart=on-failure
 TimeoutStartSec=300
 TimeoutStopSec=30
 
