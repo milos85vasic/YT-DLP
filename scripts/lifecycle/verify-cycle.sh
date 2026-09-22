@@ -8,7 +8,16 @@ set -e
 
 # Script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+# When invoked from project root, PROJECT_DIR is the current directory
+PROJECT_DIR="$PWD"
+
+# Load environment for variable access
+if [ -f "$PROJECT_DIR/.env" ]; then
+    . "$PROJECT_DIR/.env"
+else
+    echo -e "${RED}ERROR: .env file not found at $PROJECT_DIR/.env${NC}"
+    exit 1
+fi
 
 # Colors
 RED='\033[0;31m'
@@ -38,9 +47,24 @@ log_error() {
 # Track stage results
 STAGE_RESULTS=()
 
+# Service list expected to be active after boot
+EXPECTED_SERVICES=(
+    metube.service
+    metube-direct.service
+    landing-vpn.service
+    landing-no-vpn.service
+    dashboard.service
+    yt-dlp-cli.service
+    yt-dlp-cli-vpn.service
+    openvpn-yt-dlp.service
+    watchtower.service
+    media-postprocessor.service
+)
+
 run_stage() {
     local stage_name="$1"
     local stage_cmd="$2"
+    local validate_cmd="$3"  # optional validation command to run after stage
     
     echo ""
     echo -e "${BLUE}============================================${NC}"
@@ -48,7 +72,32 @@ run_stage() {
     echo -e "${BLUE}============================================${NC}"
     echo ""
     
-    if eval "$stage_cmd"; then
+    # Capture both stdout and stderr so we can inspect it later
+    STAGE_OUTPUT=$(eval "$stage_cmd" 2>&1)
+    STAGE_EXIT_CODE=$?
+    echo "STAGE_EXIT_CODE=$STAGE_EXIT_CODE"
+    
+    # Echo tail of output for progress
+    echo "$STAGE_OUTPUT" | tail -20
+    
+    # Default: stage passes if command succeeded
+    local stage_passed=true
+    
+    # Run optional validation if provided
+    if [ -n "$validate_cmd" ]; then
+        if ! eval "$validate_cmd"; then
+            stage_passed=false
+            log_error "Validation failed for stage '$stage_name'"
+        fi
+    fi
+    
+    # Override with command exit code if validation didn't explicitly fail
+    if [ $STAGE_EXIT_CODE -ne 0 ] && [ "$stage_passed" = true ]; then
+        stage_passed=false
+        log_error "Stage command failed with exit code $STAGE_EXIT_CODE"
+    fi
+    
+    if [ "$stage_passed" = true ]; then
         STAGE_RESULTS+=("$stage_name: PASS")
         log_success "Stage '$stage_name' completed successfully"
         return 0
@@ -70,9 +119,11 @@ echo ""
 # =============================================================================
 
 run_stage "Install" "
+    # Ensure download directory exists to avoid interactive prompt in init.sh
+    mkdir -p \"$DOWNLOAD_DIR\" &&
     cd $PROJECT_DIR &&
-    ./scripts/lifecycle/install.sh 2>&1 | tail -20
-" || true
+    AUTO_INSTALL=1 ./scripts/lifecycle/install.sh
+"
 
 # =============================================================================
 # Stage 2: Boot
@@ -80,8 +131,23 @@ run_stage "Install" "
 
 run_stage "Boot" "
     cd $PROJECT_DIR &&
-    USE_SYSTEMD=true ./scripts/lifecycle/boot.sh 2>&1 | tail -20
-" || true
+    USE_SYSTEMD=true ./scripts/lifecycle/boot.sh
+" "
+    # Validation: all expected services must be active
+    cd $PROJECT_DIR &&
+    all_active=true
+    for service in \"${EXPECTED_SERVICES[@]}\"; do
+        if ! systemctl --user is-active --quiet \"$service\"; then
+            echo \"Service $service is not active\"
+            all_active=false
+        fi
+    done
+    if [ \"$all_active\" = true ]; then
+        true  # validation passes
+    else
+        false  # validation fails
+    fi
+"
 
 # =============================================================================
 # Stage 3: Test
@@ -89,8 +155,12 @@ run_stage "Boot" "
 
 run_stage "Test" "
     cd $PROJECT_DIR &&
-    ./scripts/lifecycle/test.sh 2>&1 | tail -30
-" || true
+    ./scripts/lifecycle/test.sh
+" "
+    # Validation: no test should FAIL in the output
+    cd $PROJECT_DIR &&
+    ! grep -q '\\[0;31mFAIL\\[0m' <<< \"$STAGE_OUTPUT\"
+"
 
 # =============================================================================
 # Stage 4: Release (dry-run)
@@ -98,8 +168,8 @@ run_stage "Test" "
 
 run_stage "Release (dry-run)" "
     cd $PROJECT_DIR &&
-    DRY_RUN=true ./scripts/lifecycle/release.sh v9.9.9-test 2>&1 | tail -20
-" || true
+    DRY_RUN=true ./scripts/lifecycle/release.sh v9.9.9-test
+"
 
 # =============================================================================
 # Stage 5: Persistence
@@ -107,8 +177,8 @@ run_stage "Release (dry-run)" "
 
 run_stage "Persistence" "
     cd $PROJECT_DIR &&
-    ./scripts/lifecycle/enable-persistence.sh 2>&1 | tail -20
-" || true
+    ./scripts/lifecycle/enable-persistence.sh
+"
 
 # =============================================================================
 # Summary
@@ -143,4 +213,3 @@ else
     echo -e "${CYAN}The install-boot-test-release cycle has issues that need to be addressed.${NC}"
     exit 1
 fi
-

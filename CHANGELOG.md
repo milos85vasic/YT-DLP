@@ -3,6 +3,31 @@
 All notable changes to this project are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [ytdlp-1.4.2] — 2026-09-22
+
+### Fixed — full-cycle self-test script
+- `scripts/lifecycle/verify-cycle.sh` had a broken debug trace line (an
+  unterminated `'` right before a `>&2` redirect, so the redirect never
+  fired and the quote instead swallowed the following lines into one
+  garbled argument) plus two `RUNNING STAGE: ...` lines that printed
+  `$stage_name` before it was assigned (always empty). Removed the dead
+  debug instrumentation; the script's real improvements from this batch —
+  sourcing `.env` for variable access, an `EXPECTED_SERVICES` systemd
+  liveness check after Boot, captured stage output/exit-code with an
+  optional per-stage validation command, and `AUTO_INSTALL=1` for
+  non-interactive Install — are unaffected and now actually run cleanly.
+
+### Fixed — unblocked authenticated `./download` CLI
+- `yt-dlp/cookies/cookies.txt` (mounted into the `yt-dlp-cli` container per
+  both `docker-compose.yml` and the `yt-dlp-cli*.service.template` units)
+  was empty on this host, so the standalone `./download` CLI had no
+  YouTube auth for age/region/login-gated content. Retrieved a working
+  export from an existing deployment (`nezha`) and placed it at the
+  correct mount path; this file is git-ignored by design and was not — and
+  will never be — committed. `metube/config/cookies.txt` (MeTube's own,
+  separately-managed cookie upload) was already present and populated on
+  this host and was left untouched.
+
 ## [ytdlp-1.4.1] — 2026-09-22
 
 ### Fixed — systemd --user integration bugs found by live boot testing
